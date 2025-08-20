@@ -5,12 +5,8 @@ exports.inserir = async (req, res) => {
   try {
     const dados = req.body;
 
-    // pega o usuário do token
-    const usuarioId = req.user.id;
-
     const novoDesembargo = await desembargoService.inserirDesembargo({
-      ...dados,
-      usuarioId
+      ...dados
     });
 
     res.status(201).json({ success: true, desembargo: novoDesembargo });

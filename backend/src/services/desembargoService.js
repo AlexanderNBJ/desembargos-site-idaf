@@ -8,16 +8,15 @@ async function inserirDesembargo({ numero, serie, nomeAutuado, area, processoSim
   const query = `
     INSERT INTO desembargos(
         numero, serie, autuado, areaDesembargada, simlam, SEP, eDocs,
-        tipoDesembargo, dataDesembargo, latitude, longitude, descricao,
-        usuario_id, status
+        tipoDesembargo, dataDesembargo, latitude, longitude, descricao
     )
     VALUES
-    ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'PENDENTE')
+    ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
     RETURNING *;
   `;
   const values = [numero, serie, nomeAutuado, area, processoSimlam,
                   numeroSEP, numeroEdocs, tipoDesembargo, dataDesembargo,
-                  latitude, longitude, descricao, usuarioId];
+                  latitude, longitude, descricao];
 
   const result = await db.query(query, values);
   return result.rows[0];
