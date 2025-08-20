@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SeloVerde ES - Área Técnica</title>
+    <link rel="icon" type="image/x-icon" href="assets/favicon.png">
+    <link rel="stylesheet" href="css/stylesHeader.css">
+    <link rel="stylesheet" href="css/stylesLogin.css">
+</head>
+<body>
+    <header class="top-bar">
+        <div class="logo">
+            <img src="assets/simbolo-seloverde.svg" alt="Logo Selo Verde">
+        </div>
+        <div class="title-text">
+            <h1>SeloVerde ES - Área Técnica</h1>
+            <h2>Formulário de Cadastro de Desembargos</h2>
+            <span class="restricted-badge">Área Restrita</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="login-wrapper">
+            <div class="login-container">
+                <form id="loginForm">
+                    <div class="login-group">
+                        <label for="usuario">Usuário:</label>
+                        <input type="text" id="usuario" required placeholder="exemplo@exemplo.com">
+                    </div>
+
+                    <div class="login-group">
+                        <label for="senha">Senha:</label>
+                        <input type="password" id="senha" required placeholder="********">
+                    </div>
+
+                    <a href="#" class="forgot-password">Esqueci minha senha</a>
+                    
+                    <button type="submit" class="login-btn">LOGIN</button>
+                </form>
+                <p id="loginMessage" style="color:red; display:none;"></p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+    document.querySelector(".login-btn").addEventListener("click", async (e) => {
+        e.preventDefault();
+        window.location.href = "menuPrincipal.html"
+    });
+</script>
+</body>
+</html>

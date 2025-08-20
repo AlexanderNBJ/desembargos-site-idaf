@@ -1,0 +1,193 @@
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;700&display=swap');
+
+.page-container{
+  max-width: var(--max-width);
+  margin: 30px auto;
+  padding: 0 24px 80px;
+}
+
+/* header da lista: título + pesquisa */
+.list-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom: 18px;
+}
+
+.list-title {
+  color: var(--green-accent);
+  font-weight: 700;
+  font-size: 20px;
+  margin: 0;
+}
+
+/* search pill */
+.search-wrapper{
+  position: relative;
+  width: 340px;
+}
+.search-wrapper input{
+  width:100%;
+  height:40px;
+  padding: 0 14px 0 38px;
+  border-radius: 12px;
+  border: none;
+  background: #efefef;
+  font-size: 14px;
+  color: #444;
+}
+.search-wrapper svg{
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0.85;
+}
+
+/* cartão que envolve a tabela */
+.table-card {
+  background: white;
+  border-radius: var(--card-radius);
+  padding: 14px;
+  box-shadow: 0 6px 18px rgba(16,22,25,0.06);
+  overflow-x: auto;   /* permite scroll horizontal em telas pequenas */
+}
+
+/* TABELA */
+table.desembargos {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+  table-layout: fixed;    /* garante respeito às larguras definidas */
+  min-width: 1100px;      /* evita compressão extrema; ativa scroll se necessário */
+}
+
+/* cabeçalho em "pills" */
+thead th {
+  background: var(--pill-bg);
+  padding: 12px 14px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  color: #222;
+  vertical-align: middle;
+}
+thead th:first-child { border-top-left-radius: 8px; }
+thead th:last-child  { border-top-right-radius: 8px; }
+
+/* linhas do corpo */
+tbody tr {
+  background: white;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+  transition: background .12s ease, transform .06s ease;
+}
+tbody tr:hover { background: #fbfbfb; }
+
+/* células */
+tbody td {
+  padding: 11px 12px;
+  vertical-align: middle;
+  font-size: 13px;
+  color: #333;
+  overflow: hidden;           /* evita que estique demais */
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* estilo texto secundário */
+.muted { color: var(--muted); font-weight: 400; }
+
+/* -------------------------
+   DISTRIBUIÇÃO DE COLUNAS
+   porcentagens pensadas no conteúdo
+   ------------------------- */
+.col-termo        { width: 7%;  text-align:left; }   /* 123456 A */
+.col-processo     { width: 7%; text-align:left; }   /* 12345/2025 */
+.col-sep          { width: 7%;  text-align:left; }   /* 12345678 */
+.col-edocs        { width: 7%; text-align:left; }   /* 2025-AA123 */
+.col-autuado      { width: 16%; text-align:left; }   /* nomes */
+.col-tipo         { width: 5%;  text-align:left; }   /* TOTAL/PARCIAL */
+.col-area         { width: 10%;  text-align:left; }   /* 0,5 ha */
+.col-responsavel  { width: 16%; text-align:left; }   /* nomes maiores */
+.col-data         { width: 8%;  text-align:left; }   /* 07/08/2025 */
+.col-acoes        { width: 7%;  text-align:center; } /* ícones compactos */
+
+/* ações (ícones) */
+.actions {
+  display:flex;
+  gap: 8px;
+  justify-content:center;
+  align-items:center;
+}
+.action-btn{
+  width: 34px;
+  height: 34px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius: 6px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.action-btn:hover { background: rgba(16,22,25,0.04); }
+
+/* ícones */
+.icon { width: 16px; height: 16px; display:block; fill: #444; opacity: .95; }
+
+/* -------------------------
+   RESPONSIVIDADE
+   ------------------------- */
+
+/* pequena: permitir ocultar colunas menos críticas para caber melhor */
+@media (max-width: 1100px) {
+  .col-sep, .col-edocs { display: none; } /* libera espaço visual */
+  table.desembargos { table-layout: auto; min-width: 900px; }
+  tbody td { white-space: normal; } /* permitimos wrap ao ocultar colunas */
+}
+
+/* ainda menor: simplificar mais */
+@media (max-width: 760px) {
+  .col-area { display: none; }
+  .search-wrapper { display:none; }
+  .title-text h1 { font-size: 28px; }
+  .title-text h2 { display: none; }
+}
+
+.page-container .list-header .list-title {
+  font-family: "Hanken Grotesk", "Sora", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: var(--green-accent);
+  font-weight: 700;           /* negrito consistente com cabeçalho */
+  font-size: 22px;            /* ajuste: aumenta para melhor leitura */
+  line-height: 1.1;
+  margin: 0;
+  padding: 4px 0;             /* pequeno espaçamento vertical */
+  letter-spacing: 0.2px;      /* leve tracking para aparência profissional */
+  display: inline-block;      /* evita que seja sobrescrito pelo fluxo */
+  vertical-align: middle;
+}
+
+/* em telas maiores, deixa um pouco maior, similar ao header */
+@media (min-width: 1200px) {
+  .page-container .list-header .list-title {
+    font-size: 24px;
+  }
+}
+
+:root {
+  --green-accent: #10a84a; /* se já estiver definido, não precisa repetir */
+}
+
+/* se quiser que esteja exatamente alinhado com o logo/título do header,
+   ajuste o margin-left para combinar com o padding do container */
+.page-container .list-header { 
+  padding-left: 8px; /* ajuste fino se necessário */
+}
+
+/* garante que nada depois sobrescreva por causa de especificidade */
+.page-container .list-header .list-title,
+.page-container .list-header .list-title * {
+  color: var(--green-accent) !important;
+  font-family: "Hanken Grotesk", sans-serif !important;
+}

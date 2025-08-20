@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SeloVerde ES - Área Técnica</title>
+    <link rel="icon" type="image/x-icon" href="assets/favicon.png">
+    <link rel="stylesheet" href="css/stylesHeader.css">
+    <link rel="stylesheet" href="css/stylesForm.css">
+</head>
+<body>
+    <header class="top-bar">
+        <div class="logo">
+            <img src="assets/simbolo-seloverde.svg" alt="Logo Selo Verde">
+        </div>
+        <div class="title-text">
+            <h1>SeloVerde ES - Área Técnica</h1>
+            <h2>Formulário de Cadastro de Desembargos</h2>
+            <span class="restricted-badge">Área Restrita</span>
+        </div>
+        <div class="logout-container">
+            <button id="logoutBtn" class="logout-btn" aria-label="Logout" title="Sair">Logout</button>
+        </div>
+    </header>
+    <main>
+      <form id="desembargoForm" class="sv-grid" autocomplete="off" novalidate>
+        <p class="sv-intro">Preencha as seguintes informações:</p>
+
+        <!-- TERMO (col-left) -->
+        <div class="termo">
+          <div class="section-title">Termo de Embargo Ambiental</div>
+
+          <div class="termo-small">
+            <div class="small-wrap">
+              <label for="numero" class="required">Número:</label>
+              <input id="numero" name="numero" class="input-left" type="text" placeholder="Ex: 12345" required/>
+              <span class="error-msg" id="error-numero"></span>
+              <span id="mensagem-numero" class="mensagem-validacao"></span> <!-- aqui -->
+            </div>
+
+            <div class="small-wrap">
+              <label for="serie" class="required">Série:</label>
+              <input id="serie" name="serie" class="input-left" type="text" placeholder="Ex: A"/>
+              <span class="error-msg" id="error-serie"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- NOME DO AUTUADO (col-right) -->
+        <div class="nome">
+          <label for="nomeAutuado" id="textoNomeAutuado">Nome do autuado:</label>
+          <input id="nomeAutuado" name="nomeAutuado" class="input" type="text" placeholder="" />
+          <span class="error-msg" id="error-nomeAutuado"></span>
+        </div>
+
+        <!-- PROCESSO SIMLAM (ocupa left + middle) -->
+        <div class="processo">
+          <label for="processoSimlam" class="required">Processo Simlam:</label>
+          <input id="processoSimlam" name="processoSimlam" class="input" type="text" placeholder="Ex: 12345/2025" required/>
+          <span class="error-msg" id="error-processoSimlam"></span>
+        </div>
+
+        <!-- AREA (col-right) -->
+        <div class="area">
+          <label for="area">Área desembargada (ha):</label>
+          <input id="area" name="area" class="input" type="text" placeholder="Ex: 0.5" />
+          <span class="error-msg" id="error-area"></span>
+        </div>
+
+        <!-- NÚMERO DO SEP (ocupa left + middle) -->
+        <div class="sep">
+          <label for="numeroSEP" class="required">Número do SEP:</label>
+          <input id="numeroSEP" name="numeroSEP" class="input" type="text" placeholder="Ex: 123456781" />
+          <span class="error-msg" id="error-numeroSEP"></span>
+        </div>
+
+        <!-- TIPO (col-right) -->
+        <div class="tipo">
+          <label class="label-bold required-section">Tipo de desembargo:</label>
+          <div class="tipo-controls">
+            <label><input type="radio" name="tipoDesembargo" value="TOTAL" checked /> <span>Total</span></label>
+            <label><input type="radio" name="tipoDesembargo" value="PARCIAL" /> <span>Parcial</span></label>
+            <label><input type="radio" name="tipoDesembargo" value="INDEFERIMENTO" /> <span>Indeferimento</span></label>
+            <span class="error-msg" id="error-tipoDesembargo"></span>
+          </div>
+        </div>
+
+        <!-- NÚMERO DO PROCESSO E-DOCS (left+middle) -->
+        <div class="edocs">
+          <label for="numeroEdocs">Número do processo e-Docs:</label>
+          <input id="numeroEdocs" name="numeroEdocs" class="input" type="text" placeholder="Ex: 2025-A12345" />
+          <span class="error-msg" id="error-numeroEdocs"></span>
+        </div>
+
+        <!-- DATA (col-right) -->
+        <div class="data">
+          <label for="dataDesembargo" class="required">Data de desembargo:</label>
+          <input id="dataDesembargo" name="dataDesembargo" class="input" type="date"/>
+          <span class="error-msg" id="error-dataDesembargo"></span>
+        </div>
+
+        <!-- COORDENADAS (col-right) -->
+        <div class="coordenadas">
+          <div class="coordenadas-small">
+            <div class="small-wrap">
+              <label for="latitude" class="required">Latitude</label>
+              <input type="text" id="latitude" name="latitude" class="input-left" placeholder="Ex: -19.9167">
+              <span class="error-msg" id="error-latitude"></span>
+            </div>
+            <div class="small-wrap">
+              <label for="longitude" class="required">Longitude</label>
+              <input type="text" id="longitude" name="longitude" class="input-left" placeholder="Ex: -43.9345">
+              <span class="error-msg" id="error-longitude"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Descrição full width -->
+        <div class="descricao">
+          <label for="descricao">Descrição do desembargo:</label>
+          <textarea id="descricao" name="descricao" class="textarea"></textarea>
+          <span class="error-msg" id="error-descricao"></span>
+        </div>
+      </form>
+
+      <!-- Buttons outside -->
+      <div class="sv-actions">
+        <button type="button" class="btn preview">GERAR PRÉVIA</button>
+        <button type="submit" form="desembargoForm" class="btn submit" id="botaoEnviar">ENVIAR</button>
+      </div>
+
+      <div id="mensagem-insercao" class="mensagem"></div>
+    </main>
+    </body>
+
+    <script>
+      const hoje = new Date().toISOString().split('T')[0];
+      document.getElementById('dataDesembargo').value = hoje;
+    </script>
+     <script src="js/main.js"></script>
+</html>

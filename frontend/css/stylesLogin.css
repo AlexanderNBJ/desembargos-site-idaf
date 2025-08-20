@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;700&display=swap');
+
+main {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: calc(100vh - 200px);
+    min-height: calc(100vh - 200px);
+}
+
+.login-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 200px;
+    justify-content: center;
+}
+
+.login-container {
+    background: #f4f4f4;
+    padding: 50px 80px;
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    width: 400px;
+}
+
+.login-group {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    margin-bottom: 15px;
+    align-content: center;
+}
+
+.login-group label {
+    width: 80px;
+    font-weight: normal;
+    font-family: "Hanken Grotesk";
+    font-size: 20px;
+}
+
+.login-group input {
+    flex: 1;
+    padding: 7px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+.forgot-password {
+    display: block;
+    font-size: 11px;
+    color: #555;
+    text-align: right;
+    text-decoration: none;
+    margin-bottom: 15px;
+}
+
+.forgot-password:hover {
+    text-decoration: underline;
+}
+
+.login-btn {
+    margin-top: 30px;
+    width: auto;
+    background: #0db14b;
+    color: white;
+    border: none;
+    padding: 10px 50px;
+    border-radius: 4px;
+    font-size: 22px;
+    font-family: "Hanken Grotesk", sans-serif;
+    font-weight: bolder;
+    cursor: pointer;
+}
+
+.login-btn:hover {
+    background: #0a9a3f;
+}
+

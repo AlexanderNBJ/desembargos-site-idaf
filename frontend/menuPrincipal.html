@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SeloVerde ES - Área Técnica</title>
+    <link rel="icon" type="image/x-icon" href="assets/favicon.png">
+    <link rel="stylesheet" href="css/stylesHeader.css">
+    <link rel="stylesheet" href="css/stylesMenu.css">
+</head>
+<body>
+    <header class="top-bar">
+        <div class="logo">
+            <img src="assets/simbolo-seloverde.svg" alt="Logo Selo Verde">
+        </div>
+        <div class="title-text">
+            <h1>SeloVerde ES - Área Técnica</h1>
+            <h2>Formulário de Cadastro de Desembargos</h2>
+            <span class="restricted-badge">Área Restrita</span>
+        </div>
+        <div class="logout-container">
+            <span id="usuarioNome" class="usuario-nome"></span>
+            <button id="logoutBtn" class="logout-btn" aria-label="Logout" title="Sair">Logout</button>
+        </div>
+    </header>
+    <div class="menu-wrapper">
+        <button type="submit" class="menu-btn" onclick="window.location='listaDesembargos.html'">LISTA DE DESEMBARGOS</button>
+        <button type="submit" class="menu-btn" onclick="window.location='formularioDesembargos.html'">CADASTRAR DESEMBARGO</button>
+    </div>
+    <script>
+    // Mostrar nome do usuário
+    const nomeUsuario = localStorage.getItem("usuarioNome");
+    if (nomeUsuario) {
+        document.getElementById("usuarioNome").textContent = `Olá, ${nomeUsuario}!` || 'Usuário';
+    }
+
+    // Logout
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("role");
+        localStorage.removeItem("usuarioNome");
+        window.location.href = "login.html"; // volta para login
+    });
+
+    // Proteção da página: redireciona se não tiver token
+    if (!localStorage.getItem("token")) {
+        window.location.href = "login.html";
+    }
+</script>
+</body>
+</html>

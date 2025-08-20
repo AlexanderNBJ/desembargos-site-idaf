@@ -1,0 +1,23 @@
+.menu-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-self: center;
+    height: 400px;
+    justify-content: center;
+}
+
+.menu-btn {
+    margin-top: 30px;
+    width: 400px;
+    background: #0db14b;
+    color: white;
+    border: none;
+    padding: 10px 50px;
+    border-radius: 4px;
+    font-size: 22px;
+    font-family: "Hanken Grotesk", sans-serif;
+    font-weight: bolder;
+    cursor: pointer;
+    align-self: auto;
+}
