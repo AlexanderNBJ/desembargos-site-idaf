@@ -27,25 +27,5 @@
         <button type="submit" class="menu-btn" onclick="window.location='listaDesembargos.html'">LISTA DE DESEMBARGOS</button>
         <button type="submit" class="menu-btn" onclick="window.location='formularioDesembargos.html'">CADASTRAR DESEMBARGO</button>
     </div>
-    <script>
-    // Mostrar nome do usuário
-    const nomeUsuario = localStorage.getItem("usuarioNome");
-    if (nomeUsuario) {
-        document.getElementById("usuarioNome").textContent = `Olá, ${nomeUsuario}!` || 'Usuário';
-    }
-
-    // Logout
-    document.getElementById("logoutBtn").addEventListener("click", () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("role");
-        localStorage.removeItem("usuarioNome");
-        window.location.href = "login.html"; // volta para login
-    });
-
-    // Proteção da página: redireciona se não tiver token
-    if (!localStorage.getItem("token")) {
-        window.location.href = "login.html";
-    }
-</script>
 </body>
 </html>
