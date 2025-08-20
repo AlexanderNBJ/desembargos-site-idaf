@@ -18,10 +18,27 @@ exports.inserir = async (req, res) => {
 
 exports.listarDesembargos = async (req, res) => {
   try {
-    const desembargos = await desembargoService.listarDesembargos();
+    const { search } = req.query; // filtro opcional
+    let desembargos = await desembargoService.listarDesembargos();
+
+    if (search) {
+      const lowerSearch = search.toLowerCase();
+      desembargos = desembargos.filter(d =>
+        String(d.termo ?? '').toLowerCase().includes(lowerSearch) ||
+        String(d.simlam ?? '').toLowerCase().includes(lowerSearch) ||
+        String(d.sep ?? '').toLowerCase().includes(lowerSearch) ||
+        String(d.edocs ?? '').toLowerCase().includes(lowerSearch) ||
+        String(d.autuado ?? '').toLowerCase().includes(lowerSearch) ||
+        String(d.tipo ?? '').toLowerCase().includes(lowerSearch) ||
+        String(d.responsavel ?? '').toLowerCase().includes(lowerSearch) ||
+        String(d.data ?? '').toLowerCase().includes(lowerSearch)
+      );
+    }
+
+    // retorno consistente com o frontend
     res.json({ success: true, data: desembargos });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: 'Erro ao buscar desembargos' });
+    res.status(500).json({ success: false, message: 'Erro ao listar desembargos' });
   }
 };
