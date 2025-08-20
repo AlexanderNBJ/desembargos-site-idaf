@@ -16,26 +16,12 @@ exports.inserir = async (req, res) => {
   }
 };
 
-// validar desembargo
-exports.validar = async (req, res) => {
+exports.listarDesembargos = async (req, res) => {
   try {
-    const { id } = req.params;
-    await desembargoService.atualizarStatus(id, "VALIDADO");
-    res.json({ success: true, message: "Desembargo validado com sucesso" });
-  } catch (error) {
-    console.error("Erro ao validar desembargo:", error);
-    res.status(500).json({ success: false, message: "Erro no servidor" });
-  }
-};
-
-// recusar desembargo
-exports.recusar = async (req, res) => {
-  try {
-    const { id } = req.params;
-    await desembargoService.atualizarStatus(id, "RECUSADO");
-    res.json({ success: true, message: "Desembargo recusado com sucesso" });
-  } catch (error) {
-    console.error("Erro ao recusar desembargo:", error);
-    res.status(500).json({ success: false, message: "Erro no servidor" });
+    const desembargos = await desembargoService.listarDesembargos();
+    res.json({ success: true, data: desembargos });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Erro ao buscar desembargos' });
   }
 };

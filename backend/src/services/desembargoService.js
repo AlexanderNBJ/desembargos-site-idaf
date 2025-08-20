@@ -3,7 +3,7 @@ const db = require("../config/db");
 // inserir
 async function inserirDesembargo({ numero, serie, nomeAutuado, area, processoSimlam,
                                   numeroSEP, numeroEdocs, tipoDesembargo,
-                                  dataDesembargo, latitude, longitude, descricao, usuarioId }) {
+                                  dataDesembargo, latitude, longitude, descricao }) {
 
   const query = `
     INSERT INTO desembargos(
@@ -22,13 +22,24 @@ async function inserirDesembargo({ numero, serie, nomeAutuado, area, processoSim
   return result.rows[0];
 }
 
-// atualizar status
-async function atualizarStatus(id, novoStatus) {
-  const query = `
-    UPDATE desembargos SET status = $1 WHERE id = $2 RETURNING *;
-  `;
-  const result = await db.query(query, [novoStatus, id]);
-  return result.rows[0];
-}
 
-module.exports = { inserirDesembargo, atualizarStatus };
+async function listarDesembargos () {
+  const query = `
+    SELECT 
+      CONCAT(numero, CONCAT(' ', serie)) AS termo,
+      simlam,
+      sep,
+      edocs,
+      autuado,
+      tipodesembargo AS tipo,
+      areadesembargada as area,
+      ' ',
+      datadesembargo AS data
+    FROM desembargos
+    ORDER BY datadesembargo DESC
+  `;
+  const { rows } = await db.query(query);
+  return rows;
+};
+
+module.exports = { inserirDesembargo, listarDesembargos };

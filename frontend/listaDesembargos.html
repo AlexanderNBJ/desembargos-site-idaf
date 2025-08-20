@@ -146,5 +146,94 @@
 
 </div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+    const token = localStorage.getItem('token'); // se você usar auth
+    const tbody = document.getElementById('desembargos-list');
+    const template = document.getElementById('row-template').content;
+    const searchInput = document.getElementById('search');
+
+    // função para formatar data dd/mm/yyyy
+    function formatDate(isoDate) {
+      const d = new Date(isoDate);
+      return d.toLocaleDateString('pt-BR');
+    }
+
+    // busca desembargos no backend
+    async function fetchDesembargos() {
+      try {
+        const res = await fetch('/api/desembargos/list', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await res.json();
+        if (!data.success) throw new Error(data.message || 'Erro ao buscar desembargos');
+        return data.data;
+      } catch (err) {
+        console.error(err);
+        return [];
+      }
+    }
+
+    // renderiza a tabela
+    function renderTable(desembargos) {
+      tbody.innerHTML = ''; // limpa tabela
+      desembargos.forEach(d => {
+        const clone = document.importNode(template, true);
+        clone.querySelector('.col-termo').textContent = d.termo;
+        clone.querySelector('.col-processo').textContent = d.processo;
+        clone.querySelector('.col-sep').textContent = d.sep || '';
+        clone.querySelector('.col-edocs').textContent = d.edocs || '';
+        clone.querySelector('.col-autuado').textContent = d.autuado;
+        clone.querySelector('.col-tipo').textContent = d.tipo;
+        clone.querySelector('.col-area').textContent = d.area ? `${d.area} ha` : '';
+        clone.querySelector('.col-responsavel').textContent = d.responsavel;
+        clone.querySelector('.col-data').textContent = formatDate(d.data);
+
+        // opcional: atribuir actions
+        const actions = clone.querySelectorAll('.action-btn');
+        actions.forEach(btn => {
+          const action = btn.dataset.action;
+          btn.addEventListener('click', () => handleAction(action, d));
+        });
+
+        tbody.appendChild(clone);
+      });
+    }
+
+    // handle actions (view/edit/pdf)
+    function handleAction(action, desembargo) {
+      switch(action) {
+        case 'view':
+          alert(`Visualizar: ${desembargo.termo}`);
+          break;
+        case 'edit':
+          alert(`Editar: ${desembargo.termo}`);
+          break;
+        case 'pdf':
+          alert(`Gerar PDF: ${desembargo.termo}`);
+          break;
+      }
+    }
+
+    // busca e renderiza inicial
+    const desembargos = await fetchDesembargos();
+    renderTable(desembargos);
+
+    // filtro de busca
+    searchInput.addEventListener('input', () => {
+      const term = searchInput.value.toLowerCase();
+      const filtered = desembargos.filter(d => 
+        d.termo.toLowerCase().includes(term) ||
+        d.processo.toLowerCase().includes(term) ||
+        d.autuado.toLowerCase().includes(term) ||
+        (d.sep && d.sep.toLowerCase().includes(term)) ||
+        (d.edocs && d.edocs.toLowerCase().includes(term))
+      );
+      renderTable(filtered);
+    });
+  });
+</script>
 </body>
 </html>
