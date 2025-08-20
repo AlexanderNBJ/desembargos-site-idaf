@@ -31,7 +31,7 @@ exports.listarDesembargos = async (req, res) => {
         String(d.autuado ?? '').toLowerCase().includes(lowerSearch) ||
         String(d.tipo ?? '').toLowerCase().includes(lowerSearch) ||
         String(d.responsavel ?? '').toLowerCase().includes(lowerSearch) ||
-        String(d.data ?? '').toLowerCase().includes(lowerSearch)
+        formatDateToSearch(d.data).includes(lowerSearch)
       );
     }
 
@@ -42,3 +42,12 @@ exports.listarDesembargos = async (req, res) => {
     res.status(500).json({ success: false, message: 'Erro ao listar desembargos' });
   }
 };
+
+function formatDateToSearch(date) {
+  if (!date) return '';
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0'); // mês começa em 0
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`; // "17/08/2025"
+}
