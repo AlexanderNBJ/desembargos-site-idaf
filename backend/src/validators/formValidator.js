@@ -90,23 +90,23 @@ const formSchema = Joi.object({
       'any.required': 'Campo obrigatório',
     }),
 
-    // 17°53’a 21°19’ Sul de latitude
-    latitude: Joi.number()
+    // 39°39’ a 41°52’ Oeste de longitude
+    coordenadaX: Joi.number()
     .required()
-    .max(-17.8834)
-    .min(-21.317)
+    .min(202611.74437293)
+    .max(431142.9821811)
     .messages({
         'number.base': 'Latitude deve ser um número',
         'number.min': 'Latitude fora do retângulo do ES',
         'number.max': 'Latitude fora do retângulo do ES',
         'any.required': 'Campo obrigatório'
     }),
-
-    // 39°39’ a 41°52’ Oeste de longitude
-    longitude: Joi.number()
+    
+    // 17°53’a 21°19’ Sul de latitude
+    coordenadaY: Joi.number()
     .required()
-    .max(-39.65)
-    .min(-41.87)
+    .min(7640099.3226997)
+    .max(8022601.9848009)
     .messages({
         'number.base': 'Longitude deve ser um número',
         'number.min': 'Longitude fora do retângulo do ES',

@@ -69,7 +69,7 @@
 
         <!-- NÚMERO DO SEP (ocupa left + middle) -->
         <div class="sep">
-          <label for="numeroSEP" class="required">Número do SEP:</label>
+          <label for="numeroSEP" class="semirequired">Número do SEP:</label>
           <input id="numeroSEP" name="numeroSEP" class="input" type="text" placeholder="Ex: 123456781" />
           <span class="error-msg" id="error-numeroSEP"></span>
         </div>
@@ -87,7 +87,7 @@
 
         <!-- NÚMERO DO PROCESSO E-DOCS (left+middle) -->
         <div class="edocs">
-          <label for="numeroEdocs">Número do processo e-Docs:</label>
+          <label for="numeroEdocs" class="semirequired">Número do processo e-Docs:</label>
           <input id="numeroEdocs" name="numeroEdocs" class="input" type="text" placeholder="Ex: 2025-A12345" />
           <span class="error-msg" id="error-numeroEdocs"></span>
         </div>
@@ -100,20 +100,24 @@
         </div>
 
         <!-- COORDENADAS (col-right) -->
-        <div class="coordenadas">
-          <div class="coordenadas-small">
-            <div class="small-wrap">
-              <label for="latitude" class="required">Latitude</label>
-              <input type="text" id="latitude" name="latitude" class="input-left" placeholder="Ex: -19.9167">
-              <span class="error-msg" id="error-latitude"></span>
-            </div>
-            <div class="small-wrap">
-              <label for="longitude" class="required">Longitude</label>
-              <input type="text" id="longitude" name="longitude" class="input-left" placeholder="Ex: -43.9345">
-              <span class="error-msg" id="error-longitude"></span>
+          <div class="coordenadas">
+            <!-- título da seção -->
+            <div class="section-title">Coordenadas UTM:</div>
+
+            <div class="coordenadas-small">
+              <div class="small-wrap">
+                <label for="coordenadaX" class="required">X(m)</label>
+                <input type="text" id="coordenadaX" name="coordenadaX" class="input-left" placeholder="Ex: -19.9167">
+                <span class="error-msg" id="error-coordenadaX"></span>
+              </div>
+              <div class="small-wrap">
+                <label for="coordenadaY" class="required">Y(m)</label>
+                <input type="text" id="coordenadaY" name="coordenadaY" class="input-left" placeholder="Ex: -43.9345">
+                <span class="error-msg" id="error-coordenadaY"></span>
+              </div>
             </div>
           </div>
-        </div>
+
 
         <!-- Descrição full width -->
         <div class="descricao">
