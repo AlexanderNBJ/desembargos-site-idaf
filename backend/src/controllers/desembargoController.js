@@ -24,15 +24,15 @@ exports.listarDesembargos = async (req, res) => {
     if (search) {
       const lowerSearch = search.toLowerCase();
       desembargos = desembargos.filter(d =>
-        String(d.TERMO ?? '').toLowerCase().includes(lowerSearch) ||
-        String(d.PROCESSO_SIMLAM ?? '').toLowerCase().includes(lowerSearch) ||
-        String(d.NUMERO_SEP ?? '').toLowerCase().includes(lowerSearch) ||
-        String(d.NUMERO_EDOCS ?? '').toLowerCase().includes(lowerSearch) ||
-        String(d.NOME_AUTUADO ?? '').toLowerCase().includes(lowerSearch) ||
-        String(d.TIPO_DESEMBARGO ?? '').toLowerCase().includes(lowerSearch) ||
-        String(d.RESPONSAVEL_DESEMBARGO ?? '').toLowerCase().includes(lowerSearch) ||
+        String(d.termo ?? '').toLowerCase().includes(lowerSearch) ||
+        String(d.processo ?? '').toLowerCase().includes(lowerSearch) ||
+        String(d.sep ?? '').toLowerCase().includes(lowerSearch) ||
+        String(d.edocs ?? '').toLowerCase().includes(lowerSearch) ||
+        String(d.autuado ?? '').toLowerCase().includes(lowerSearch) ||
+        String(d.tipo ?? '').toLowerCase().includes(lowerSearch) ||
+        String(d.responsavel ?? '').toLowerCase().includes(lowerSearch) ||
         String(d.status ?? '').toLowerCase().includes(lowerSearch) ||
-        formatDateToSearch(d.DATA_DESEMBARGO).includes(lowerSearch)
+        formatDateToSearch(d.data).includes(lowerSearch)
       );
     }
 
