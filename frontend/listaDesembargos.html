@@ -49,7 +49,7 @@
           <th class="col-edocs">e-Docs</th>
           <th class="col-autuado">Autuado</th>
           <th class="col-tipo">Tipo</th>
-          <th class="col-area">Área Desembargada</th>
+          <th class="col-area">Status</th>
           <th class="col-responsavel">Responsável pelo desembargo</th>
           <th class="col-data">Data de Desembargo</th>
           <th class="col-acoes">Ações</th>
@@ -131,7 +131,7 @@
       <td class="col-edocs">{{edocs}}</td>
       <td class="col-autuado">{{autuado}}</td>
       <td class="col-tipo muted">{{tipo}}</td>
-      <td class="col-area muted">{{area}}</td>
+      <td class="col-status muted">{{col-status}}</td>
       <td class="col-responsavel">{{responsavel}}</td>
       <td class="col-data">{{data}}</td>
       <td class="col-acoes">
@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       clone.querySelector('.col-edocs').textContent = d.edocs || '';
       clone.querySelector('.col-autuado').textContent = d.autuado;
       clone.querySelector('.col-tipo').textContent = d.tipo;
-      clone.querySelector('.col-area').textContent = d.area ? `${d.area} ha` : '';
+      clone.querySelector('.col-status').textContent = d.status ? `${d.status}` : '';
       clone.querySelector('.col-responsavel').textContent = d.responsavel;
       clone.querySelector('.col-data').textContent = formatDate(d.data);
 

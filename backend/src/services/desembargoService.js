@@ -33,7 +33,7 @@ async function listarDesembargos () {
       NUMERO_EDOCS AS edocs,
       NOME_AUTUADO AS autuado,
       TIPO_DESEMBARGO AS tipo,
-      AREA_DESEMBARGADA AS area,
+      STATUS AS status,
       RESPONSAVEL_DESEMBARGO AS responsavel,
       DATA_DESEMBARGO AS data
     FROM DESEMBARGOS_PENDENTES

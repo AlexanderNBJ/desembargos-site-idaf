@@ -106,9 +106,9 @@ tbody td {
 .col-sep          { width: 7%;  text-align:left; }   /* 12345678 */
 .col-edocs        { width: 7%; text-align:left; }   /* 2025-AA123 */
 .col-autuado      { width: 16%; text-align:left; }   /* nomes */
-.col-tipo         { width: 10%;  text-align:left; }   /* TOTAL/PARCIAL */
-.col-area         { width: 10%;  text-align:left; }   /* 0,5 ha */
-.col-responsavel  { width: 16%; text-align:left; }   /* nomes maiores */
+.col-tipo         { width: 5%;  text-align:left; }   /* TOTAL/PARCIAL */
+.col-status       { width: 25%;  text-align:left; }   /* 0,5 ha */
+.col-responsavel  { width: 10%; text-align:left; }   /* nomes maiores */
 .col-data         { width: 8%;  text-align:left; }   /* 07/08/2025 */
 .col-acoes        { width: 7%;  text-align:center; } /* ícones compactos */
 
@@ -149,7 +149,7 @@ tbody td {
 
 /* ainda menor: simplificar mais */
 @media (max-width: 760px) {
-  .col-area { display: none; }
+  .col-status { display: none; }
   .search-wrapper { display:none; }
   .title-text h1 { font-size: 28px; }
   .title-text h2 { display: none; }

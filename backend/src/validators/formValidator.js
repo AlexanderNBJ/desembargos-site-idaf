@@ -59,7 +59,7 @@ const formSchema = Joi.object({
   numeroSEP: Joi.number()
     .integer()
     .positive()
-    .required()
+    .allow(null, '')
     .messages({
       'number.integer': 'Deve ser número inteiro',
       'number.positive': 'Deve ser positivo',

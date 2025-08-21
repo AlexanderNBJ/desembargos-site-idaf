@@ -31,6 +31,7 @@ exports.listarDesembargos = async (req, res) => {
         String(d.NOME_AUTUADO ?? '').toLowerCase().includes(lowerSearch) ||
         String(d.TIPO_DESEMBARGO ?? '').toLowerCase().includes(lowerSearch) ||
         String(d.RESPONSAVEL_DESEMBARGO ?? '').toLowerCase().includes(lowerSearch) ||
+        String(d.status ?? '').toLowerCase().includes(lowerSearch) ||
         formatDateToSearch(d.DATA_DESEMBARGO).includes(lowerSearch)
       );
     }
