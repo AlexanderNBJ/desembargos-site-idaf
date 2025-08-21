@@ -48,8 +48,8 @@ async function criarDesembargo(req, res) {
       numeroEdocs: value.numeroEdocs?.trim().toUpperCase() || null,
       tipoDesembargo: value.tipoDesembargo?.toUpperCase() || null,
       dataDesembargo: value.dataDesembargo || null,
-      latitude: value.latitude ?? null,
-      longitude: value.longitude ?? null,
+      coordenadaX: value.coordenadaX ?? null,
+      coordenadaY: value.coordenadaY ?? null,
       descricao: value.descricao?.trim() || null,
     };
 
