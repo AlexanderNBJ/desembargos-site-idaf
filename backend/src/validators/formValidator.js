@@ -96,9 +96,9 @@ const formSchema = Joi.object({
     .min(202611.74437293)
     .max(431142.9821811)
     .messages({
-        'number.base': 'Latitude deve ser um número',
-        'number.min': 'Latitude fora do retângulo do ES',
-        'number.max': 'Latitude fora do retângulo do ES',
+        'number.base': 'Deve ser um número',
+        'number.min': 'Coordenada X fora do retângulo do ES',
+        'number.max': 'Coordenada X fora do retângulo do ES',
         'any.required': 'Campo obrigatório'
     }),
     
@@ -108,13 +108,14 @@ const formSchema = Joi.object({
     .min(7640099.3226997)
     .max(8022601.9848009)
     .messages({
-        'number.base': 'Longitude deve ser um número',
-        'number.min': 'Longitude fora do retângulo do ES',
-        'number.max': 'Longitude fora do retângulo do ES',
+        'number.base': 'Deve ser um número',
+        'number.min': 'Coordenada Y fora do retângulo do ES',
+        'number.max': 'Coordenada Y fora do retângulo do ES',
         'any.required': 'Campo obrigatório'
     }),
 
   descricao: Joi.string()
+    .trim()
     .max(4000)
     .allow('', null)
     .messages({
