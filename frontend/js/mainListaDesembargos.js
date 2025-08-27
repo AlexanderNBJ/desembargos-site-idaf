@@ -28,38 +28,50 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // renderiza tabela
-  function renderTable(data) {
-    tbody.innerHTML = '';
-    data.forEach(d => {
-      const clone = document.importNode(template, true);
-      clone.querySelector('.col-termo').textContent = d.termo;
-      clone.querySelector('.col-processo').textContent = d.processo;
-      clone.querySelector('.col-sep').textContent = d.sep || '';
-      clone.querySelector('.col-edocs').textContent = d.edocs || '';
-      clone.querySelector('.col-autuado').textContent = d.autuado;
-      clone.querySelector('.col-tipo').textContent = d.tipo;
-      clone.querySelector('.col-status').textContent = d.status ? `${d.status}` : '';
-      clone.querySelector('.col-responsavel').textContent = d.responsavel;
-      clone.querySelector('.col-data').textContent = formatDate(d.data);
+  // renderiza tabela
+function renderTable(data) {
+  tbody.innerHTML = '';
+  data.forEach(d => {
+    const clone = document.importNode(template, true);
 
-      const actions = clone.querySelectorAll('.action-btn');
-      actions.forEach(btn => {
-        const action = btn.dataset.action;
-        btn.addEventListener('click', () => handleAction(action, d));
-      });
+    // seta o id no <tr>
+    clone.querySelector('tr').dataset.id = d.id;
 
-      tbody.appendChild(clone);
+    clone.querySelector('.col-termo').textContent = d.termo;
+    clone.querySelector('.col-processo').textContent = d.processo;
+    clone.querySelector('.col-sep').textContent = d.sep || '';
+    clone.querySelector('.col-edocs').textContent = d.edocs || '';
+    clone.querySelector('.col-autuado').textContent = d.autuado;
+    clone.querySelector('.col-tipo').textContent = d.tipo;
+    clone.querySelector('.col-status').textContent = d.status ? `${d.status}` : '';
+    clone.querySelector('.col-responsavel').textContent = d.responsavel;
+    clone.querySelector('.col-data').textContent = formatDate(d.data);
+
+    const actions = clone.querySelectorAll('.action-btn');
+    actions.forEach(btn => {
+      const action = btn.dataset.action;
+      btn.addEventListener('click', () => handleAction(action, d.id));
     });
-  }
 
-  // actions
-  function handleAction(action, desembargo) {
-    switch(action) {
-      case 'view': alert(`Visualizar: ${desembargo.termo}`); break;
-      case 'edit': alert(`Editar: ${desembargo.termo}`); break;
-      case 'pdf': alert(`Gerar PDF: ${desembargo.termo}`); break;
-    }
+    tbody.appendChild(clone);
+  });
+}
+
+// actions
+function handleAction(action, id) {
+  switch(action) {
+    case 'view':
+      window.location.href = `visualizacaoDesembargo.html?id=${id}`;
+      break;
+    case 'edit':
+      alert(`Editar ID: ${id}`);
+      break;
+    case 'pdf':
+      window.open(`/api/desembargos/${id}/pdf`, "_blank");
+      break;
   }
+}
+
 
   // busca inicial
   renderTable(await fetchDesembargos());
@@ -80,3 +92,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderTable(resultados);
   }, 300));
 });
+
+// Supondo que você tem uma tabela/lista com botões ou links "Visualizar"
+function abrirDesembargo(id) {
+  // Guarda o ID do desembargo no sessionStorage
+  sessionStorage.setItem("desembargoId", id);
+  
+  // Redireciona para a página de visualização
+  window.location.href = "visualizacaoDesembargo.html";
+}

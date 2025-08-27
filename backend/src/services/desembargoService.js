@@ -23,10 +23,11 @@ async function inserirDesembargo({ numero, serie, nomeAutuado, area, processoSim
   return result.rows[0];
 }
 
-
+// listar
 async function listarDesembargos () {
   const query = `
     SELECT 
+      ID as id,
       CONCAT(NUMERO_EMBARGO, ' ', SERIE_EMBARGO) AS termo,
       PROCESSO_SIMLAM AS processo,
       NUMERO_SEP AS sep,
@@ -38,10 +39,37 @@ async function listarDesembargos () {
       DATA_DESEMBARGO AS data
     FROM DESEMBARGOS_PENDENTES
     ORDER BY DATA_DESEMBARGO DESC
-
   `;
   const { rows } = await db.query(query);
   return rows;
-};
+}
 
-module.exports = { inserirDesembargo, listarDesembargos };
+// buscar por ID
+async function getDesembargoById(id) {
+  const result = await db.query("SELECT * FROM desembargos_pendentes WHERE id = $1", [id]);
+  return result.rows[0];
+}
+
+// atualizar
+async function updateDesembargo(id, dados) {
+  const {
+    numero, serie, processoSimlam, numeroSEP, numeroEdocs,
+    coordenadaX, coordenadaY, nomeAutuado, area, tipoDesembargo,
+    dataDesembargo, descricao
+  } = dados;
+
+  const result = await db.query(
+    `UPDATE desembargos_pendentes
+     SET numero_embargo = $1, serie_embargo = $2, processo_simlam = $3, numero_sep = $4,
+         numero_edocs = $5, coordenada_x = $6, coordenada_y = $7, nome_autuado = $8,
+         area_desembargada = $9, tipo_desembargo = $10, data_desembargo = $11::date, descricao = $12
+     WHERE id = $13
+     RETURNING *`,
+    [numero, serie, processoSimlam, numeroSEP, numeroEdocs, coordenadaX, coordenadaY,
+     nomeAutuado, area, tipoDesembargo, dataDesembargo, descricao, id]
+  );
+
+  return result.rows[0];
+}
+
+module.exports = { inserirDesembargo, listarDesembargos, getDesembargoById, updateDesembargo };

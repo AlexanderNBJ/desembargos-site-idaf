@@ -7,7 +7,6 @@
     <link rel="icon" type="image/x-icon" href="assets/favicon.png">
     <link rel="stylesheet" href="css/stylesHeader.css">
     <link rel="stylesheet" href="css/stylesList.css">
-
 </head>
 <body>
     <header class="top-bar">
@@ -124,7 +123,7 @@
 
   <!-- template para uso via JS: clone this template and populate before appending to #desembargos-list -->
   <template id="row-template">
-    <tr>
+    <tr data-id="{{id}}">
       <td class="col-termo">{{termo}}</td>
       <td class="col-processo">{{processo}}</td>
       <td class="col-sep">{{sep}}</td>
@@ -149,10 +148,7 @@
       </td>
     </tr>
   </template>
-
 </div>
-
 <script src="js/mainListaDesembargos.js"></script>
-
 </body>
 </html>

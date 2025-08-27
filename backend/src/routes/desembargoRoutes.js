@@ -7,4 +7,8 @@ const { route } = require("./formRoutes");
 router.post("/", desembargoController.inserir);
 router.get('/list', desembargoController.listarDesembargos)
 
+// visualizar e editar desembargo
+router.get("/:id", desembargoController.getDesembargoById);
+router.put("/:id", desembargoController.updateDesembargo);
+
 module.exports = router;
