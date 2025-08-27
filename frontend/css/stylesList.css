@@ -191,3 +191,35 @@ tbody td {
   color: var(--green-accent) !important;
   font-family: "Hanken Grotesk", sans-serif !important;
 }
+
+/* Container para centralizar o botão */
+.buttons-center {
+  display: flex;
+  justify-content: center;   /* centraliza horizontalmente */
+  margin-top: 24px;          /* separação do conteúdo acima */
+  gap: 12px;                 /* se tiver mais de um botão, separa */
+}
+
+/* Botão igual ao de voltar */
+.btn-center {
+  background-color: #2c7a7b; /* mesma cor do btn principal */
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-family: 'Sora', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-center:hover {
+  background-color: #225e5f; /* mesmo hover que os outros botões */
+}
+
+.btn-center:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+}
