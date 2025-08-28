@@ -1,4 +1,5 @@
 const db = require("../config/db");
+const { jsPDF } = require("jspdf");
 
 // inserir
 async function inserirDesembargo({ numero, serie, nomeAutuado, area, processoSimlam,
@@ -72,4 +73,93 @@ async function updateDesembargo(id, dados) {
   return result.rows[0];
 }
 
-module.exports = { inserirDesembargo, listarDesembargos, getDesembargoById, updateDesembargo };
+async function gerarPdfDesembargo(desembargo) {
+  // desembargo já vem como objeto do banco
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  let y = 40;
+  const primaryColor = "#17903f"; // verde do site
+  const secondaryColor = "#444";   // cinza
+  const lineHeight = 18;
+
+  // ================= Cabeçalho =================
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(primaryColor);
+  doc.text("www.idaf.es.gov.br", 40, y); y += lineHeight;
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(secondaryColor);
+  doc.setDrawColor(200);
+  doc.setLineWidth(0.8);
+  doc.line(40, y, 555, y);
+  y += 20;
+
+  // ================= Título =================
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(primaryColor);
+  doc.text(`TERMO DE DESEMBARGO Nº ${desembargo.numero_embargo}/${desembargo.serie_embargo}/IDAF`, 40, y);
+  y += 25;
+
+  // ================= Informações principais =================
+  const formatDate = (d) => {
+    if (!d) return "-";
+    const date = new Date(d);
+    const day = String(date.getDate()).padStart(2,'0');
+    const month = String(date.getMonth()+1).padStart(2,'0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  };
+  const infoFields = [
+    { label: "Processo E-Docs", value: desembargo.numero_edocs || '-' },
+    { label: "Processo Simlam", value: desembargo.processo_simlam || '-' },
+    { label: "Instrumento Único de Fiscalização", value: `${desembargo.numero_sep || '-'} Série ${desembargo.serie_embargo || '-'}` },
+    { label: "Autuado", value: desembargo.nome_autuado || '-' },
+    { label: "Área Desembargada", value: `${desembargo.area_desembargada || '-'} ha` },
+    { label: "Tipo de Desembargo", value: (desembargo.tipo_desembargo || '-').toUpperCase() },
+    { label: "Data do Desembargo", value: formatDate(desembargo.data_desembargo) },
+    { label: "Coordenadas UTM", value: `X(m): ${desembargo.coordenada_x || '-'}, Y(m): ${desembargo.coordenada_y || '-'}` },
+  ];
+
+  const labelX = 40;
+  const valueX = 250; 
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(primaryColor);
+  infoFields.forEach(item => {
+    doc.setFont("helvetica", "bold");
+    doc.text(`${item.label}:`, labelX, y);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(secondaryColor);
+    doc.text(item.value, valueX, y);
+    y += lineHeight;
+  });
+  y += 10;
+
+  // ================= Descrição =================
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(primaryColor);
+  doc.text("Descrição do Desembargo:", 40, y); y += lineHeight;
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(secondaryColor);
+  const descricaoSplit = doc.splitTextToSize(desembargo.descricao || '-', 500);
+  doc.text(descricaoSplit, 40, y); 
+  y += descricaoSplit.length * lineHeight + 10;
+
+  // ================= Assinatura =================
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(primaryColor);
+  doc.text("Nome do Usuário", 40, y); y += lineHeight;
+  doc.setFont("helvetica", "normal");
+  doc.text("Cargo do Usuário", 40, y); y += lineHeight;
+  doc.text("Unidade Técnico-Administrativa Responsável", 40, y); y += lineHeight + 20;
+
+  // ================= Disclaimer =================
+  doc.setFontSize(10);
+  doc.setTextColor("#666");
+  doc.text("Este documento somente terá validade após sua inclusão e assinatura no sistema EDOC-s.", 40, y);
+
+  // retorna buffer para enviar como arquivo
+  return doc.output("arraybuffer");
+}
+
+module.exports = { inserirDesembargo, listarDesembargos, getDesembargoById, updateDesembargo, gerarPdfDesembargo };

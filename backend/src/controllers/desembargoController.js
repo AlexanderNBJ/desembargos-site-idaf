@@ -82,3 +82,28 @@ function formatDateToSearch(date) {
   const year = d.getFullYear();
   return `${day}/${month}/${year}`;
 }
+
+
+exports.gerarPdf = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // busca desembargo pelo ID
+    const desembargo = await desembargoService.getDesembargoById(id);
+
+    if (!desembargo) {
+      return res.status(404).json({ error: "Desembargo não encontrado" });
+    }
+
+    // gera PDF usando service
+    const pdfBuffer = await desembargoService.gerarPdfDesembargo(desembargo);
+
+    // envia PDF para o navegador
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `inline; filename=desembargo_${id}.pdf`);
+    res.send(Buffer.from(pdfBuffer));
+  } catch (err) {
+    console.error("Erro ao gerar PDF:", err);
+    res.status(500).json({ error: "Erro ao gerar PDF" });
+  }
+};

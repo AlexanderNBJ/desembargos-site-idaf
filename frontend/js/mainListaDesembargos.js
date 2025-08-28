@@ -58,7 +58,7 @@ function renderTable(data) {
 }
 
 // actions
-function handleAction(action, id) {
+async function handleAction(action, id) {
   switch(action) {
     case 'view':
       window.location.href = `visualizacaoDesembargo.html?id=${id}`;
@@ -67,7 +67,34 @@ function handleAction(action, id) {
       alert(`Editar ID: ${id}`);
       break;
     case 'pdf':
-      window.open(`/api/desembargos/${id}/pdf`, "_blank");
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`/api/desembargos/${id}/pdf`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("Erro ao gerar PDF");
+        }
+
+        // pega o blob e cria um link para download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `termo_desembargo_${id}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+
+      } catch (err) {
+        console.error(err);
+        alert("Não foi possível gerar o PDF deste desembargo.");
+      }
       break;
   }
 }
@@ -101,3 +128,4 @@ function abrirDesembargo(id) {
   // Redireciona para a página de visualização
   window.location.href = "visualizacaoDesembargo.html";
 }
+
