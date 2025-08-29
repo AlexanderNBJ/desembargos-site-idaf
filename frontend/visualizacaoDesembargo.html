@@ -20,12 +20,11 @@
       <button id="logoutBtn" class="logout-btn" aria-label="Logout" title="Sair">Logout</button>
     </div>
   </header>
-
-  <main>
+<main>
     <form id="desembargoForm" class="sv-grid" autocomplete="off" novalidate>
       <p class="sv-intro">Visualize ou edite as informações do desembargo:</p>
 
-      <!-- TERMO (col-left) -->
+      <!-- TERMO -->
       <div class="termo">
         <div class="section-title">Termo de Embargo Ambiental</div>
         <div class="termo-small">
@@ -42,19 +41,19 @@
         </div>
       </div>
 
-      <!-- NOME DO AUTUADO (col-right) -->
+      <!-- NOME -->
       <div class="nome">
         <label for="nomeAutuado" id="textoNomeAutuado">Nome do autuado:</label>
         <input id="nomeAutuado" name="nomeAutuado" class="input" type="text" disabled />
         <span class="error-msg" id="error-nomeAutuado"></span>
       </div>
 
-      <!-- PROCESSO SIMLAM (ocupa left + middle) - com lupa -->
+      <!-- PROCESSO (com lupa) -->
       <div class="processo">
         <label for="processoSimlam" class="required">Processo Simlam:</label>
         <div class="input-with-icon">
           <input id="processoSimlam" name="processoSimlam" class="input" type="text" placeholder="Ex: 12345/2025" disabled/>
-          <button type="button" id="btnBuscarProcesso" class="icon-btn" aria-label="Buscar processo no banco" title="Buscar no banco" disabled>
+          <button type="button" id="btnBuscarProcesso" class="icon-btn" title="Buscar no banco (por processo Simlam)" disabled aria-label="Buscar processo">
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
               <path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.471 6.471 0 0 0 1.57-4.23C15.99 6.01 13.48 3.5 10.5 3.5S5.01 6.01 5.01 9s2.51 5.5 5.49 5.5c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14Zm-5 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14Z"/>
             </svg>
@@ -64,21 +63,21 @@
         <span id="mensagem-busca" class="mensagem-validacao"></span>
       </div>
 
-      <!-- AREA (col-right) -->
+      <!-- AREA -->
       <div class="area">
         <label for="area">Área desembargada (ha):</label>
         <input id="area" name="area" class="input" type="text" disabled/>
         <span class="error-msg" id="error-area"></span>
       </div>
 
-      <!-- NÚMERO DO SEP (ocupa left + middle) -->
+      <!-- SEP -->
       <div class="sep">
         <label for="numeroSEP" class="semirequired">Número do SEP:</label>
         <input id="numeroSEP" name="numeroSEP" class="input" type="text" disabled/>
         <span class="error-msg" id="error-numeroSEP"></span>
       </div>
 
-      <!-- TIPO (col-right) -->
+      <!-- TIPO -->
       <div class="tipo">
         <label class="label-bold required-section">Tipo de desembargo:</label>
         <div class="tipo-controls">
@@ -89,57 +88,56 @@
         <span class="error-msg" id="error-tipoDesembargo"></span>
       </div>
 
-      <!-- NÚMERO DO PROCESSO E-DOCS (left+middle) -->
+      <!-- EDOCS -->
       <div class="edocs">
         <label for="numeroEdocs" class="semirequired">Número do processo e-Docs:</label>
         <input id="numeroEdocs" name="numeroEdocs" class="input" type="text" disabled/>
         <span class="error-msg" id="error-numeroEdocs"></span>
       </div>
 
-      <!-- DATA (col-right) -->
+      <!-- DATA -->
       <div class="data">
         <label for="dataDesembargo" class="required">Data de desembargo:</label>
         <input id="dataDesembargo" name="dataDesembargo" class="input" type="date" disabled/>
         <span class="error-msg" id="error-dataDesembargo"></span>
       </div>
 
-      <!-- RESPONSÁVEL PELO DESEMBARGO (full-row) -->
+      <!-- RESPONSÁVEL e STATUS (mesma linha) -->
       <div class="responsavel">
         <label for="responsavelDesembargo">Responsável pelo desembargo:</label>
         <input id="responsavelDesembargo" name="responsavelDesembargo" class="input" type="text" disabled/>
         <span class="error-msg" id="error-responsavelDesembargo"></span>
       </div>
 
-      <!-- COORDENADAS + STATUS (essa linha fica alinhada) -->
-      <div class="coordenadas-status-row">
-        <div class="coordenadas">
-          <div class="section-title">Coordenadas UTM:</div>
-          <div class="coordenadas-small">
-            <div class="small-wrap">
-              <label for="coordenadaX">X(m)</label>
-              <input type="text" id="coordenadaX" name="coordenadaX" class="input-left" disabled>
-              <span class="error-msg" id="error-coordenadaX"></span>
-            </div>
-            <div class="small-wrap">
-              <label for="coordenadaY">Y(m)</label>
-              <input type="text" id="coordenadaY" name="coordenadaY" class="input-left" disabled>
-              <span class="error-msg" id="error-coordenadaY"></span>
-            </div>
-          </div>
-        </div>
+      <div class="status-coord-wrapper">
+        <label for="status">Status:</label>
+        <select id="status" name="status" class="input" disabled>
+          <option value="">-- selecione --</option>
+          <option value="EM ANÁLISE">Em Análise</option>
+          <option value="REVISÃO PENDENTE">Revisão Pendente</option>
+          <option value="APROVADO">Aprovado</option>
+        </select>
+        <span class="error-msg" id="error-status"></span>
+      </div>
 
-        <div class="status-coord-wrapper">
-          <label for="status">Status:</label>
-          <select id="status" name="status" class="input" disabled>
-            <option value="">-- selecione --</option>
-            <option value="EM ANÁLISE">Em Análise</option>
-            <option value="REVISÃO PENDENTE">Revisão Pendente</option>
-          </select>
-          <span class="error-msg" id="error-status"></span>
+      <!-- COORDENADAS (abaixo) -->
+      <div class="coordenadas">
+        <div class="section-title">Coordenadas UTM:</div>
+        <div class="coordenadas-small">
+          <div class="small-wrap">
+            <label for="coordenadaX">X(m)</label>
+            <input type="text" id="coordenadaX" name="coordenadaX" class="input-left" disabled>
+            <span class="error-msg" id="error-coordenadaX"></span>
+          </div>
+          <div class="small-wrap">
+            <label for="coordenadaY">Y(m)</label>
+            <input type="text" id="coordenadaY" name="coordenadaY" class="input-left" disabled>
+            <span class="error-msg" id="error-coordenadaY"></span>
+          </div>
         </div>
       </div>
 
-      <!-- Descrição full width -->
+      <!-- DESCRIÇÃO -->
       <div class="descricao">
         <label for="descricao">Descrição do desembargo:</label>
         <textarea id="descricao" name="descricao" class="textarea" disabled></textarea>
@@ -147,7 +145,7 @@
       </div>
     </form>
 
-    <!-- Opções de edição alinhadas com o formulário -->
+    <!-- AÇÕES -->
     <div class="actions-container">
       <div class="edit-toggle">
         <label><input type="checkbox" id="enableEdit"> Habilitar edição</label>
@@ -160,7 +158,6 @@
 
     <div id="mensagem-insercao" class="mensagem"></div>
   </main>
-
   <script src="js/mainVisualizacaoDesembargo.js"></script>
 </body>
 </html>

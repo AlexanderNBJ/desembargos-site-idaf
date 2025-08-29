@@ -7,7 +7,7 @@ async function inserirDesembargo({ numero, serie, nomeAutuado, area, processoSim
                                   dataDesembargo, coordenadaX, coordenadaY, descricao }) {
 
   const query = `
-    INSERT INTO DESEMBARGOS_PENDENTES(
+    INSERT INTO desembargos(
         NUMERO_EMBARGO, SERIE_EMBARGO, NOME_AUTUADO, AREA_DESEMBARGADA, PROCESSO_SIMLAM,
         NUMERO_SEP, NUMERO_EDOCS, TIPO_DESEMBARGO, DATA_DESEMBARGO, COORDENADA_X, COORDENADA_Y,
         DESCRICAO, STATUS, RESPONSAVEL_DESEMBARGO
@@ -38,7 +38,7 @@ async function listarDesembargos () {
       STATUS AS status,
       RESPONSAVEL_DESEMBARGO AS responsavel,
       DATA_DESEMBARGO AS data
-    FROM DESEMBARGOS_PENDENTES
+    FROM desembargos
     ORDER BY DATA_DESEMBARGO DESC
   `;
   const { rows } = await db.query(query);
@@ -47,14 +47,14 @@ async function listarDesembargos () {
 
 // buscar por ID
 async function getDesembargoById(id) {
-  const result = await db.query("SELECT * FROM desembargos_pendentes WHERE id = $1", [id]);
+  const result = await db.query("SELECT * FROM desembargos WHERE id = $1", [id]);
   return result.rows[0];
 }
 
 // buscar por SIMLAM
 async function getDesembargoByProcesso(processo) {
   const result = await db.query(
-    "SELECT * FROM desembargos_pendentes WHERE processo_simlam = $1",
+    "SELECT * FROM desembargos WHERE processo_simlam = $1",
     [processo]
   );
   return result.rows[0];
@@ -64,18 +64,19 @@ async function updateDesembargo(id, dados) {
   const {
     numero, serie, processoSimlam, numeroSEP, numeroEdocs,
     coordenadaX, coordenadaY, nomeAutuado, area, tipoDesembargo,
-    dataDesembargo, descricao
+    dataDesembargo, descricao, status, responsavelDesembargo
   } = dados;
 
   const result = await db.query(
-    `UPDATE desembargos_pendentes
+    `UPDATE desembargos
      SET numero_embargo = $1, serie_embargo = $2, processo_simlam = $3, numero_sep = $4,
          numero_edocs = $5, coordenada_x = $6, coordenada_y = $7, nome_autuado = $8,
-         area_desembargada = $9, tipo_desembargo = $10, data_desembargo = $11::date, descricao = $12
-     WHERE id = $13
+         area_desembargada = $9, tipo_desembargo = $10, data_desembargo = $11::date, descricao = $12,
+         status = $13, responsavel_desembargo = $14
+     WHERE id = $15
      RETURNING *`,
     [numero, serie, processoSimlam, numeroSEP, numeroEdocs, coordenadaX, coordenadaY,
-     nomeAutuado, area, tipoDesembargo, dataDesembargo, descricao, id]
+     nomeAutuado, area, tipoDesembargo, dataDesembargo, descricao,status, responsavelDesembargo, id]
   );
 
   return result.rows[0];

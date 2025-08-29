@@ -47,11 +47,26 @@ function renderTable(data) {
     //clone.querySelector('.col-responsavel').textContent = d.responsavel;
     clone.querySelector('.col-data').textContent = formatDate(d.data);
 
-    const actions = clone.querySelectorAll('.action-btn');
-    actions.forEach(btn => {
-      const action = btn.dataset.action;
-      btn.addEventListener('click', () => handleAction(action, d.id));
-    });
+    const viewBtn = clone.querySelector('button[data-action="view"]');
+        const pdfBtn = clone.querySelector('button[data-action="pdf"]');
+
+        if (viewBtn) {
+          viewBtn.addEventListener('click', () => handleAction('view', d.id));
+        }
+
+        if (pdfBtn) {
+          // se status diferente de "APROVADO", desabilita o botão de PDF
+          const isAprovado = String(d.status ?? '').trim().toUpperCase() === 'APROVADO';
+          pdfBtn.disabled = !isAprovado;
+          pdfBtn.setAttribute('aria-disabled', (!isAprovado).toString());
+          pdfBtn.title = isAprovado ? 'Gerar PDF' : 'PDF disponível somente para desembargos com status "APROVADO"';
+
+          pdfBtn.addEventListener('click', () => {
+            // segurança: se, por algum motivo, estiver desabilitado, não executar
+            if (pdfBtn.disabled) return;
+            handleAction('pdf', d.id);
+          });
+        }
 
     tbody.appendChild(clone);
   });

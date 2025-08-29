@@ -266,3 +266,7 @@ input[type="date"]:focus::-webkit-datetime-edit-year-field { color: black; }
   .sv-grid { display: block; }
   .actions-container { flex-direction: column; align-items: stretch; gap: 12px; }
 }
+
+#status{
+  margin-top: 20px;
+}
