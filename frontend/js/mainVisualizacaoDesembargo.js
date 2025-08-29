@@ -1,7 +1,5 @@
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   const token = localStorage.getItem("token");
-
-  // Pega o ID da URL
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get("id");
 
@@ -14,127 +12,320 @@ document.addEventListener("DOMContentLoaded", async () => {
   const form = document.getElementById("desembargoForm");
   const enableEdit = document.getElementById("enableEdit");
   const updateBtn = document.getElementById("updateBtn");
+  const btnBuscar = document.getElementById("btnBuscarProcesso");
+  const mensagemBusca = document.getElementById("mensagem-busca");
+  const mensagemInsercao = document.getElementById("mensagem-insercao");
 
-  // Bloqueia inputs inicialmente
+  // inicial: bloquear inputs (permitir checkbox e botões de ação)
   Array.from(form.elements).forEach(el => {
     if (["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName)) el.disabled = true;
   });
-  updateBtn.disabled = true;
+  if (updateBtn) updateBtn.disabled = true;
+  if (btnBuscar) btnBuscar.disabled = true; // lupa só funciona quando habilitar edição = true
 
-  // Busca desembargo pelo ID
-  async function fetchDesembargo() {
+  // util: normaliza linha retornada do backend (vários formatos)
+  function normalizeRow(row) {
+    if (!row) return null;
+    const pick = (o, ...keys) => {
+      for (const k of keys) {
+        if (!o) continue;
+        if (k in o && o[k] !== undefined) return o[k];
+      }
+      return undefined;
+    };
+
+    return {
+      id: pick(row, 'id'),
+      numero: pick(row, 'numero', 'numero_embargo', 'numero_embargo'),
+      serie: pick(row, 'serie', 'serie_embargo'),
+      processoSimlam: pick(row, 'processoSimlam', 'processo_simlam', 'processo'),
+      numeroSEP: pick(row, 'numeroSEP', 'numero_sep'),
+      numeroEdocs: pick(row, 'numeroEdocs', 'numero_edocs'),
+      coordenadaX: pick(row, 'coordenadaX', 'coordenada_x'),
+      coordenadaY: pick(row, 'coordenadaY', 'coordenada_y'),
+      nomeAutuado: pick(row, 'nomeAutuado', 'nome_autuado', 'autuado', 'nome'),
+      area: pick(row, 'area', 'area_desembargada'),
+      tipoDesembargo: pick(row, 'tipoDesembargo', 'tipo_desembargo', 'tipo'),
+      dataDesembargo: pick(row, 'dataDesembargo', 'data_desembargo', 'data'),
+      descricao: pick(row, 'descricao', 'descricao'),
+      status: pick(row, 'status', 'estado', 'situacao'),
+      responsavelDesembargo: pick(row, 'responsavelDesembargo', 'responsavel_desembargo', 'responsavel', 'usuario', 'responsavel_nome')
+    };
+  }
+
+  function setSelectValue(selectEl, value) {
+    if (!selectEl) return;
+    if (value === null || value === undefined) {
+      selectEl.value = '';
+      return;
+    }
+    // tentativa direta
+    const vStr = String(value);
+    const exact = Array.from(selectEl.options).find(o => o.value === vStr);
+    if (exact) {
+      selectEl.value = exact.value;
+      return;
+    }
+    // case-insensitive match
+    const ci = Array.from(selectEl.options).find(o => o.value.toLowerCase() === vStr.toLowerCase() || (o.text && o.text.toLowerCase() === vStr.toLowerCase()));
+    if (ci) {
+      selectEl.value = ci.value;
+      return;
+    }
+    // fallback: leave blank
+    selectEl.value = '';
+  }
+
+  // preenche valores no form a partir do objeto normalizado
+  function preencherFormulario(obj) {
+    if (!obj) return;
+    document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
+
+    if (form.numero) form.numero.value = obj.numero ?? '';
+    if (form.serie) form.serie.value = obj.serie ?? '';
+    if (form.nomeAutuado) form.nomeAutuado.value = obj.nomeAutuado ?? '';
+    if (form.processoSimlam) form.processoSimlam.value = obj.processoSimlam ?? '';
+    if (form.area) form.area.value = obj.area ?? '';
+    if (form.numeroSEP) form.numeroSEP.value = obj.numeroSEP ?? '';
+    if (form.numeroEdocs) form.numeroEdocs.value = obj.numeroEdocs ?? '';
+    if (form.coordenadaX) form.coordenadaX.value = obj.coordenadaX ?? '';
+    if (form.coordenadaY) form.coordenadaY.value = obj.coordenadaY ?? '';
+    if (form.descricao) form.descricao.value = obj.descricao ?? '';
+    if (form.responsavelDesembargo) form.responsavelDesembargo.value = obj.responsavelDesembargo ?? '';
+
+    // status (tenta casamentos robustos)
+    if (form.status) setSelectValue(form.status, obj.status ?? '');
+
+    // data -> manter somente YYYY-MM-DD (se vier ISO)
+    const dt = obj.dataDesembargo ?? '';
+    if (form.dataDesembargo) {
+      if (typeof dt === 'string' && dt.includes('T')) form.dataDesembargo.value = dt.split('T')[0];
+      else form.dataDesembargo.value = dt || '';
+    }
+
+    // radio tipo
+    if (obj.tipoDesembargo) {
+      const v = String(obj.tipoDesembargo).toUpperCase();
+      const radio = form.querySelector(`input[name="tipoDesembargo"][value="${v}"]`);
+      if (radio) radio.checked = true;
+    } else {
+      form.querySelectorAll('input[name="tipoDesembargo"]').forEach(r => r.checked = false);
+    }
+  }
+
+  // valida todos os campos via backend e mostra mensagens (retorna true se há erros)
+  async function validateAllAndShow() {
+    const payload = {
+      numero: form.numero ? form.numero.value : null,
+      serie: form.serie ? form.serie.value : null,
+      nomeAutuado: form.nomeAutuado ? form.nomeAutuado.value : null,
+      area: form.area ? form.area.value : null,
+      processoSimlam: form.processoSimlam ? form.processoSimlam.value : null,
+      numeroSEP: form.numeroSEP ? (form.numeroSEP.value || null) : null,
+      numeroEdocs: form.numeroEdocs ? (form.numeroEdocs.value || null) : null,
+      tipoDesembargo: (() => {
+        const r = document.querySelector('input[name="tipoDesembargo"]:checked');
+        return r ? r.value : '';
+      })(),
+      dataDesembargo: form.dataDesembargo ? form.dataDesembargo.value : null,
+      coordenadaX: form.coordenadaX ? form.coordenadaX.value : null,
+      coordenadaY: form.coordenadaY ? form.coordenadaY.value : null,
+      descricao: form.descricao ? form.descricao.value : null,
+      responsavelDesembargo: form.responsavelDesembargo ? form.responsavelDesembargo.value : null
+    };
+
+    try {
+      const res = await fetch('/api/desembargos/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      // limpar
+      document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
+      if (data && data.errors) {
+        Object.keys(data.errors).forEach(k => {
+          const el = document.getElementById(`error-${k}`);
+          if (el) el.textContent = data.errors[k];
+        });
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Erro na validação global:', err);
+      mensagemBusca.textContent = 'Aviso: validação indisponível (ver console)';
+      mensagemBusca.classList.remove('sucesso');
+      mensagemBusca.classList.add('erro');
+      return false;
+    }
+  }
+
+  // busca por processo SIMLAM (chamada pela lupa) - só funciona se enableEdit.checked === true
+  async function buscarPorProcessoSimlam(proc) {
+    if (!enableEdit.checked) {
+      mensagemBusca.textContent = 'Habilite edição para usar a busca por processo.';
+      mensagemBusca.classList.remove('sucesso');
+      mensagemBusca.classList.add('erro');
+      return;
+    }
+
+    if (!proc) {
+      mensagemBusca.textContent = 'Informe o processo para buscar.';
+      mensagemBusca.classList.remove('sucesso');
+      mensagemBusca.classList.add('erro');
+      return;
+    }
+
+    // validar antes de buscar
+    const hasErr = await validateAllAndShow();
+    if (hasErr) {
+      mensagemBusca.textContent = 'Corrija os erros antes de buscar.';
+      mensagemBusca.classList.remove('sucesso');
+      mensagemBusca.classList.add('erro');
+      return;
+    }
+
+    mensagemBusca.textContent = '';
+    try {
+      btnBuscar.classList.add('loading');
+      btnBuscar.disabled = true;
+
+      const resp = await fetch(`/api/desembargos/processo?valor=${encodeURIComponent(proc)}`);
+      if (resp.status === 404) {
+        mensagemBusca.textContent = 'Nenhum registro encontrado para este processo.';
+        mensagemBusca.classList.remove('sucesso');
+        mensagemBusca.classList.add('erro');
+        return;
+      }
+      if (!resp.ok) throw new Error('Falha na consulta');
+
+      const data = await resp.json();
+
+      // trata formatos: data, desembargo, array, direct row
+      let payload = data;
+      if (!payload) {
+        mensagemBusca.textContent = 'Resposta vazia do servidor.';
+        mensagemBusca.classList.remove('sucesso');
+        mensagemBusca.classList.add('erro');
+        return;
+      }
+      if (payload.data) payload = payload.data;
+      if (payload.desembargo) payload = payload.desembargo;
+      if (Array.isArray(payload) && payload.length > 0) payload = payload[0];
+
+      const norm = normalizeRow(payload);
+      preencherFormulario(norm);
+
+      mensagemBusca.textContent = 'Dados preenchidos a partir do banco.';
+      mensagemBusca.classList.remove('erro');
+      mensagemBusca.classList.add('sucesso');
+
+      // revalidar para atualizar mensagens de erro
+      await validateAllAndShow();
+    } catch (err) {
+      console.error('Erro ao buscar por processo:', err);
+      mensagemBusca.textContent = 'Erro ao buscar. Tente novamente.';
+      mensagemBusca.classList.remove('sucesso');
+      mensagemBusca.classList.add('erro');
+    } finally {
+      btnBuscar.classList.remove('loading');
+      // só reabilita se enableEdit ainda estiver true
+      btnBuscar.disabled = !enableEdit.checked;
+    }
+  }
+
+  // botão da lupa
+  if (btnBuscar) {
+    btnBuscar.addEventListener('click', async () => {
+      const current = (form.processoSimlam && form.processoSimlam.value) ? form.processoSimlam.value.trim() : '';
+      let proc = current;
+      if (!proc) {
+        proc = prompt("Informe o número do Processo Simlam (ex: 12345/2025):");
+        if (!proc) return;
+      }
+      await buscarPorProcessoSimlam(proc);
+    });
+  }
+
+  // busca desembargo por ID ao abrir a página
+  async function fetchById() {
     try {
       const res = await fetch(`/api/desembargos/${id}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(`HTTP ${res.status} - ${errText}`);
+        const txt = await res.text();
+        throw new Error(`HTTP ${res.status} - ${txt}`);
       }
-      return res.json();
+      const json = await res.json();
+      // aceita formatos variados
+      let payload = json;
+      if (payload.data) payload = payload.data;
+      if (payload.desembargo) payload = payload.desembargo;
+      if (Array.isArray(payload) && payload.length) payload = payload[0];
+
+      const norm = normalizeRow(payload);
+      preencherFormulario(norm);
     } catch (err) {
-      console.error("Erro na fetchDesembargo:", err);
-      alert("Erro ao buscar desembargo. Veja console para detalhes.");
-      return null;
+      console.error("Erro ao buscar desembargo por ID:", err);
+      alert("Erro ao carregar desembargo. Veja console.");
     }
   }
 
-  const desembargo = await fetchDesembargo();
-  if (!desembargo) return;
-
-  // Preenche formulário
-  form.numero.value = desembargo.numero_embargo ?? "";
-  form.serie.value = desembargo.serie_embargo ?? "";
-  form.nomeAutuado.value = desembargo.nome_autuado ?? "";
-  form.processoSimlam.value = desembargo.processo_simlam ?? "";
-  form.area.value = desembargo.area_desembargada ?? "";
-  form.numeroSEP.value = desembargo.numero_sep ?? "";
-  form.numeroEdocs.value = desembargo.numero_edocs ?? "";
-  // Ajuste correto da data: envia/mostra como YYYY-MM-DD, sem converter para Date
-  form.dataDesembargo.value = desembargo.data_desembargo?.split("T")[0] ?? "";
-  form.coordenadaX.value = desembargo.coordenada_x ?? "";
-  form.coordenadaY.value = desembargo.coordenada_y ?? "";
-  form.descricao.value = desembargo.descricao ?? "";
-
-  const radio = form.querySelector(
-    `input[name="tipoDesembargo"][value="${desembargo.tipo_desembargo}"]`
-  );
-  if (radio) radio.checked = true;
-
-  if (form.status) form.status.value = desembargo.status ?? "";
-
-  // Habilitar edição
+  // habilitar edição — controla todos os inputs do form e a lupa
   enableEdit.addEventListener("change", () => {
     const enable = enableEdit.checked;
     Array.from(form.elements).forEach(el => {
       if (["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName)) el.disabled = !enable;
     });
-    updateBtn.disabled = !enable;
+    // manter checkbox e actions visíveis; lupa ficará habilitada conforme enable
+    if (btnBuscar) btnBuscar.disabled = !enable;
+    if (updateBtn) updateBtn.disabled = !enable;
   });
 
-  // VALIDAÇÃO EM TEMPO REAL (backend Joi)
+  // blur validation simples por campo (opcional)
   const campos = [
     'numero', 'serie', 'nomeAutuado', 'area', 'processoSimlam',
-    'numeroSEP', 'numeroEdocs', 'tipoDesembargo', 'dataDesembargo',
-    'coordenadaX', 'coordenadaY', 'descricao'
+    'numeroSEP', 'numeroEdocs', 'dataDesembargo',
+    'coordenadaX', 'coordenadaY', 'descricao', 'responsavelDesembargo'
   ];
-
-  campos.forEach(campo => {
-    const input = document.getElementById(campo);
-    if (!input) return;
-
-    if (campo === 'tipoDesembargo') {
-      const radios = document.querySelectorAll('input[name="tipoDesembargo"]');
-      radios.forEach(radio => {
-        radio.addEventListener('change', async () => {
-          const valor = radio.value.toUpperCase();
-          const erro = await validarCampo('tipoDesembargo', valor);
-          document.getElementById('error-tipoDesembargo').textContent = erro;
+  campos.forEach(c => {
+    const el = document.getElementById(c);
+    if (!el) return;
+    el.addEventListener('blur', async () => {
+      try {
+        const res = await fetch('/api/desembargos/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [c]: el.value })
         });
-      });
-    } else {
-      input.addEventListener('blur', async () => {
-        const valor = input.value;
-        const erro = await validarCampo(campo, valor);
-        document.getElementById(`error-${campo}`).textContent = erro;
-      });
-    }
+        const json = await res.json();
+        const errEl = document.getElementById(`error-${c}`);
+        if (errEl) errEl.textContent = json.errors?.[c] ?? '';
+      } catch (err) {
+        console.error('Erro na validação por campo', c, err);
+      }
+    });
   });
 
-  async function validarCampo(nomeDoCampo, valor) {
-    const body = {};
-    body[nomeDoCampo] = valor;
-    try {
-      const res = await fetch('/api/desembargos/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      return (data.errors && data.errors[nomeDoCampo]) ? data.errors[nomeDoCampo] : '';
-    } catch (err) {
-      console.error('Erro na validação:', err);
-      return 'Erro ao validar';
-    }
-  }
-
-  // Atualizar desembargo
+  // salvar / atualizar desembargo
   updateBtn.addEventListener("click", async (e) => {
     e.preventDefault();
     const dados = Object.fromEntries(new FormData(form).entries());
-    const dataInput = form.dataDesembargo.value; // "YYYY-MM-DD"
-    const [ano, mes, dia] = dataInput.split('-');
-    const dataLocal = new Date(ano, mes - 1, dia); // hora 00:00 local
-    dados.dataDesembargo = dataLocal.toISOString(); // envia ISO UTC
+    const radio = document.querySelector('input[name="tipoDesembargo"]:checked');
+    if (radio) dados.tipoDesembargo = radio.value;
 
+    if (form.dataDesembargo && form.dataDesembargo.value) {
+      const [ano, mes, dia] = form.dataDesembargo.value.split('-');
+      const dt = new Date(ano, Number(mes) - 1, Number(dia));
+      dados.dataDesembargo = dt.toISOString();
+    } else {
+      dados.dataDesembargo = null;
+    }
 
-    // Converte campos vazios para null
-    Object.keys(dados).forEach(k => {
-      if (dados[k] === "") dados[k] = null;
-    });
+    // converter vazios para null
+    Object.keys(dados).forEach(k => { if (dados[k] === "") dados[k] = null; });
 
-    // IMPORTANTE: manter data como string YYYY-MM-DD para não alterar dia
-    // Se houver hora no backend, converta lá para DATE ou ajuste timezone
     try {
       const res = await fetch(`/api/desembargos/${id}`, {
         method: "PUT",
@@ -145,17 +336,25 @@ document.addEventListener("DOMContentLoaded", async () => {
         body: JSON.stringify(dados)
       });
       const result = await res.json();
-
       if (res.ok && result.success) {
-        alert("Atualizado com sucesso!");
-        window.location.href = "listaDesembargos.html"; // volta para a lista
+        mensagemInsercao.textContent = 'Atualizado com sucesso!';
+        mensagemInsercao.classList.remove('erro');
+        mensagemInsercao.classList.add('sucesso');
+        setTimeout(() => { window.location.href = "listaDesembargos.html"; }, 900);
       } else {
         console.error(result);
-        alert("Erro ao atualizar desembargo. Veja console para detalhes.");
+        mensagemInsercao.textContent = result.message || 'Erro ao atualizar desembargo';
+        mensagemInsercao.classList.remove('sucesso');
+        mensagemInsercao.classList.add('erro');
       }
     } catch (err) {
-      console.error(err);
-      alert("Erro ao atualizar desembargo. Veja console para detalhes.");
+      console.error('Erro ao atualizar desembargo:', err);
+      mensagemInsercao.textContent = 'Erro ao atualizar desembargo';
+      mensagemInsercao.classList.remove('sucesso');
+      mensagemInsercao.classList.add('erro');
     }
   });
+
+  // inicializa preenchendo por ID
+  fetchById();
 });

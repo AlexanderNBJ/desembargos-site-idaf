@@ -136,10 +136,12 @@ function mapDesembargo(dbRow) {
     coordenadaY:    dbRow.coordenada_y,
     nomeAutuado:    dbRow.nome_autuado,
     area:           dbRow.area_desembargada,
-     dataDesembargo: dbRow.data_desembargo 
+    dataDesembargo: dbRow.data_desembargo 
       ? new Date(dbRow.data_desembargo).toISOString().split("T")[0] 
       : null,
     tipoDesembargo: dbRow.tipo_desembargo,
-    descricao: dbRow.descricao
+    descricao:      dbRow.descricao,
+    status:         dbRow.status,
+    responsavelDesembargo:  dbRow.responsavel_desembargo
   };
 }

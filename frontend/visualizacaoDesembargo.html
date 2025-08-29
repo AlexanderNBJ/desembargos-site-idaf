@@ -1,157 +1,166 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SeloVerde ES - Área Técnica</title>
-    <link rel="icon" type="image/x-icon" href="assets/favicon.png">
-    <link rel="stylesheet" href="css/stylesHeader.css">
-    <link rel="stylesheet" href="css/stylesDesebargo.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>SeloVerde ES - Visualização de Desembargo</title>
+  <link rel="icon" type="image/x-icon" href="assets/favicon.png">
+  <link rel="stylesheet" href="css/stylesHeader.css">
+  <link rel="stylesheet" href="css/stylesDesebargo.css">
 </head>
 <body>
-    <header class="top-bar">
-        <div class="logo">
-            <img src="assets/simbolo-seloverde.svg" alt="Logo Selo Verde">
-        </div>
-        <div class="title-text">
-            <h1>SeloVerde ES - Área Técnica</h1>
-            <h2>Visualização de Desembargo</h2>
-            <span class="restricted-badge">Área Restrita</span>
-        </div>
-        <div class="logout-container">
-            <button id="logoutBtn" class="logout-btn" aria-label="Logout" title="Sair">Logout</button>
-        </div>
-    </header>
-    <main>
-  <form id="desembargoForm" class="sv-grid" autocomplete="off" novalidate>
-  <p class="sv-intro">Visualize ou edite as informações do desembargo:</p>
-
-  <!-- TERMO -->
-  <div class="termo">
-    <div class="section-title">Termo de Embargo Ambiental</div>
-    <div class="termo-small">
-      <div class="small-wrap">
-        <label for="numero" class="required">Número:</label>
-        <input id="numero" name="numero" class="input-left" type="text" required disabled/>
-        <span class="error-msg" id="error-numero"></span>
-      </div>
-      <div class="small-wrap">
-        <label for="serie" class="required">Série:</label>
-        <input id="serie" name="serie" class="input-left" type="text" disabled/>
-        <span class="error-msg" id="error-serie"></span>
-      </div>
+  <header class="top-bar">
+    <div class="logo"><img src="assets/simbolo-seloverde.svg" alt="Logo Selo Verde"></div>
+    <div class="title-text">
+      <h1>SeloVerde ES - Área Técnica</h1>
+      <h2>Visualização de Desembargo</h2>
+      <span class="restricted-badge">Área Restrita</span>
     </div>
-  </div>
-
-  <!-- NOME AUTUADO -->
-  <div class="nome">
-    <label for="nomeAutuado">Nome do autuado:</label>
-    <input id="nomeAutuado" name="nomeAutuado" class="input" type="text" disabled/>
-    <span class="error-msg" id="error-nomeAutuado"></span>
-  </div>
-
-  <!-- PROCESSO SIMLAM -->
-  <div class="processo">
-    <label for="processoSimlam" class="required">Processo Simlam:</label>
-    <input id="processoSimlam" name="processoSimlam" class="input" type="text" required disabled/>
-    <span class="error-msg" id="error-processoSimlam"></span>
-  </div>
-
-  <!-- ÁREA -->
-  <div class="area">
-    <label for="area">Área desembargada (ha):</label>
-    <input id="area" name="area" class="input" type="text" disabled/>
-    <span class="error-msg" id="error-area"></span>
-  </div>
-
-  <!-- SEP -->
-  <div class="sep">
-    <label for="numeroSEP">Número do SEP:</label>
-    <input id="numeroSEP" name="numeroSEP" class="input" type="text" disabled/>
-    <span class="error-msg" id="error-numeroSEP"></span>
-  </div>
-
-  <!-- TIPO -->
-  <div class="tipo">
-    <label class="label-bold required-section">Tipo de desembargo:</label>
-    <div class="tipo-controls">
-      <label><input type="radio" name="tipoDesembargo" value="TOTAL" disabled/> Total</label>
-      <label><input type="radio" name="tipoDesembargo" value="PARCIAL" disabled/> Parcial</label>
-      <label><input type="radio" name="tipoDesembargo" value="INDEFERIMENTO" disabled/> Indeferimento</label>
+    <div class="logout-container">
+      <button id="logoutBtn" class="logout-btn" aria-label="Logout" title="Sair">Logout</button>
     </div>
-    <span class="error-msg" id="error-tipoDesembargo"></span>
-  </div>
+  </header>
 
-  <!-- EDOCS -->
-  <div class="edocs">
-    <label for="numeroEdocs">Número do processo e-Docs:</label>
-    <input id="numeroEdocs" name="numeroEdocs" class="input" type="text" disabled/>
-    <span class="error-msg" id="error-numeroEdocs"></span>
-  </div>
+  <main>
+    <form id="desembargoForm" class="sv-grid" autocomplete="off" novalidate>
+      <p class="sv-intro">Visualize ou edite as informações do desembargo:</p>
 
-  <!-- DATA -->
-  <div class="data">
-    <label for="dataDesembargo" class="required">Data de desembargo:</label>
-    <input id="dataDesembargo" name="dataDesembargo" class="input" type="date" disabled/>
-    <span class="error-msg" id="error-dataDesembargo"></span>
-  </div>
-
-  <!-- COORDENADAS + STATUS -->
-  <div class="coordenadas-status-row">
-    <div class="coordenadas">
-      <div class="section-title">Coordenadas UTM:</div>
-      <div class="coordenadas-small">
-        <div class="small-wrap">
-          <label for="coordenadaX">X(m)</label>
-          <input type="text" id="coordenadaX" name="coordenadaX" class="input-left" disabled>
-          <span class="error-msg" id="error-coordenadaX"></span>
-        </div>
-        <div class="small-wrap">
-          <label for="coordenadaY">Y(m)</label>
-          <input type="text" id="coordenadaY" name="coordenadaY" class="input-left" disabled>
-          <span class="error-msg" id="error-coordenadaY"></span>
+      <!-- TERMO (col-left) -->
+      <div class="termo">
+        <div class="section-title">Termo de Embargo Ambiental</div>
+        <div class="termo-small">
+          <div class="small-wrap">
+            <label for="numero" class="required">Número:</label>
+            <input id="numero" name="numero" class="input-left" type="text" required disabled/>
+            <span class="error-msg" id="error-numero"></span>
+          </div>
+          <div class="small-wrap">
+            <label for="serie" class="required">Série:</label>
+            <input id="serie" name="serie" class="input-left" type="text" disabled/>
+            <span class="error-msg" id="error-serie"></span>
+          </div>
         </div>
       </div>
+
+      <!-- NOME DO AUTUADO (col-right) -->
+      <div class="nome">
+        <label for="nomeAutuado" id="textoNomeAutuado">Nome do autuado:</label>
+        <input id="nomeAutuado" name="nomeAutuado" class="input" type="text" disabled />
+        <span class="error-msg" id="error-nomeAutuado"></span>
+      </div>
+
+      <!-- PROCESSO SIMLAM (ocupa left + middle) - com lupa -->
+      <div class="processo">
+        <label for="processoSimlam" class="required">Processo Simlam:</label>
+        <div class="input-with-icon">
+          <input id="processoSimlam" name="processoSimlam" class="input" type="text" placeholder="Ex: 12345/2025" disabled/>
+          <button type="button" id="btnBuscarProcesso" class="icon-btn" aria-label="Buscar processo no banco" title="Buscar no banco" disabled>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+              <path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.471 6.471 0 0 0 1.57-4.23C15.99 6.01 13.48 3.5 10.5 3.5S5.01 6.01 5.01 9s2.51 5.5 5.49 5.5c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14Zm-5 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14Z"/>
+            </svg>
+          </button>
+        </div>
+        <span class="error-msg" id="error-processoSimlam"></span>
+        <span id="mensagem-busca" class="mensagem-validacao"></span>
+      </div>
+
+      <!-- AREA (col-right) -->
+      <div class="area">
+        <label for="area">Área desembargada (ha):</label>
+        <input id="area" name="area" class="input" type="text" disabled/>
+        <span class="error-msg" id="error-area"></span>
+      </div>
+
+      <!-- NÚMERO DO SEP (ocupa left + middle) -->
+      <div class="sep">
+        <label for="numeroSEP" class="semirequired">Número do SEP:</label>
+        <input id="numeroSEP" name="numeroSEP" class="input" type="text" disabled/>
+        <span class="error-msg" id="error-numeroSEP"></span>
+      </div>
+
+      <!-- TIPO (col-right) -->
+      <div class="tipo">
+        <label class="label-bold required-section">Tipo de desembargo:</label>
+        <div class="tipo-controls">
+          <label><input type="radio" name="tipoDesembargo" value="TOTAL" disabled /> Total</label>
+          <label><input type="radio" name="tipoDesembargo" value="PARCIAL" disabled /> Parcial</label>
+          <label><input type="radio" name="tipoDesembargo" value="INDEFERIMENTO" disabled /> Indeferimento</label>
+        </div>
+        <span class="error-msg" id="error-tipoDesembargo"></span>
+      </div>
+
+      <!-- NÚMERO DO PROCESSO E-DOCS (left+middle) -->
+      <div class="edocs">
+        <label for="numeroEdocs" class="semirequired">Número do processo e-Docs:</label>
+        <input id="numeroEdocs" name="numeroEdocs" class="input" type="text" disabled/>
+        <span class="error-msg" id="error-numeroEdocs"></span>
+      </div>
+
+      <!-- DATA (col-right) -->
+      <div class="data">
+        <label for="dataDesembargo" class="required">Data de desembargo:</label>
+        <input id="dataDesembargo" name="dataDesembargo" class="input" type="date" disabled/>
+        <span class="error-msg" id="error-dataDesembargo"></span>
+      </div>
+
+      <!-- RESPONSÁVEL PELO DESEMBARGO (full-row) -->
+      <div class="responsavel">
+        <label for="responsavelDesembargo">Responsável pelo desembargo:</label>
+        <input id="responsavelDesembargo" name="responsavelDesembargo" class="input" type="text" disabled/>
+        <span class="error-msg" id="error-responsavelDesembargo"></span>
+      </div>
+
+      <!-- COORDENADAS + STATUS (essa linha fica alinhada) -->
+      <div class="coordenadas-status-row">
+        <div class="coordenadas">
+          <div class="section-title">Coordenadas UTM:</div>
+          <div class="coordenadas-small">
+            <div class="small-wrap">
+              <label for="coordenadaX">X(m)</label>
+              <input type="text" id="coordenadaX" name="coordenadaX" class="input-left" disabled>
+              <span class="error-msg" id="error-coordenadaX"></span>
+            </div>
+            <div class="small-wrap">
+              <label for="coordenadaY">Y(m)</label>
+              <input type="text" id="coordenadaY" name="coordenadaY" class="input-left" disabled>
+              <span class="error-msg" id="error-coordenadaY"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="status-coord-wrapper">
+          <label for="status">Status:</label>
+          <select id="status" name="status" class="input" disabled>
+            <option value="">-- selecione --</option>
+            <option value="EM ANÁLISE">Em Análise</option>
+            <option value="REVISÃO PENDENTE">Revisão Pendente</option>
+          </select>
+          <span class="error-msg" id="error-status"></span>
+        </div>
+      </div>
+
+      <!-- Descrição full width -->
+      <div class="descricao">
+        <label for="descricao">Descrição do desembargo:</label>
+        <textarea id="descricao" name="descricao" class="textarea" disabled></textarea>
+        <span class="error-msg" id="error-descricao"></span>
+      </div>
+    </form>
+
+    <!-- Opções de edição alinhadas com o formulário -->
+    <div class="actions-container">
+      <div class="edit-toggle">
+        <label><input type="checkbox" id="enableEdit"> Habilitar edição</label>
+      </div>
+      <div class="buttons-container">
+        <button id="updateBtn" class="btn" disabled>Salvar Alterações</button>
+        <button type="button" class="btn btn-secondary" onclick="window.location.href='listaDesembargos.html'">Voltar</button>
+      </div>
     </div>
 
-    <div class="status">
-      <label for="status">Status:</label>
-      <select id="status" name="status" class="input" disabled>
-        <option value="EM ANÁLISE">Em Análise</option>
-        <option value="REVISÃO PENDENTE">Revisão Pendente</option>
-      </select>
-      <span class="error-msg" id="error-status"></span>
-    </div>
-  </div>
+    <div id="mensagem-insercao" class="mensagem"></div>
+  </main>
 
-  <!-- DESCRIÇÃO -->
-  <div class="descricao">
-    <label for="descricao">Descrição do desembargo:</label>
-    <textarea id="descricao" name="descricao" class="textarea" disabled></textarea>
-    <span class="error-msg" id="error-descricao"></span>
-  </div>
-</form>
-
-  <!-- Opções de edição alinhadas com o form -->
-  <div class="actions-container">
-    <div class="edit-toggle">
-      <label><input type="checkbox" id="enableEdit"> Habilitar edição</label>
-    </div>
-    <div class="buttons-container">
-      <button id="updateBtn" class="btn" disabled>Salvar Alterações</button>
-      <button type="button" onclick="window.location.href='listaDesembargos.html'" class="btn btn-secondary">Voltar</button>
-    </div>
-  </div>
-
-  <div id="mensagem-insercao" class="mensagem"></div>
-</main>
-
-    <script src="js/mainVisualizacaoDesembargo.js"></script>
-    <script>
-      document.getElementById("enableEdit").addEventListener("change", function () {
-        document.getElementById("updateBtn").disabled = !this.checked;
-      });
-
-    </script>
+  <script src="js/mainVisualizacaoDesembargo.js"></script>
 </body>
 </html>
