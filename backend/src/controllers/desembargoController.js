@@ -107,3 +107,39 @@ exports.gerarPdf = async (req, res) => {
     res.status(500).json({ error: "Erro ao gerar PDF" });
   }
 };
+
+exports.getDesembargoByProcesso = async (req, res) => {
+  try {
+    const { valor } = req.query; // exemplo: 12345/2025
+    const desembargo = await desembargoService.getDesembargoByProcesso(valor);
+    if (!desembargo) {
+      return res.status(404).json({ message: "Processo não encontrado" });
+    }
+    res.json(mapDesembargo(desembargo));
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Falha na consulta por processo" });
+  }
+};
+
+function mapDesembargo(dbRow) {
+  if (!dbRow) return null;
+
+  return {
+    id:             dbRow.id,
+    numero:         dbRow.numero_embargo,
+    serie:          dbRow.serie_embargo,
+    processoSimlam: dbRow.processo_simlam,
+    numeroSEP:      dbRow.numero_sep,
+    numeroEdocs:    dbRow.numero_edocs,
+    coordenadaX:    dbRow.coordenada_x,
+    coordenadaY:    dbRow.coordenada_y,
+    nomeAutuado:    dbRow.nome_autuado,
+    area:           dbRow.area_desembargada,
+     dataDesembargo: dbRow.data_desembargo 
+      ? new Date(dbRow.data_desembargo).toISOString().split("T")[0] 
+      : null,
+    tipoDesembargo: dbRow.tipo_desembargo,
+    descricao: dbRow.descricao
+  };
+}

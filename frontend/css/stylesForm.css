@@ -208,3 +208,44 @@ input[type="date"]:focus::-webkit-datetime-edit-year-field { color: black; }
   .sv-actions { flex-direction: column; gap: 10px; }
   .btn.submit { width: 100%; }
 }
+
+/* === Campo com ícone (Processo Simlam) === */
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.input-with-icon > input {
+  flex: 1;
+  padding-right: 40px; /* espaço pra lupa */
+}
+
+.icon-btn {
+  position: absolute;
+  right: 6px;
+  height: calc(var(--input-h) - 6px);
+  width: calc(var(--input-h) - 6px);
+  border-radius: 6px;
+  border: 1px solid #e6e6e6;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #118032; /* identidade sv */
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  box-shadow: 0 0 0 2px rgba(23,144,63,0.15);
+}
+
+.icon-btn:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+/* opcional: spinner simples quando carregando */
+.icon-btn.loading svg {
+  animation: sv-spin 1s linear infinite;
+}
+@keyframes sv-spin { 100% { transform: rotate(360deg); } }

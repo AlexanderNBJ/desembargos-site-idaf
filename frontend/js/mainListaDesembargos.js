@@ -44,7 +44,7 @@ function renderTable(data) {
     clone.querySelector('.col-autuado').textContent = d.autuado;
     clone.querySelector('.col-tipo').textContent = d.tipo;
     clone.querySelector('.col-status').textContent = d.status ? `${d.status}` : '';
-    clone.querySelector('.col-responsavel').textContent = d.responsavel;
+    //clone.querySelector('.col-responsavel').textContent = d.responsavel;
     clone.querySelector('.col-data').textContent = formatDate(d.data);
 
     const actions = clone.querySelectorAll('.action-btn');

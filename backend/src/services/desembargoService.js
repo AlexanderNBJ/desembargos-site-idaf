@@ -51,6 +51,14 @@ async function getDesembargoById(id) {
   return result.rows[0];
 }
 
+// buscar por SIMLAM
+async function getDesembargoByProcesso(processo) {
+  const result = await db.query(
+    "SELECT * FROM desembargos_pendentes WHERE processo_simlam = $1",
+    [processo]
+  );
+  return result.rows[0];
+}
 // atualizar
 async function updateDesembargo(id, dados) {
   const {
@@ -162,4 +170,4 @@ async function gerarPdfDesembargo(desembargo) {
   return doc.output("arraybuffer");
 }
 
-module.exports = { inserirDesembargo, listarDesembargos, getDesembargoById, updateDesembargo, gerarPdfDesembargo };
+module.exports = { inserirDesembargo, listarDesembargos, getDesembargoById, updateDesembargo, gerarPdfDesembargo, getDesembargoByProcesso };

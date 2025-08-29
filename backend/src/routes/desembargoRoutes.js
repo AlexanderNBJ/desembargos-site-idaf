@@ -3,6 +3,8 @@ const router = express.Router();
 const desembargoController = require("../controllers/desembargoController");
 const { route } = require("./formRoutes");
 
+router.get("/processo", desembargoController.getDesembargoByProcesso);
+
 // cadastrar desembargo
 router.post("/", desembargoController.inserir);
 router.get('/list', desembargoController.listarDesembargos)

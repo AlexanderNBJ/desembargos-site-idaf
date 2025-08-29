@@ -102,11 +102,11 @@ tbody td {
    porcentagens pensadas no conteúdo
    ------------------------- */
 .col-termo        { width: 5%;  text-align:center; }   /* 123456 A */
-.col-processo     { width: 5%; text-align:center; }   /* 12345/2025 */
+.col-processo     { width: 10%; text-align:center; }   /* 12345/2025 */
 .col-sep          { width: 5%;  text-align:center; }   /* 12345678 */
-.col-edocs        { width: 5%; text-align: center; }   /* 2025-AA123 */
+.col-edocs        { width: 10%; text-align: center; }   /* 2025-AA123 */
 .col-autuado      { width: 15%; text-align:left; }   /* nomes */
-.col-tipo         { width: 7%;  text-align: left; }   /* TOTAL/PARCIAL */
+.col-tipo         { width: 10%;  text-align: left; }   /* TOTAL/PARCIAL */
 .col-status       { width: 8%;  text-align: left; }   /* 0,5 ha */
 .col-responsavel  { width: 15%; text-align:left; }   /* nomes maiores */
 .col-data         { width: 8%;  text-align:center; }   /* 07/08/2025 */
