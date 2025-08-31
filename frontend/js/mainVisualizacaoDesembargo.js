@@ -189,8 +189,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const respEl = document.getElementById('responsavelDesembargo');
     if (respEl) {
       if (respEl.tagName === 'INPUT') respEl.value = obj.responsavelDesembargo ?? '';
-      else if (respEl.tagName === 'SELECT') setSelectValue(respEl, obj.responsavelDesembargo ?? '');
+      else if (respEl.tagName === 'SELECT') {
+        // obj.responsavelDesembargo precisa ser o ID, não o nome
+        setSelectValue(respEl, obj.responsavelDesembargoId ?? '');
+      }
     }
+
   }
 
   // ---------- fetch users (for GERENTE) ----------
@@ -352,6 +356,7 @@ document.addEventListener("DOMContentLoaded", () => {
           select.name = 'responsavelDesembargo';
           select.className = currentRespEl ? currentRespEl.className : 'input';
           select.style.minWidth = '180px';
+          select.disabled = true;
 
           // replace node
           if (currentRespEl && currentRespEl.parentNode) {
@@ -367,16 +372,16 @@ document.addEventListener("DOMContentLoaded", () => {
           if (Array.isArray(users) && users.length) {
             // Normalize and fill options
             users.forEach(u => {
-              const opt = document.createElement('option');
-              // choose value preference: username/email/id
-              const val = (u.username || u.email || u.id || u.nome || u.name || '').toString();
-              const label = (u.name || u.nome || u.username || u.email || val).toString();
-              opt.value = val;
-              opt.textContent = label;
-              // store alternative for matching
-              opt.dataset.alt = label.toLowerCase();
-              select.appendChild(opt);
-            });
+            const opt = document.createElement('option');
+            // ajuste aqui
+            const val = u.id; // sempre o id como value
+            const label = u.username || u.name || u.nome || u.email || val; // mostrar nome/username
+            opt.value = val;
+            opt.textContent = label;
+            opt.dataset.alt = label.toLowerCase();
+            select.appendChild(opt);
+          });
+
             // try to match current responsavel
             setSelectValue(select, norm.responsavelDesembargo ?? '');
             // if no match, try matching by name
@@ -474,10 +479,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
       el.disabled = !enable;
+        if (el.id === 'responsavelDesembargo') {
+          el.disabled = !enable; // só habilita se checkbox marcado
+        }
     });
 
     if (btnBuscar) btnBuscar.disabled = !enable;
     if (updateBtn) updateBtn.disabled = !enable;
+
   });
 
   // ---------- blur validation (mantive) ----------

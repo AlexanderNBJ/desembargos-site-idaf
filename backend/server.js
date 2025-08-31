@@ -6,6 +6,8 @@ const formRoutes = require('./src/routes/formRoutes');
 const embargoRoutes = require('./src/routes/embargoRoutes');
 const desembargoRoutes = require("./src/routes/desembargoRoutes");
 const authRoutes = require('./src/routes/authRoutes');
+const usuarioRoutes = require('./src/routes/usuarioRoutes');
+
 
 dotenv.config();
 
@@ -24,6 +26,7 @@ app.use(express.static('../frontend'));
 // rotas da API
 app.use('/api/desembargos', formRoutes);
 app.use('/api/embargos', embargoRoutes);
+app.use('/api/usuarios', usuarioRoutes);
 app.use('/auth', authRoutes);
 
 // rota teste
