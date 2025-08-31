@@ -7,6 +7,25 @@ function getAuthHeaders(contentType = 'application/json') {
   return headers;
 }
 
+async function getUsuarioLogado() {
+  try {
+    const res = await fetch('/api/usuarios/me', {
+      method: 'GET',
+      headers: getAuthHeaders()
+    });
+    if (!res.ok) throw new Error('Não foi possível obter usuário logado');
+    const data = await res.json();
+    return {
+      name: data.name || '-',
+      position: data.position || '-'
+    };
+  } catch (err) {
+    console.error('Erro ao buscar usuário logado:', err);
+    return { name: '-', position: '-' };
+  }
+}
+
+
 // ======= CAMPOS DO FORMULÁRIO =======
 const campos = [
   'numero', 'serie', 'nomeAutuado', 'area', 'processoSimlam',
@@ -246,6 +265,8 @@ previewBtn.addEventListener('click', async () => {
     return;
   }
 
+  const usuario = await getUsuarioLogado();
+
   // Gera PDF
   function formatDateISO(d) {
     if (!d) return "-";
@@ -276,7 +297,8 @@ previewBtn.addEventListener('click', async () => {
     coordenada_x: Number.isFinite(formData.coordenadaX) ? formData.coordenadaX : (formData.coordenadaX ?? '-'),
     coordenada_y: Number.isFinite(formData.coordenadaY) ? formData.coordenadaY : (formData.coordenadaY ?? '-'),
     descricao: formData.descricao || '-',
-    responsavel_desembargo: formData.responsavelDesembargo || '-' // se não existir, ficará "-"
+    responsavel_desembargo: usuario.name || '-',
+    cargo_responsavel: usuario.position || '-'
   };
 
   const { jsPDF } = window.jspdf;
@@ -377,9 +399,16 @@ previewBtn.addEventListener('click', async () => {
   // ================= Assinatura =================
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryColor);
+  doc.text("Prévia de Desembargo feita por:", 40, y);
+  y += lineHeight;
+
+  doc.setTextColor(secondaryColor);
   doc.text(String(previewObj.responsavel_desembargo || "-"), 40, y);
   y += lineHeight;
   doc.setFont("helvetica", "normal");
+  doc.text(String(previewObj.cargo_responsavel || "-"), 40, y);
+  y += lineHeight;
+
 
   // salva PDF (preview)
   const nomeArquivo = `Desembargo_preview_${String(previewObj.numero_embargo || 'sem-numero')}.pdf`;
