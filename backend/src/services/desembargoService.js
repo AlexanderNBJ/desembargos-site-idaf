@@ -106,8 +106,20 @@ async function gerarPdfDesembargo(desembargo) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.setTextColor(primaryColor);
-  doc.text(`TERMO DE DESEMBARGO Nº ${desembargo.numero_embargo}/${desembargo.serie_embargo}/IDAF`, 40, y);
+  doc.text(`TERMO DE DESEMBARGO Nº ${desembargo.id}/IDAF`, 40, y);
   y += 25;
+
+  // ================= Disclaimer =================
+  doc.setFontSize(10);
+  doc.setTextColor("#666");
+  doc.text("Este documento somente terá validade após sua inclusão e assinatura no sistema EDOC-s.", 40, y);
+  y += 15;
+
+  doc.setTextColor(secondaryColor);
+  doc.setDrawColor(200);
+  doc.setLineWidth(0.8);
+  doc.line(40, y, 555, y);
+  y += 30;
 
   // ================= Informações principais =================
   const formatDate = (d) => {
@@ -119,9 +131,10 @@ async function gerarPdfDesembargo(desembargo) {
     return `${day}-${month}-${year}`;
   };
   const infoFields = [
-    { label: "Processo E-Docs", value: desembargo.numero_edocs || '-' },
+    { label: "Termo de Embargo Ambiental", value: `${desembargo.numero_embargo || '-'} ${desembargo.serie_embargo || '-'}` },
     { label: "Processo Simlam", value: desembargo.processo_simlam || '-' },
-    { label: "Instrumento Único de Fiscalização", value: `${desembargo.numero_sep || '-'} Série ${desembargo.serie_embargo || '-'}` },
+    { label: "Processo E-Docs", value: desembargo.numero_edocs || '-' },
+    { label: "Número do SEP", value: desembargo.numero_sep || '-' },
     { label: "Autuado", value: desembargo.nome_autuado || '-' },
     { label: "Área Desembargada", value: `${desembargo.area_desembargada || '-'} ha` },
     { label: "Tipo de Desembargo", value: (desembargo.tipo_desembargo || '-').toUpperCase() },
@@ -135,13 +148,17 @@ async function gerarPdfDesembargo(desembargo) {
   doc.setFontSize(12);
   doc.setTextColor(primaryColor);
   infoFields.forEach(item => {
+    const label = String(item.label || "");
+    const value = String(item.value || "-");
+
     doc.setFont("helvetica", "bold");
-    doc.text(`${item.label}:`, labelX, y);
+    doc.text(label + ":", labelX, y);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(secondaryColor);
-    doc.text(item.value, valueX, y);
+    doc.text(value, valueX, y);
     y += lineHeight;
   });
+
   y += 10;
 
   // ================= Descrição =================
@@ -157,15 +174,14 @@ async function gerarPdfDesembargo(desembargo) {
   // ================= Assinatura =================
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryColor);
-  doc.text("Nome do Usuário", 40, y); y += lineHeight;
+  doc.text(String(desembargo.responsavel_desembargo || "-"), 40, y);
+  y += lineHeight;
   doc.setFont("helvetica", "normal");
-  doc.text("Cargo do Usuário", 40, y); y += lineHeight;
-  doc.text("Unidade Técnico-Administrativa Responsável", 40, y); y += lineHeight + 20;
 
-  // ================= Disclaimer =================
-  doc.setFontSize(10);
-  doc.setTextColor("#666");
-  doc.text("Este documento somente terá validade após sua inclusão e assinatura no sistema EDOC-s.", 40, y);
+  //TODO ADICIONAR AS INFORMAÇÕES DO USUÁRIO QUE CADASTROU
+
+  //doc.text("Cargo do Usuário", 40, y); y += lineHeight;
+  //doc.text("Unidade Técnico-Administrativa Responsável", 40, y); y += lineHeight + 20;
 
   // retorna buffer para enviar como arquivo
   return doc.output("arraybuffer");

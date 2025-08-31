@@ -248,29 +248,57 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // busca desembargo por ID ao abrir a página
-  async function fetchById() {
-    try {
-      const res = await fetch(`/api/desembargos/${id}`, {
-        headers: { "Authorization": `Bearer ${token}` }
-      });
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`HTTP ${res.status} - ${txt}`);
-      }
-      const json = await res.json();
-      // aceita formatos variados
-      let payload = json;
-      if (payload.data) payload = payload.data;
-      if (payload.desembargo) payload = payload.desembargo;
-      if (Array.isArray(payload) && payload.length) payload = payload[0];
-
-      const norm = normalizeRow(payload);
-      preencherFormulario(norm);
-    } catch (err) {
-      console.error("Erro ao buscar desembargo por ID:", err);
-      alert("Erro ao carregar desembargo. Veja console.");
+async function fetchById() {
+  try {
+    const res = await fetch(`/api/desembargos/${id}`, {
+      headers: { "Authorization": `Bearer ${token}` }
+    });
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`HTTP ${res.status} - ${txt}`);
     }
+    const json = await res.json();
+    let payload = json;
+    if (payload.data) payload = payload.data;
+    if (payload.desembargo) payload = payload.desembargo;
+    if (Array.isArray(payload) && payload.length) payload = payload[0];
+
+    const norm = normalizeRow(payload);
+    preencherFormulario(norm);
+
+    // 🚨 Se aprovado → travar edição
+    if (norm.status && norm.status.toUpperCase() === "APROVADO") {
+      // 🔒 Esconde o bloco inteiro (checkbox + label)
+      const editToggle = document.querySelector(".edit-toggle");
+      if (editToggle) {
+        editToggle.style.display = "none"; // some com checkbox + label
+      }
+
+      // Garante que não tem como ativar depois
+      if (enableEdit) {
+        enableEdit.checked = false;
+        enableEdit.disabled = true;
+      }
+
+      if (updateBtn) updateBtn.disabled = true;
+      if (btnBuscar) btnBuscar.disabled = true;
+
+      // trava todos os inputs/seletores permanentemente
+      Array.from(form.elements).forEach(el => {
+        if (["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName)) el.disabled = true;
+      });
+
+      mensagemInsercao.textContent = "Este desembargo foi APROVADO e não pode mais ser editado.";
+      mensagemInsercao.classList.remove("sucesso");
+      mensagemInsercao.classList.add("erro");
+    }
+
+  } catch (err) {
+    console.error("Erro ao buscar desembargo por ID:", err);
+    alert("Erro ao carregar desembargo. Veja console.");
   }
+}
+
 
   // habilitar edição — controla todos os inputs do form e a lupa
   enableEdit.addEventListener("change", () => {
