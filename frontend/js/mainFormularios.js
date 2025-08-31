@@ -1,3 +1,12 @@
+// helper para incluir header Authorization
+function getAuthHeaders(contentType = 'application/json') {
+  const token = Auth.getSessionToken ? Auth.getSessionToken() : localStorage.getItem('sessionToken');
+  const headers = {};
+  if (contentType && contentType !== 'form') headers['Content-Type'] = contentType;
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  return headers;
+}
+
 // ======= CAMPOS DO FORMULÁRIO =======
 const campos = [
   'numero', 'serie', 'nomeAutuado', 'area', 'processoSimlam',
@@ -12,7 +21,7 @@ async function validarCampo(nomeDoCampo, valor) {
   try {
     const res = await fetch('/api/desembargos/validate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ [nomeDoCampo]: valor })
     });
     const data = await res.json();
@@ -91,7 +100,7 @@ async function validarFormularioBackend(formData) {
   try {
     const res = await fetch('/api/desembargos/validate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(formData)
     });
     const data = await res.json();
@@ -130,7 +139,7 @@ form.addEventListener('submit', async e => {
   try {
     const resInsert = await fetch('/api/desembargos/create', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(formData)
     });
     const dataInsert = await resInsert.json();
@@ -160,7 +169,7 @@ async function validarNumeroESerieEmbargo() {
   try {
     const res = await fetch('/api/desembargos/validate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ numero })
     });
     const data = await res.json();
@@ -169,7 +178,7 @@ async function validarNumeroESerieEmbargo() {
       return;
     }
 
-    const checkRes = await fetch(`/api/embargos/check/${numero}`);
+    const checkRes = await fetch(`/api/embargos/check/${numero}`, { headers: getAuthHeaders(), method: 'GET' });
     const checkData = await checkRes.json();
     mensagemSpan.textContent = checkData.message;
     mensagemSpan.classList.add(checkData.success ? 'sucesso' : 'erro');
@@ -191,7 +200,11 @@ document.getElementById('btnBuscarProcesso').addEventListener('click', async () 
   if (!proc) return;
 
   try {
-    const res = await fetch(`/api/desembargos/processo?valor=${encodeURIComponent(proc)}`);
+    const res = await fetch(`/api/desembargos/processo?valor=${encodeURIComponent(proc)}`, {
+      method: 'GET',
+      headers: getAuthHeaders()
+    });
+
     const data = await res.json();
 
     if (res.ok) {

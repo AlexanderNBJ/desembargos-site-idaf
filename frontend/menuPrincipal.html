@@ -27,5 +27,15 @@
         <button type="submit" class="menu-btn" onclick="window.location='listaDesembargos.html'">LISTA DE DESEMBARGOS</button>
         <button type="submit" class="menu-btn" onclick="window.location='formularioDesembargos.html'">CADASTRAR DESEMBARGO</button>
     </div>
+    <script src="js/auth.js"></script>
+    <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('logoutBtn');
+    if (btn) btn.addEventListener('click', () => Auth.logout(true));
+  });
+</script>
+
+    <script src="js/mainMenu.js"></script>
+
 </body>
 </html>

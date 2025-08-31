@@ -167,6 +167,19 @@
     </main>
     <div id="toast-container"></div>
     </body>
+    <script src="js/auth.js"></script>
+    <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const btn = document.getElementById('logoutBtn');
+    if (btn) btn.addEventListener('click', () => Auth.logout(true));
+  });
+</script>
+
+<script>
+  // garante que usuário esteja logado, caso contrário vai para login
+  Auth.initAuth({ redirectIfMissing: true});
+</script>
+
 
     <script>
       const hoje = new Date().toISOString().split('T')[0];
