@@ -4,7 +4,7 @@ const { jsPDF } = require("jspdf");
 // inserir
 async function inserirDesembargo({ numero, serie, nomeAutuado, area, processoSimlam,
                                   numeroSEP, numeroEdocs, tipoDesembargo,
-                                  dataDesembargo, coordenadaX, coordenadaY, descricao }) {
+                                  dataDesembargo, coordenadaX, coordenadaY, descricao, responsavelDesembargo }) {
 
   const query = `
     INSERT INTO desembargos(
@@ -18,7 +18,7 @@ async function inserirDesembargo({ numero, serie, nomeAutuado, area, processoSim
   `;
   const values = [numero, serie, nomeAutuado, area, processoSimlam,
                   numeroSEP, numeroEdocs, tipoDesembargo, dataDesembargo,
-                  coordenadaX, coordenadaY, descricao, 'EM ANÁLISE', 'USUÁRIO'];
+                  coordenadaX, coordenadaY, descricao, 'EM ANÁLISE', responsavelDesembargo];
 
   const result = await db.query(query, values);
   return result.rows[0];

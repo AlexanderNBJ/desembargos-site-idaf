@@ -38,6 +38,8 @@ async function criarDesembargo(req, res) {
     }
 
     // 2️⃣ Refatora / normaliza os dados
+    const responsavel = req.user?.username || req.user?.name || "DESCONHECIDO";
+
     const refatorado = {
       numero: value.numero,
       serie: value.serie?.toUpperCase().trim() || null,
@@ -51,6 +53,7 @@ async function criarDesembargo(req, res) {
       coordenadaX: value.coordenadaX ?? null,
       coordenadaY: value.coordenadaY ?? null,
       descricao: value.descricao?.trim() || null,
+      responsavelDesembargo: responsavel
     };
 
     console.log('Dados refatorados para inserção:', refatorado);
