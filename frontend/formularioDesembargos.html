@@ -148,9 +148,20 @@
 
       <!-- Buttons outside -->
       <div class="sv-actions">
-        <button type="button" id="previewBtn" class="btn preview">GERAR PRÉVIA</button>
-        <button type="submit" form="desembargoForm" class="btn submit" id="botaoEnviar">ENVIAR</button>
+        <button type="button" class="btn back" onclick="window.location.href='menuPrincipal.html'">
+          <i class="fa-solid fa-arrow-left"></i> Voltar
+        </button>
+        
+        <div class="right-actions">
+          <button type="button" id="previewBtn" class="btn preview">
+            <i class="fa-solid fa-eye"></i> Gerar Prévia
+          </button>
+          <button type="submit" form="desembargoForm" class="btn submit" id="botaoEnviar">
+            <i class="fa-solid fa-paper-plane"></i> Enviar
+          </button>
+        </div>
       </div>
+
 
       <div id="mensagem-insercao" class="mensagem"></div>
     </main>

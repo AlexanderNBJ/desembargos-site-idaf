@@ -223,3 +223,50 @@ tbody td {
   background-color: #a0aec0;
   cursor: not-allowed;
 }
+
+.sv-actions {
+  width: var(--container-w);
+  margin: 16px auto 40px;
+  display: flex;
+  justify-content: flex-start; /* só um botão, então alinhado à esquerda */
+  align-items: center;
+}
+
+/* Botão genérico */
+.btn {
+  padding: 10px 18px;
+  border-radius: 6px;
+  border: none;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease-in-out;
+}
+
+/* Botão de voltar (secundário) */
+.btn.back {
+  background: #f4f4f4;
+  color: #118032;
+  border: 1px solid #cfd9d5;
+}
+.btn.back:hover {
+  background: #e8f6ee;
+  border-color: #118032;
+}
+
+/* Ajuste do botão de voltar */
+.sv-actions {
+  width: 100%;
+  max-width: var(--container-w); /* mesma largura da tabela */
+  margin: 16px auto; /* centraliza horizontalmente */
+  display: flex;
+  justify-content: flex-start; /* botão colado à esquerda do container, não da página */
+  align-items: center;
+}
+
+.sv-actions .btn.back i {
+  margin-right: 8px; /* garante espaço entre a setinha e o texto */
+}

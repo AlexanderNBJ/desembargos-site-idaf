@@ -315,3 +315,148 @@ input[type="date"]:focus::-webkit-datetime-edit-year-field { color: black; }
 .toast .icon {
   font-size: 1.3rem;
 }
+
+/* ================= BOTÕES VISUALIZAÇÃO ================= */
+.actions-container {
+  width: var(--container-w);
+  margin: 24px auto;
+  display: flex;
+  justify-content: flex-start;
+  gap: 12px;
+  align-items: center;
+}
+
+.actions-container .edit-toggle {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actions-container .edit-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--green-accent);
+  cursor: pointer;
+}
+
+.actions-container .buttons-container {
+  display: flex;
+  gap: 12px;
+}
+
+.actions-container .btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  background: #2c7a7b;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.actions-container .btn:hover { background-color: #225e5f; }
+.actions-container .btn:disabled { background-color: #a0aec0; cursor: not-allowed; }
+
+.actions-container .btn-secondary {
+  background-color: #718096;
+}
+.actions-container .btn-secondary:hover { background-color: #4a5568; }
+
+.sv-actions {
+  width: var(--container-w);
+  margin: 24px auto;       /* centralizado e espaçado */
+  display: flex;
+  justify-content: flex-start;
+  gap: 12px;
+  align-items: center;
+}
+
+.sv-actions .edit-toggle {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sv-actions .edit-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #17903f;   /* mesma identidade do site */
+  cursor: pointer;
+}
+
+.sv-actions .buttons-container {
+  display: flex;
+  gap: 12px;
+}
+
+.sv-actions .btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  background: #2c7a7b;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.sv-actions .btn:hover { background-color: #225e5f; }
+.sv-actions .btn:disabled { background-color: #a0aec0; cursor: not-allowed; }
+
+.sv-actions .btn-secondary {
+  background-color: #718096;
+}
+.sv-actions .btn-secondary:hover { background-color: #4a5568; }
+
+.sv-actions {
+  width: var(--container-w);
+  margin: 24px auto;
+  display: flex;
+  justify-content: flex-start;
+  gap: 12px;
+  align-items: center;
+}
+
+.sv-actions .edit-toggle {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sv-actions .edit-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #17903f;
+  cursor: pointer;
+}
+
+.sv-actions .buttons-container {
+  display: flex;
+  gap: 12px;
+}
+
+.sv-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: none;
+  background: #2c7a7b;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0px 2px 4px rgba(0,0,0,0.2);
+  transition: all 0.2s ease-in-out;
+}
+
+.sv-actions .btn:hover { background-color: #225e5f; transform: translateY(-1px); }
+.sv-actions .btn:disabled { background-color: #a0aec0; cursor: not-allowed; box-shadow: none; }
+
+.sv-actions .btn-secondary {
+  background-color: #718096;
+}
+
+.sv-actions .btn-secondary:hover { background-color: #4a5568; transform: translateY(-1px); }

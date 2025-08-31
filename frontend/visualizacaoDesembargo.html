@@ -147,15 +147,22 @@
     </form>
 
     <!-- AÇÕES -->
-    <div class="actions-container">
+    <div class="sv-actions">
       <div class="edit-toggle">
         <label><input type="checkbox" id="enableEdit"> Habilitar edição</label>
       </div>
       <div class="buttons-container">
-        <button id="updateBtn" class="btn" disabled>SALVAR ALTERAÇÕES</button>
-        <button type="button" class="btn btn-secondary" onclick="window.location.href='listaDesembargos.html'">VOLTAR</button>
+        <button id="updateBtn" class="btn" disabled>
+          <i class="fa-solid fa-floppy-disk"></i> SALVAR ALTERAÇÕES
+        </button>
+        <button type="button" class="btn btn-secondary" onclick="window.location.href='listaDesembargos.html'">
+          <i class="fa-solid fa-arrow-left"></i> VOLTAR
+        </button>
       </div>
     </div>
+
+
+
 
     <div id="mensagem-insercao" class="mensagem"></div>
   </main>
