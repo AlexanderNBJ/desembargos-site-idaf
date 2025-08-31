@@ -270,3 +270,48 @@ input[type="date"]:focus::-webkit-datetime-edit-year-field { color: black; }
 #status{
   margin-top: 20px;
 }
+
+/* Container dos toasts */
+#toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 2000;
+}
+
+/* Toast base */
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 280px;
+  max-width: 320px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-weight: 500;
+  color: #fff;
+  box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
+  opacity: 0;
+  transform: translateX(120%);
+  transition: all 0.4s ease-in-out;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Tipos */
+.toast.success { background-color: #27ae60; }   /* Verde */
+.toast.error   { background-color: #c0392b; }   /* Vermelho */
+.toast.info    { background-color: #2980b9; }   /* Azul */
+.toast.warning { background-color: #f39c12; }   /* Amarelo */
+
+/* Ícone */
+.toast .icon {
+  font-size: 1.3rem;
+}

@@ -136,21 +136,15 @@ form.addEventListener('submit', async e => {
     const dataInsert = await resInsert.json();
 
     if (dataInsert.success) {
-      mensagemDiv.textContent = 'Desembargo inserido com sucesso!';
-      mensagemDiv.classList.remove('erro');
-      mensagemDiv.classList.add('sucesso');
+      showToast("Desembargo inserido com sucesso!", "success");
       form.reset();
       document.getElementById("dataDesembargo").value = new Date().toISOString().split('T')[0];
     } else {
-      mensagemDiv.textContent = dataInsert.message || 'Erro ao inserir desembargo';
-      mensagemDiv.classList.remove('sucesso');
-      mensagemDiv.classList.add('erro');
+      showToast(dataInsert.message || "Erro ao inserir desembargo", "error");
     }
   } catch (err) {
     console.error('Erro ao processar formulário:', err);
-    mensagemDiv.textContent = 'Erro ao processar formulário';
-    mensagemDiv.classList.remove('sucesso');
-    mensagemDiv.classList.add('erro');
+    showToast("Erro ao processar formulário", "error");
   }
 });
 
@@ -249,3 +243,31 @@ previewBtn.addEventListener('click', async () => {
   });
   doc.save(`Desembargo_${formData.numero}.pdf`);
 });
+
+function showToast(message, type = "success") {
+  const container = document.getElementById("toast-container");
+
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+
+  const icon = document.createElement("i");
+  icon.className = type === "success" ? "fa-solid fa-circle-check icon" : "fa-solid fa-circle-xmark icon";
+
+  const text = document.createElement("span");
+  text.textContent = message;
+
+  toast.appendChild(icon);
+  toast.appendChild(text);
+  container.appendChild(toast);
+
+  // animação de entrada
+  setTimeout(() => {
+    toast.classList.add("show");
+  }, 100);
+
+  // remove depois de 4s
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 400);
+  }, 4000);
+}

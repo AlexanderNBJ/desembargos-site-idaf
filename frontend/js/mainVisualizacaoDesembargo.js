@@ -288,9 +288,7 @@ async function fetchById() {
         if (["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName)) el.disabled = true;
       });
 
-      mensagemInsercao.textContent = "Este desembargo foi APROVADO e não pode mais ser editado.";
-      mensagemInsercao.classList.remove("sucesso");
-      mensagemInsercao.classList.add("erro");
+      showToast("Este desembargo foi APROVADO e não pode mais ser editado.", "info");
     }
 
   } catch (err) {
@@ -365,24 +363,45 @@ async function fetchById() {
       });
       const result = await res.json();
       if (res.ok && result.success) {
-        mensagemInsercao.textContent = 'Atualizado com sucesso!';
-        mensagemInsercao.classList.remove('erro');
-        mensagemInsercao.classList.add('sucesso');
-        setTimeout(() => { window.location.href = "listaDesembargos.html"; }, 900);
+        showToast("Desembargo atualizado com sucesso!", "success");
+        setTimeout(() => { window.location.href = "listaDesembargos.html"; }, 1200);
       } else {
         console.error(result);
-        mensagemInsercao.textContent = result.message || 'Erro ao atualizar desembargo';
-        mensagemInsercao.classList.remove('sucesso');
-        mensagemInsercao.classList.add('erro');
+        showToast(result.message || "Erro ao atualizar desembargo", "error");
       }
     } catch (err) {
-      console.error('Erro ao atualizar desembargo:', err);
-      mensagemInsercao.textContent = 'Erro ao atualizar desembargo';
-      mensagemInsercao.classList.remove('sucesso');
-      mensagemInsercao.classList.add('erro');
+      showToast("Erro ao atualizar desembargo. Tente novamente.", "error");
     }
   });
 
   // inicializa preenchendo por ID
   fetchById();
+  function showToast(message, type = "success") {
+  const container = document.getElementById("toast-container");
+
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+
+  const icon = document.createElement("i");
+  switch(type) {
+    case "success": icon.className = "fa-solid fa-circle-check icon"; break;
+    case "error": icon.className = "fa-solid fa-circle-xmark icon"; break;
+    case "warning": icon.className = "fa-solid fa-triangle-exclamation icon"; break;
+    default: icon.className = "fa-solid fa-circle-info icon";
+  }
+
+  const text = document.createElement("span");
+  text.textContent = message;
+
+  toast.appendChild(icon);
+  toast.appendChild(text);
+  container.appendChild(toast);
+
+  setTimeout(() => { toast.classList.add("show"); }, 100);
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 400);
+  }, 4000);
+}
 });

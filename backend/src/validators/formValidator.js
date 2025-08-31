@@ -22,9 +22,11 @@ const formSchema = Joi.object({
     .pattern(serieRegex)
     .uppercase()
     .required()
+    .valid('A','B','C','D','E')
     .messages({
       'string.empty':'Campo obrigatório',
       'string.pattern.base': 'Deve conter uma única letra',
+      'any.only': 'Deve conter A, B, C, D ou E',
       'any.required': 'Campo obrigatório',
     }),
 

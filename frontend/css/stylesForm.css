@@ -151,7 +151,7 @@ input[type="checkbox"] { width:14px; height:14px; accent-color:#2f9e4a; }
 .mensagem-validacao.erro { color: orange; }
 
 .mensagem {
-  position: absolute;
+  position: fixed;
   top: 20px;
   right: -320px;
   width: 300px;
@@ -161,11 +161,19 @@ input[type="checkbox"] { width:14px; height:14px; accent-color:#2f9e4a; }
   display: none;
   box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
   z-index: 1000;
-  transition: opacity 0.5s;
+  opacity: 0;
+  transform: translateX(120%);
+  transition: all 0.4s ease-in-out;
+}
+
+.mensagem.show {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 .mensagem.sucesso { background-color: #2ecc71; color: #fff; }
 .mensagem.erro { background-color: #e74c3c; color: #fff; }
+
 
 /* ================= MISC ================= */
 #textoNomeAutuado { margin-top: 20px; }
@@ -249,3 +257,47 @@ input[type="date"]:focus::-webkit-datetime-edit-year-field { color: black; }
   animation: sv-spin 1s linear infinite;
 }
 @keyframes sv-spin { 100% { transform: rotate(360deg); } }
+
+/* Container dos toasts */
+#toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 2000;
+}
+
+/* Toast padrão */
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 280px;
+  max-width: 320px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-weight: 500;
+  color: #fff;
+  box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
+  opacity: 0;
+  transform: translateX(120%);
+  transition: all 0.4s ease-in-out;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Tipos */
+.toast.success { background-color: #27ae60; }   /* Verde */
+.toast.error   { background-color: #c0392b; }   /* Vermelho */
+
+/* Ícone */
+.toast .icon {
+  font-size: 1.2rem;
+}
+
