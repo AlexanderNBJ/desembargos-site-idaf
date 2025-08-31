@@ -234,14 +234,143 @@ previewBtn.addEventListener('click', async () => {
   }
 
   // Gera PDF
+  function formatDateISO(d) {
+    if (!d) return "-";
+    try {
+      const date = new Date(d);
+      if (Number.isNaN(date.getTime())) return "-";
+      const day = String(date.getDate()).padStart(2,'0');
+      const month = String(date.getMonth()+1).padStart(2,'0');
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    } catch {
+      return "-";
+    }
+  }
+
+  // Monta um "desembargo" no shape esperado pelo layout (mapeando nomes do form)
+  const previewObj = {
+    id: formData.numero ?? '-', // só para título
+    numero_embargo: formData.numero ?? '-',
+    serie_embargo: formData.serie ?? '-',
+    processo_simlam: formData.processoSimlam ?? '-',
+    numero_edocs: formData.numeroEdocs ?? '-',
+    numero_sep: formData.numeroSEP ?? '-',
+    nome_autuado: formData.nomeAutuado ?? '-',
+    area_desembargada: (Number.isFinite(formData.area) ? formData.area : (formData.area ?? '-')),
+    tipo_desembargo: (formData.tipoDesembargo || '-'),
+    data_desembargo: formData.dataDesembargo || null,
+    coordenada_x: Number.isFinite(formData.coordenadaX) ? formData.coordenadaX : (formData.coordenadaX ?? '-'),
+    coordenada_y: Number.isFinite(formData.coordenadaY) ? formData.coordenadaY : (formData.coordenadaY ?? '-'),
+    descricao: formData.descricao || '-',
+    responsavel_desembargo: formData.responsavelDesembargo || '-' // se não existir, ficará "-"
+  };
+
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  let y = 10;
-  campos.forEach(campo => {
-    doc.text(`${campo}: ${formData[campo] ?? ''}`, 10, y);
-    y += 10;
+  const doc = new jsPDF({ unit: "pt", format: "a4" });
+  let y = 40;
+  const primaryColor = "#17903f"; // verde do site
+  const secondaryColor = "#444";   // cinza
+  const lineHeight = 18;
+
+  // ================= Cabeçalho =================
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(primaryColor);
+  doc.text("www.idaf.es.gov.br", 40, y);
+  y += lineHeight;
+
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(secondaryColor);
+  doc.setDrawColor(200);
+  doc.setLineWidth(0.8);
+  doc.line(40, y, 555, y);
+  y += 20;
+
+  // ================= Título =================
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  doc.setTextColor(primaryColor);
+  doc.text(`TERMO DE DESEMBARGO Nº X/IDAF`, 40, y);
+  y += 25;
+
+  // ================= Disclaimer (EXPLÍCITO: PRÉVIA) =================
+  doc.setFontSize(10);
+  doc.setTextColor("#666");
+  // usar splitTextToSize para evitar overflow
+  const disclaimer = "AVISO: ESTE DOCUMENTO É APENAS UMA PRÉVIA. Somente terá validade após inclusão e assinatura no sistema EDOC-s.";
+  const discLines = doc.splitTextToSize(disclaimer, 515);
+  doc.text(discLines, 40, y);
+  y += discLines.length * (lineHeight - 4);
+  y += 6;
+
+  doc.setTextColor(secondaryColor);
+  doc.setDrawColor(200);
+  doc.setLineWidth(0.8);
+  doc.line(40, y, 555, y);
+  y += 30;
+
+  // ================= Informações principais =================
+  const infoFields = [
+    { label: "Termo de Embargo Ambiental", value: `${previewObj.numero_embargo || '-'} ${previewObj.serie_embargo || '-'}` },
+    { label: "Processo Simlam", value: previewObj.processo_simlam || '-' },
+    { label: "Processo E-Docs", value: previewObj.numero_edocs || '-' },
+    { label: "Número do SEP", value: previewObj.numero_sep || '-' },
+    { label: "Autuado", value: previewObj.nome_autuado || '-' },
+    { label: "Área Desembargada", value: `${previewObj.area_desembargada ?? '-'} ${previewObj.area_desembargada && previewObj.area_desembargada !== '-' ? 'ha' : ''}` },
+    { label: "Tipo de Desembargo", value: (previewObj.tipo_desembargo || '-').toUpperCase() },
+    { label: "Data do Desembargo", value: formatDateISO(previewObj.data_desembargo) },
+    { label: "Coordenadas UTM", value: `X(m): ${previewObj.coordenada_x ?? '-'}, Y(m): ${previewObj.coordenada_y ?? '-'}` },
+  ];
+
+  const labelX = 40;
+  const valueX = 250;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(primaryColor);
+
+  infoFields.forEach(item => {
+    const label = String(item.label || "");
+    const value = String(item.value ?? "-");
+
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(primaryColor);
+    doc.text(label + ":", labelX, y);
+
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(secondaryColor);
+
+    // quebra de linha se value for longo
+    const valLines = doc.splitTextToSize(value, 280);
+    doc.text(valLines, valueX, y);
+    y += valLines.length * lineHeight;
   });
-  doc.save(`Desembargo_${formData.numero}.pdf`);
+
+  y += 10;
+
+  // ================= Descrição =================
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(primaryColor);
+  doc.text("Descrição do Desembargo:", 40, y);
+  y += lineHeight;
+
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(secondaryColor);
+  const descricaoSplit = doc.splitTextToSize(previewObj.descricao || '-', 515);
+  doc.text(descricaoSplit, 40, y);
+  y += descricaoSplit.length * lineHeight + 10;
+
+  // ================= Assinatura =================
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(primaryColor);
+  doc.text(String(previewObj.responsavel_desembargo || "-"), 40, y);
+  y += lineHeight;
+  doc.setFont("helvetica", "normal");
+
+  // salva PDF (preview)
+  const nomeArquivo = `Desembargo_preview_${String(previewObj.numero_embargo || 'sem-numero')}.pdf`;
+  doc.save(nomeArquivo);
 });
 
 function showToast(message, type = "success") {
