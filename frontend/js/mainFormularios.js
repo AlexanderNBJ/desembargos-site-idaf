@@ -1,6 +1,12 @@
-// helper para incluir header Authorization
+function getStoredToken() {
+  if (window.Auth && typeof Auth.getSessionToken === 'function') {
+    try { const t = Auth.getSessionToken(); if (t) return t; } catch {}
+  }
+  return localStorage.getItem('sessionToken') || localStorage.getItem('token') || null;
+}
+
 function getAuthHeaders(contentType = 'application/json') {
-  const token = Auth.getSessionToken ? Auth.getSessionToken() : localStorage.getItem('sessionToken');
+  const token = getStoredToken();
   const headers = {};
   if (contentType && contentType !== 'form') headers['Content-Type'] = contentType;
   if (token) headers['Authorization'] = 'Bearer ' + token;
@@ -8,22 +14,28 @@ function getAuthHeaders(contentType = 'application/json') {
 }
 
 async function getUsuarioLogado() {
-  try {
-    const res = await fetch('/api/usuarios/me', {
-      method: 'GET',
-      headers: getAuthHeaders()
-    });
-    if (!res.ok) throw new Error('Não foi possível obter usuário logado');
-    const data = await res.json();
-    return {
-      name: data.name || '-',
-      position: data.position || '-'
-    };
-  } catch (err) {
-    console.error('Erro ao buscar usuário logado:', err);
-    return { name: '-', position: '-' };
+  // tenta endpoints em ordem (português/english)
+  const tries = ['/api/usuarios/me', '/api/users/me'];
+  for (const path of tries) {
+    try {
+      const res = await fetch(path, { method: 'GET', headers: getAuthHeaders() });
+      if (!res.ok) continue; // tenta próximo
+      const data = await res.json();
+      // aceita { success: true, name, position } ou { name, position }
+      const name = data.name || (data.data && data.data.name) || null;
+      const position = data.position || (data.data && data.data.position) || null;
+      return {
+        name: name || '-',
+        position: position || '-'
+      };
+    } catch (err) {
+      // tenta próximo
+    }
   }
+  console.error('Erro ao buscar usuário logado: não foi possível obter resposta válida');
+  return { name: '-', position: '-' };
 }
+
 
 
 // ======= CAMPOS DO FORMULÁRIO =======

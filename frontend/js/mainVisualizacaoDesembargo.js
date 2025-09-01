@@ -81,25 +81,25 @@ document.addEventListener("DOMContentLoaded", () => {
     return String(raw).toUpperCase();
   }
 
-  // show user name in header (in any page)
-  (function showUserInHeader() {
-    const info = getCurrentUserInfo();
-    const username = info.username || (info.payload && (info.payload.name || info.payload.username || info.payload.email)) || null;
-    if (!username) return;
-    // find or create span#usuarioNome inside header .logout-container
-    let span = document.getElementById('usuarioNome');
-    if (!span) {
-      const logoutContainer = document.querySelector('header .logout-container');
-      if (logoutContainer) {
-        span = document.createElement('span');
-        span.id = 'usuarioNome';
-        span.className = 'usuario-nome';
-        span.style.marginRight = '8px';
-        logoutContainer.insertBefore(span, logoutContainer.firstChild);
-      }
-    }
-    if (span) span.textContent = username;
-  })();
+//  // show user name in header (in any page)
+//  (function showUserInHeader() {
+//    const info = getCurrentUserInfo();
+//    const username = info.username || (info.payload && (info.payload.name || info.payload.username || info.payload.email)) || null;
+//    if (!username) return;
+//    // find or create span#usuarioNome inside header .logout-container
+//    let span = document.getElementById('usuarioNome');
+//    if (!span) {
+//      const logoutContainer = document.querySelector('header .logout-container');
+//      if (logoutContainer) {
+//        span = document.createElement('span');
+//        span.id = 'usuarioNome';
+//        span.className = 'usuario-nome';
+//        span.style.marginRight = '8px';
+//        logoutContainer.insertBefore(span, logoutContainer.firstChild);
+//      }
+//    }
+//    if (span) span.textContent = username;
+//  })();
 
   // ---------- Normalize & UI helpers ----------
   function normalizeRow(row) {

@@ -9,8 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // tenta pegar nome do token (username)
   const token = Auth.getSessionToken();
   const decoded = Auth.parseJwt(token);
-  const display = decoded?.username || decoded?.sub || Auth.getSessionUser()?.username || 'Usuário';
-  if (userSpan) userSpan.textContent = display;
+  //const display = decoded?.username || decoded?.sub || Auth.getSessionUser()?.username || 'Usuário';
+  //if (userSpan) userSpan.textContent = display;
 
   // NÃO ocultamos o botão de cadastrar — fica visível para todos os perfis
 
