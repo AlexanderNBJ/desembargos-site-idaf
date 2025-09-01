@@ -47,9 +47,19 @@ async function listarDesembargos () {
 
 // buscar por ID
 async function getDesembargoById(id) {
-  const result = await db.query("SELECT * FROM desembargos WHERE id = $1", [id]);
+  const query = `
+    SELECT d.*,
+           u.name    AS aprovador_name,
+           u.position AS aprovador_position
+    FROM desembargos d
+    LEFT JOIN users u ON d.aprovado_por = u.username
+    WHERE d.id = $1
+    LIMIT 1
+  `;
+  const result = await db.query(query, [id]);
   return result.rows[0];
 }
+
 
 // buscar por SIMLAM
 async function getDesembargoByProcesso(processo) {
@@ -64,7 +74,7 @@ async function updateDesembargo(id, dados) {
   const {
     numero, serie, processoSimlam, numeroSEP, numeroEdocs,
     coordenadaX, coordenadaY, nomeAutuado, area, tipoDesembargo,
-    dataDesembargo, descricao, status, responsavelDesembargo
+    dataDesembargo, descricao, status, responsavelDesembargo, aprovado_por
   } = dados;
 
   const result = await db.query(
@@ -72,15 +82,16 @@ async function updateDesembargo(id, dados) {
      SET numero_embargo = $1, serie_embargo = $2, processo_simlam = $3, numero_sep = $4,
          numero_edocs = $5, coordenada_x = $6, coordenada_y = $7, nome_autuado = $8,
          area_desembargada = $9, tipo_desembargo = $10, data_desembargo = $11::date, descricao = $12,
-         status = $13, responsavel_desembargo = $14
-     WHERE id = $15
+         status = $13, responsavel_desembargo = $14, aprovado_por = $15
+     WHERE id = $16
      RETURNING *`,
     [numero, serie, processoSimlam, numeroSEP, numeroEdocs, coordenadaX, coordenadaY,
-     nomeAutuado, area, tipoDesembargo, dataDesembargo, descricao,status, responsavelDesembargo, id]
+     nomeAutuado, area, tipoDesembargo, dataDesembargo, descricao, status, responsavelDesembargo, aprovado_por, id]
   );
 
   return result.rows[0];
 }
+
 
 async function gerarPdfDesembargo(desembargo) {
   // desembargo já vem como objeto do banco
@@ -172,12 +183,21 @@ async function gerarPdfDesembargo(desembargo) {
   y += descricaoSplit.length * lineHeight + 10;
 
   // ================= Assinatura =================
+  const aprovadorName = desembargo.aprovador_name || desembargo.aprovado_por || desembargo.responsavel_desembargo || '-';
+  const aprovadorPosition = desembargo.aprovador_position || '-';
+
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryColor);
-  doc.text(String(desembargo.responsavel_desembargo || "-"), 40, y);
+  doc.text("Desembargo aprovado por:", 40, y);
   y += lineHeight;
-  doc.setFont("helvetica", "normal");
+  doc.setTextColor(secondaryColor);
+  doc.text(String(aprovadorName), 40, y);
+  y += lineHeight;
 
+  doc.setTextColor(primaryColor);
+  doc.setFont("helvetica", "normal");
+  doc.text(String(aprovadorPosition), 40, y);
+  y += lineHeight;
   //TODO ADICIONAR AS INFORMAÇÕES DO USUÁRIO QUE CADASTROU
 
   //doc.text("Cargo do Usuário", 40, y); y += lineHeight;

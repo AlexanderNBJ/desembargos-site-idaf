@@ -374,10 +374,13 @@ document.addEventListener("DOMContentLoaded", () => {
             users.forEach(u => {
             const opt = document.createElement('option');
             // ajuste aqui
-            const val = u.id; // sempre o id como value
-            const label = u.username || u.name || u.nome || u.email || val; // mostrar nome/username
-            opt.value = val;
-            opt.textContent = label;
+            // preferir username como value, exibir name quando disponível
+          const val = u.username || u.id || u.name || u.email;
+          const label = u.name || u.username || u.email || String(u.id || '');
+          opt.value = val;
+          opt.textContent = label;
+          opt.dataset.alt = (u.name || u.username || '').toLowerCase();
+
             opt.dataset.alt = label.toLowerCase();
             select.appendChild(opt);
           });
@@ -385,11 +388,23 @@ document.addEventListener("DOMContentLoaded", () => {
             // try to match current responsavel
             setSelectValue(select, norm.responsavelDesembargo ?? '');
             // if no match, try matching by name
+            // após popular options
+            // tentativa 1: valor explícito
+            if (norm.responsavelDesembargo) {
+              setSelectValue(select, norm.responsavelDesembargo);
+            }
+
+            // tentativa 2: buscar por nome (case-insensitive)
             if (!select.value) {
-              const maybe = norm.responsavelDesembargo ? norm.responsavelDesembargo.toLowerCase() : '';
-              const matchOpt = Array.from(select.options).find(o => (o.dataset.alt && o.dataset.alt === maybe));
+              const maybe = (norm.responsavelDesembargo || '').toLowerCase();
+              const matchOpt = Array.from(select.options).find(o =>
+                (o.value && o.value.toLowerCase() === maybe) ||
+                (o.dataset.alt && o.dataset.alt === maybe) ||
+                (o.textContent && o.textContent.toLowerCase() === maybe)
+              );
               if (matchOpt) select.value = matchOpt.value;
             }
+
           } else {
             // no users found: leave a single option with current value for manual edit
             const opt = document.createElement('option');

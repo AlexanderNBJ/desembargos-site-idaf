@@ -64,6 +64,15 @@ exports.updateDesembargo = async (req, res) => {
     const { error, value } = formSchema.validate(req.body, { allowUnknown: true });
     if (error) return res.status(400).json({ error: error.details[0].message });
 
+    // se estiver sendo alterado para APROVADO, somente GERENTE pode
+    if (value.status && String(value.status).trim().toUpperCase() === 'APROVADO') {
+      if (!req.user || req.user.role !== 'GERENTE') {
+        return res.status(403).json({ error: "Apenas usuários com papel GERENTE podem aprovar desembargos" });
+      }
+      // marca quem aprovou
+      value.aprovado_por = req.user.username;
+    }
+
     const updated = await desembargoService.updateDesembargo(id, value);
     if (!updated) return res.status(404).json({ error: "Desembargo não encontrado" });
 

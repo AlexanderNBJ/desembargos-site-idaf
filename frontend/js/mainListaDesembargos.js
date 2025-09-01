@@ -11,12 +11,25 @@ document.addEventListener('DOMContentLoaded', async () => {
     return d.toLocaleDateString('pt-BR');
   }
 
+  // Substitua a linha: const token = localStorage.getItem('token');
+  function getStoredToken() {
+  // tenta Auth helper (recomendado)
+  if (window.Auth && typeof Auth.getSessionToken === 'function') {
+    const t = Auth.getSessionToken();
+    if (t) return t;
+  }
+  // fallbacks legacy
+  return localStorage.getItem('sessionToken') || localStorage.getItem('token') || null;
+}
+
+
   // busca desembargos do backend
   async function fetchDesembargos(searchTerm = '') {
     try {
       const url = `/api/desembargos/list${searchTerm ? '?search=' + encodeURIComponent(searchTerm) : ''}`;
+      const token = getStoredToken();
       const res = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.message || 'Erro ao buscar desembargos');
@@ -82,35 +95,59 @@ async function handleAction(action, id) {
       alert(`Editar ID: ${id}`);
       break;
     case 'pdf':
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`/api/desembargos/${id}/pdf`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          }
-        });
+  try {
+    const token = getStoredToken();
+    if (!token) {
+      alert('Sessão expirada. Faça login novamente.');
+      window.location.href = 'login.html';
+      return;
+    }
 
-        if (!response.ok) {
-          throw new Error("Erro ao gerar PDF");
-        }
-
-        // pega o blob e cria um link para download
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `termo_desembargo_${id}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
-
-      } catch (err) {
-        console.error(err);
-        alert("Não foi possível gerar o PDF deste desembargo.");
+    console.log('Gerando PDF — token presente? ', !!token);
+    const response = await fetch(`/api/desembargos/${id}/pdf`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
       }
-      break;
+    });
+
+    console.log('Resposta do servidor ao pedir PDF:', response.status, response.statusText);
+
+    if (response.status === 401) {
+      alert('Não autorizado. Sua sessão expirou ou não tem permissão.');
+      // opcional: logout centralizado
+      if (window.Auth && typeof Auth.logout === 'function') Auth.logout(true);
+      else {
+        localStorage.removeItem('sessionToken');
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
+      }
+      return;
+    }
+
+    if (!response.ok) {
+      const txt = await response.text().catch(()=>null);
+      console.error('Erro ao gerar PDF — body:', txt);
+      throw new Error("Erro ao gerar PDF");
+    }
+
+    // pega o blob e cria um link para download
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `termo_desembargo_${id}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+
+  } catch (err) {
+    console.error(err);
+    alert("Não foi possível gerar o PDF deste desembargo.");
+  }
+  break;
+
   }
 }
 
