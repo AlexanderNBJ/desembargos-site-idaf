@@ -72,6 +72,13 @@ exports.updateDesembargo = async (req, res) => {
       // marca quem aprovou
       value.aprovado_por = req.user.username;
     }
+    // se responsavel não foi enviado, tenta preencher com info do usuário autenticado
+    if (!value.responsavelDesembargo || value.responsavelDesembargo === '') {
+      if (req.user) {
+        // ajuste conforme o que existirá em req.user (username ou name)
+        value.responsavelDesembargo = req.user.username || req.user.name || req.user.id || null;
+      }
+    }
 
     const updated = await desembargoService.updateDesembargo(id, value);
     if (!updated) return res.status(404).json({ error: "Desembargo não encontrado" });

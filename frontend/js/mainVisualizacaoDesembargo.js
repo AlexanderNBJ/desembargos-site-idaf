@@ -529,69 +529,89 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // ---------- update/save ----------
-  updateBtn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    const info = form._currentUser || {};
-    const record = form._currentRecord || {};
-    const role = normalizeRole(info.role) || info.role || null;
+// ---------- update/save (handler atualizado: COMUM -> status = 'EM ANÁLISE') ----------
+updateBtn.addEventListener("click", async (e) => {
+  e.preventDefault();
+  const info = form._currentUser || {};          // preenchido no fetchById
+  const record = form._currentRecord || {};      // preenchido no fetchById
+  const role = normalizeRole(info.role) || info.role || null;
 
-    if (!record.canEditRecord) {
-      showToast("Você não tem permissão para editar este desembargo.", "error");
-      return;
+  if (!record.canEditRecord) {
+    showToast("Você não tem permissão para editar este desembargo.", "error");
+    return;
+  }
+
+  // pega dados do form
+  const dados = Object.fromEntries(new FormData(form).entries());
+  // radio tipoDesembargo
+  const radio = document.querySelector('input[name="tipoDesembargo"]:checked');
+  if (radio) dados.tipoDesembargo = radio.value;
+
+  // data -> ISO
+  if (form.dataDesembargo && form.dataDesembargo.value) {
+    const [ano, mes, dia] = form.dataDesembargo.value.split('-');
+    const dt = new Date(ano, Number(mes) - 1, Number(dia));
+    dados.dataDesembargo = dt.toISOString();
+  } else {
+    dados.dataDesembargo = null;
+  }
+
+  // Se COMUM: força status para EM ANÁLISE (regra solicitada)
+  if (role === "COMUM") {
+    dados.status = "EM ANÁLISE";
+    // garantir responsavel: se não foi preenchido, usar usuário atual (info.username) ou valor atual do registro
+    if (!dados.responsavelDesembargo || dados.responsavelDesembargo === "") {
+      dados.responsavelDesembargo = info.username || form._currentRecord?.responsavel || null;
     }
-
-    const dados = Object.fromEntries(new FormData(form).entries());
-    const radio = document.querySelector('input[name="tipoDesembargo"]:checked');
-    if (radio) dados.tipoDesembargo = radio.value;
-
-    if (form.dataDesembargo && form.dataDesembargo.value) {
-      const [ano, mes, dia] = form.dataDesembargo.value.split('-');
-      const dt = new Date(ano, Number(mes) - 1, Number(dia));
-      dados.dataDesembargo = dt.toISOString();
-    } else {
-      dados.dataDesembargo = null;
+  } else {
+    // GERENTE: permite enviar status, mas se ausente usar valor atual (evita NULL)
+    if (!('status' in dados) || dados.status === '' || dados.status === null || dados.status === undefined) {
+      if (form._currentRecord && form._currentRecord.status) dados.status = form._currentRecord.status;
+      else dados.status = 'EM ANÁLISE';
     }
-
-    // COMUM must not change status or responsavel
-    if (role === "COMUM") {
-      if ('status' in dados) {
-        if (record.status) dados.status = record.status;
-        else delete dados.status;
-      }
-      if ('responsavelDesembargo' in dados) {
-        // restore to original
-        if (record.responsavel) dados.responsavelDesembargo = record.responsavel;
-        else delete dados.responsavelDesembargo;
-      }
+    // para responsavel: se vazio, tenta manter valor atual
+    if (!dados.responsavelDesembargo || dados.responsavelDesembargo === "") {
+      dados.responsavelDesembargo = form._currentRecord?.responsavel || (info.username || null);
     }
+  }
 
-    Object.keys(dados).forEach(k => { if (dados[k] === "") dados[k] = null; });
+  // COMUM não deve alterar responsavel/status por UI — mas aqui reforçamos
+  if (role === "COMUM") {
+    // preservações já feitas acima
+  }
 
-    try {
-      const token = getStoredToken();
-      const headers = { "Content-Type": "application/json" };
-      if (token) headers["Authorization"] = `Bearer ${token}`;
-
-      const res = await fetch(`/api/desembargos/${id}`, {
-        method: "PUT",
-        headers,
-        body: JSON.stringify(dados)
-      });
-
-      const result = await res.json();
-      if (res.ok && result.success) {
-        showToast("Desembargo atualizado com sucesso!", "success");
-        setTimeout(() => { window.location.href = "listaDesembargos.html"; }, 1200);
-      } else {
-        console.error(result);
-        showToast(result.message || "Erro ao atualizar desembargo", "error");
-      }
-    } catch (err) {
-      console.error(err);
-      showToast("Erro ao atualizar desembargo. Tente novamente.", "error");
-    }
+  // converter strings vazias em null (exceto status/reponsavel que já tratamos)
+  Object.keys(dados).forEach(k => {
+    if (dados[k] === "") dados[k] = null;
   });
+
+  try {
+    const token = getStoredToken();
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    const res = await fetch(`/api/desembargos/${id}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify(dados)
+    });
+
+    const result = await res.json();
+    if (res.ok && result.success) {
+      showToast("Desembargo atualizado com sucesso!", "success");
+      setTimeout(() => { window.location.href = "listaDesembargos.html"; }, 1200);
+    } else {
+      console.error(result);
+      const msg = result.message || result.error || "Erro ao atualizar desembargo";
+      showToast(msg, "error");
+    }
+  } catch (err) {
+    console.error(err);
+    showToast("Erro ao atualizar desembargo. Tente novamente.", "error");
+  }
+});
+
+
 
   // ---------- init ----------
   fetchById();
