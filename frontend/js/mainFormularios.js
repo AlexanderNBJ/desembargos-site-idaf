@@ -435,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentPreviewUrl = await gerarPreviewBlob(formData);
         if (iframePreview) iframePreview.src = currentPreviewUrl;
         openModal();
-        showToast('Prévia gerada — revise e confirme antes de enviar.', 'success');
+        showToast('Prévia gerada — revise e confirme antes de enviar.', 'info');
       } catch (err) {
         console.error('Erro ao gerar preview para modal:', err);
         showToast('Erro ao gerar prévia', 'error');
