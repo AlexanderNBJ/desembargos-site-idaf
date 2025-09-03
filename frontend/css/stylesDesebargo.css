@@ -460,3 +460,64 @@ input[type="date"]:focus::-webkit-datetime-edit-year-field { color: black; }
 }
 
 .sv-actions .btn-secondary:hover { background-color: #4a5568; transform: translateY(-1px); }
+
+/* ===== Intro row: override e garantia de layout ===== */
+.sv-intro-row {
+  grid-area: intro;            /* garante que ocupe a área "intro" do grid */
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* leva o toggle para a direita */
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding-right: 2px; /* evita que o toggle "esconda" conteúdo no overflow */
+}
+
+/* o parágrafo fica livre para ocupar todo o espaço disponível */
+.sv-intro-row .sv-intro {
+  margin: 0;
+  padding: 0;
+  color: #17903f;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: normal;   /* permite quebra natural — evita truncar o texto */
+  overflow: visible;
+  text-overflow: unset;
+  flex: 1 1 auto;        /* ocupa espaço restante, encolhe quando necessário */
+  min-width: 0;          /* essencial pra flex children não forçar overflow */
+}
+
+/* toggle fixado na direita, sem colar no texto */
+.sv-intro-row .edit-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 12px;
+}
+
+/* checkbox styling */
+.sv-intro-row .edit-toggle input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #17903f;
+  cursor: pointer;
+}
+
+/* FORÇA: z-index para garantir que não fique atrás do background */
+.sv-intro-row, .sv-intro-row .edit-toggle {
+  z-index: 2;
+}
+
+/* Mobile: permite que o texto quebre e toggle fique ao lado/embaixo conforme espaço */
+@media (max-width: 680px) {
+  .sv-intro-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  .sv-intro-row .sv-intro {
+    font-size: 13px;
+  }
+}

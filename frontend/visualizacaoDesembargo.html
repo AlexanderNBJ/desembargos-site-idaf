@@ -23,7 +23,17 @@
   </header>
 <main>
     <form id="desembargoForm" class="sv-grid" autocomplete="off" novalidate>
-      <p class="sv-intro">Visualize ou edite as informações do desembargo:</p>
+      <!-- intro + toggle na mesma linha -->
+      <div class="sv-intro-row">
+        <p class="sv-intro">Visualize ou edite as informações do desembargo:</p>
+
+        <div class="edit-toggle">
+          <label style="display:inline-flex;align-items:center;gap:8px;">
+            <input type="checkbox" id="enableEdit"> <span>Habilitar edição</span>
+          </label>
+        </div>
+      </div>
+
 
       <!-- TERMO -->
       <div class="termo">
@@ -148,9 +158,6 @@
 
     <!-- AÇÕES -->
     <div class="sv-actions">
-      <div class="edit-toggle">
-        <label><input type="checkbox" id="enableEdit"> Habilitar edição</label>
-      </div>
       <div class="buttons-container">
         <button id="updateBtn" class="btn" disabled>
           <i class="fa-solid fa-floppy-disk"></i> SALVAR ALTERAÇÕES

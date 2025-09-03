@@ -118,14 +118,7 @@ async function gerarPdfDesembargo(desembargo) {
   doc.setFontSize(14);
   doc.setTextColor(primaryColor);
   doc.text(`TERMO DE DESEMBARGO Nº ${desembargo.id}/IDAF`, 40, y);
-  y += 25;
-
-  // ================= Disclaimer =================
-  doc.setFontSize(10);
-  doc.setTextColor("#666");
-  doc.text("Este documento somente terá validade após sua inclusão e assinatura no sistema EDOC-s.", 40, y);
-  y += 15;
-
+  y += 10;
   doc.setTextColor(secondaryColor);
   doc.setDrawColor(200);
   doc.setLineWidth(0.8);
@@ -198,10 +191,12 @@ async function gerarPdfDesembargo(desembargo) {
   doc.setFont("helvetica", "normal");
   doc.text(String(aprovadorPosition), 40, y);
   y += lineHeight;
-  //TODO ADICIONAR AS INFORMAÇÕES DO USUÁRIO QUE CADASTROU
 
-  //doc.text("Cargo do Usuário", 40, y); y += lineHeight;
-  //doc.text("Unidade Técnico-Administrativa Responsável", 40, y); y += lineHeight + 20;
+  // ================= Disclaimer =================
+  doc.setFontSize(10);
+  doc.setTextColor("#666");
+  doc.text("Este documento somente terá validade após sua inclusão e assinatura no sistema EDOC-s.", 40, y);
+  y += 15;
 
   // retorna buffer para enviar como arquivo
   return doc.output("arraybuffer");

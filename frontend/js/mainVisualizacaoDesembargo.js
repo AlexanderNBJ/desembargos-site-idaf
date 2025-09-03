@@ -611,8 +611,6 @@ updateBtn.addEventListener("click", async (e) => {
   }
 });
 
-
-
   // ---------- init ----------
   fetchById();
 
