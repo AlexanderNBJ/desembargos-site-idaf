@@ -1,7 +1,3 @@
-// js/mainFormularios.js
-// Mantém as assinaturas e comportamentos originais,
-// adiciona modal de confirmação no submit (prévia no iframe, sem download).
-
 document.addEventListener('DOMContentLoaded', () => {
 
   // ------------------ AUTH HELPERS (expostos globalmente) ------------------
@@ -237,7 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const formData = obterDadosFormulario();
           await validarFormularioBackend(formData);
 
-          console.log("Processo:", data);
+          //console.log("Processo:", data);
         } else {
           const msgEl = document.getElementById("mensagem-busca");
           if (msgEl) { msgEl.textContent = data.message || "Não encontrado"; msgEl.classList.add("erro"); }
@@ -259,6 +255,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const primaryColor = "#17903f"; // verde do site
     const secondaryColor = "#444";   // cinza
     const lineHeight = 18;
+    const logoEl = document.getElementById("logoPdf");
+
+    if (logoEl) {
+      doc.addImage(logoEl, "PNG", 30, 20, 540, 90);
+      y += 100;
+    }
 
     // ================= Cabeçalho =================
     doc.setFont("helvetica", "bold");
@@ -278,17 +280,8 @@ document.addEventListener('DOMContentLoaded', () => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.setTextColor(primaryColor);
-    doc.text(`TERMO DE DESEMBARGO Nº ${previewObj.numero_embargo || 'X'}/${previewObj.serie_embargo || ''}`, 40, y);
-    y += 25;
-
-    // ================= Disclaimer =================
-    doc.setFontSize(10);
-    doc.setTextColor("#666");
-    const disclaimer = "AVISO: ESTE DOCUMENTO É APENAS UMA PRÉVIA. Somente terá validade após inclusão e assinatura no sistema EDOC-s.";
-    const discLines = doc.splitTextToSize(disclaimer, 515);
-    doc.text(discLines, 40, y);
-    y += discLines.length * (lineHeight - 4);
-    y += 6;
+    doc.text(`TERMO DE DESEMBARGO Nº X/IDAF`, 40, y);
+    y += 10;
 
     doc.setTextColor(secondaryColor);
     doc.setDrawColor(200);
@@ -314,18 +307,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
-    doc.setTextColor(primaryColor);
+    //doc.setTextColor(primaryColor);
 
     infoFields.forEach(item => {
       const label = String(item.label || "");
       const value = String(item.value ?? "-");
 
       doc.setFont("helvetica", "bold");
-      doc.setTextColor(primaryColor);
+      //doc.setTextColor(primaryColor);
       doc.text(label + ":", labelX, y);
 
       doc.setFont("helvetica", "normal");
-      doc.setTextColor(secondaryColor);
+      //doc.setTextColor(secondaryColor);
 
       // quebra de linha se value for longo
       const valLines = doc.splitTextToSize(value, 280);
@@ -358,7 +351,16 @@ document.addEventListener('DOMContentLoaded', () => {
     y += lineHeight;
     doc.setFont("helvetica", "normal");
     doc.text(String(previewObj.cargo_responsavel || "-"), 40, y);
-    y += lineHeight;
+    y += 2*lineHeight;
+
+    // ================= Disclaimer =================
+    doc.setFontSize(10);
+    doc.setTextColor("#666");
+    const disclaimer = "AVISO: ESTE DOCUMENTO É APENAS UMA PRÉVIA. Uma vez aprovado, o termo somente terá validade após sua inclusão e assinatura no sistema EDOC-s.";
+    const discLines = doc.splitTextToSize(disclaimer, 515);
+    doc.text(discLines, 40, y);
+    y += discLines.length * (lineHeight - 4);
+    y += 6;
 
     return doc;
   }

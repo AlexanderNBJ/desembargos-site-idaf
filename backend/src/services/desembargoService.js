@@ -197,7 +197,7 @@ async function gerarPdfDesembargo(desembargo) {
   doc.setTextColor(primaryColor);
   doc.setFont("helvetica", "normal");
   doc.text(String(aprovadorPosition), 40, y);
-  y += lineHeight;
+  y += 2*lineHeight;
 
   // ================= Disclaimer =================
   doc.setFontSize(10);
