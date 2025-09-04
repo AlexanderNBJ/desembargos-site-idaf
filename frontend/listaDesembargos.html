@@ -1,172 +1,153 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SeloVerde ES - Área Técnica</title>
-    <link rel="icon" type="image/x-icon" href="assets/favicon.png">
-    <link rel="stylesheet" href="css/stylesHeader.css">
-    <link rel="stylesheet" href="css/stylesList.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SeloVerde ES - Área Técnica</title>
+  <link rel="icon" type="image/x-icon" href="assets/favicon.png">
+  <link rel="stylesheet" href="css/stylesHeader.css">
+  <link rel="stylesheet" href="css/stylesList.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  <style>
+    /* Pequenos ajustes para as abas e paginação — evita editar arquivos css existentes */
+    .tabs { display:flex; gap:8px; margin:12px 0; flex-wrap:wrap; }
+    .tab { padding:8px 12px; border-radius:6px; cursor:pointer; background:#f3f3f3; border:1px solid #e0e0e0; }
+    .tab.active { background:#17903f; color:white; border-color:#138032; }
+    .table-toolbar { display:flex; gap:12px; align-items:center; justify-content:space-between; margin:8px 0; flex-wrap:wrap;}
+    .table-controls { display:flex; gap:8px; align-items:center; }
+    .pagination { display:flex; gap:6px; align-items:center; margin-top:10px; flex-wrap:wrap; }
+    .page-btn { padding:6px 8px; border-radius:4px; border:1px solid #ddd; background:white; cursor:pointer;}
+    .page-btn.disabled { opacity:0.5; cursor:not-allowed; }
+    .small-muted { font-size:0.9rem; color:#666; }
+    th.sortable { cursor:pointer; user-select:none; }
+    th.sortable:after { content: ' ⇅'; font-size:0.8rem; color:#999; margin-left:4px; }
+    th.sortable.asc:after { content: ' ↑'; }
+    th.sortable.desc:after { content: ' ↓'; }
+    .page-size { width:72px; }
+    .search-wrapper input { min-width:200px; }
+  </style>
 </head>
 <body>
-    <header class="top-bar">
-        <div class="logo">
-            <!-- Logo em SVG -->
-            <img src="assets/simbolo-seloverde.svg" alt="Logo Selo Verde">
-        </div>
-        <div class="title-text">
-            <h1>SeloVerde ES - Área Técnica</h1>
-            <h2>Formulário de Cadastro de Desembargos</h2>
-            <span class="restricted-badge">Área Restrita</span>
-        </div>
-        <div class="logout-container">
-            <button id="logoutBtn" class="logout-btn" aria-label="Logout" title="Sair">Logout</button>
-        </div>
-    </header>
-    <div class="page-container" role="main">
+  <header class="top-bar">
+    <div class="logo">
+      <img src="assets/simbolo-seloverde.svg" alt="Logo Selo Verde">
+    </div>
+    <div class="title-text">
+      <h1>SeloVerde ES - Área Técnica</h1>
+      <h2>Formulário de Cadastro de Desembargos</h2>
+      <span class="restricted-badge">Área Restrita</span>
+    </div>
+    <div class="logout-container">
+      <button id="logoutBtn" class="logout-btn" aria-label="Logout" title="Sair">Logout</button>
+    </div>
+  </header>
 
-  <div class="list-header" aria-hidden="false">
-    <h3 class="list-title">Lista de desembargos:</h3>
+  <div class="page-container" role="main">
+    <div class="list-header" aria-hidden="false">
+      <h3 class="list-title">Lista de desembargos:</h3>
 
-    <div class="search-wrapper" title="Pesquisar desembargos">
-      <!-- magnifier icon -->
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-        <path fill="#666" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/>
-      </svg>
+      <div class="search-wrapper" title="Pesquisar desembargos">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <path fill="#666" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/>
+        </svg>
 
-      <input id="search" type="search" placeholder="Pesquisar..." aria-label="Pesquisar desembargos">
+        <input id="search" type="search" placeholder="Pesquisar..." aria-label="Pesquisar desembargos">
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div id="tabs" class="tabs" role="tablist" aria-label="Filtros de desembargos">
+      <!-- botões serão gerados dinamicamente -->
+    </div>
+
+    <div class="table-card" role="region" aria-label="Lista de desembargos">
+      <div class="table-toolbar">
+        <div class="table-controls">
+          <label for="pageSize" class="small-muted">Linhas por página</label>
+          <select id="pageSize" class="page-size" aria-label="Linhas por página">
+            <option value="5">5</option>
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+          </select>
+
+          <div id="current-filter" class="small-muted" style="margin-left:12px;"></div>
+        </div>
+
+        <div class="table-controls">
+          <div id="summaryText" class="small-muted" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <table class="desembargos" role="table" aria-label="Tabela de desembargos">
+        <thead>
+          <tr>
+            <th class="col-termo sortable" data-key="termo">Termo de Embargo</th>
+            <th class="col-processo sortable" data-key="processo">Processo Simlam</th>
+            <th class="col-sep sortable" data-key="sep">SEP</th>
+            <th class="col-edocs sortable" data-key="edocs">e-Docs</th>
+            <th class="col-autuado sortable" data-key="autuado">Autuado</th>
+            <th class="col-tipo sortable" data-key="tipo">Tipo</th>
+            <th class="col-area sortable" data-key="status">Status</th>
+            <th class="col-data sortable" data-key="data">Data de Desembargo</th>
+            <th class="col-acoes">Ações</th>
+          </tr>
+        </thead>
+
+        <tbody id="desembargos-list">
+          <!-- será preenchido via JS -->
+        </tbody>
+      </table>
+
+      <div class="pagination" id="paginationControls" aria-label="Controles de paginação">
+        <!-- controles serão preenchidos via JS -->
+      </div>
+    </div>
+
+    <!-- template para uso via JS: clone this template and populate before appending to #desembargos-list -->
+    <template id="row-template">
+      <tr data-id="{{id}}">
+        <td class="col-termo">{{termo}}</td>
+        <td class="col-processo">{{processo}}</td>
+        <td class="col-sep">{{sep}}</td>
+        <td class="col-edocs">{{edocs}}</td>
+        <td class="col-autuado">{{autuado}}</td>
+        <td class="col-tipo muted">{{tipo}}</td>
+        <td class="col-status muted">{{col-status}}</td>
+        <!-- td class="col-responsavel">{{responsavel}}</td -->
+        <td class="col-data">{{data}}</td>
+        <td class="col-acoes">
+          <div class="actions">
+            <button class="action-btn" data-action="view" title="Visualizar" aria-label="Visualizar">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+            </button>
+            <button class="action-btn" data-action="pdf" title="Gerar PDF" aria-label="Gerar PDF">
+              <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM13 3.5L18.5 9H13V3.5zM6 20V4h6v5h5v11H6z"/></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </template>
+
+    <div class="sv-actions" style="margin-top:14px;">
+      <button type="button" class="btn back" onclick="window.location.href='menuPrincipal.html'">
+        <i class="fa-solid fa-arrow-left"></i> Voltar
+      </button>
     </div>
   </div>
 
-  <div class="table-card" role="region" aria-label="Lista de desembargos">
-    <table class="desembargos" role="table" aria-label="Tabela de desembargos">
-      <thead>
-        <tr>
-          <th class="col-termo">Termo de Embargo</th>
-          <th class="col-processo">Processo Simlam</th>
-          <th class="col-sep">SEP</th>
-          <th class="col-edocs">e-Docs</th>
-          <th class="col-autuado">Autuado</th>
-          <th class="col-tipo">Tipo</th>
-          <th class="col-area">Status</th>
-          <!--th class="col-responsavel">Responsável pelo desembargo</th-->
-          <th class="col-data">Data de Desembargo</th>
-          <th class="col-acoes">Ações</th>
-        </tr>
-      </thead>
+  <script src="js/auth.js"></script>
+  <script src="js/userHeader.js"></script>
 
-      <tbody id="desembargos-list">
-        <!-- placeholder rows (exemplo estático) -->
-        <tr>
-          <td class="col-termo">123456 A</td>
-          <td class="col-processo">12345/2025</td>
-          <td class="col-sep">12345678</td>
-          <td class="col-edocs">2025-AA123</td>
-          <td class="col-autuado">João Silva</td>
-          <td class="col-tipo muted">TOTAL</td>
-          <td class="col-area muted">0,5 ha</td>
-          <td class="col-responsavel">Miguel Santos</td>
-          <td class="col-data">07/08/2025</td>
-          <td class="col-acoes">
-            <div class="actions" aria-hidden="true">
-              <!-- lupa -->
-              <button class="action-btn" title="Visualizar">
-                <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"></path>
-                </svg>
-              </button>
-              <!-- editar -->
-              <button class="action-btn" title="Editar">
-                <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.41l-2.34-2.34a1.003 1.003 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"></path>
-                </svg>
-              </button>
-              <!-- documento / copiar -->
-              <button class="action-btn" title="Gerar PDF">
-                <svg class="icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM13 3.5L18.5 9H13V3.5zM6 20V4h6v5h5v11H6z"></path>
-                </svg>
-              </button>
-            </div>
-          </td>
-        </tr>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('logoutBtn');
+      if (btn) btn.addEventListener('click', () => Auth.logout(true));
+    });
 
-        <!-- repita exemplo para visual -->
-        <tr>
-          <td>123456 A</td>
-          <td>12345/2025</td>
-          <td>12345678</td>
-          <td>2025-AA123</td>
-          <td>João Silva</td>
-          <td class="muted">TOTAL</td>
-          <td class="muted">0,5 ha</td>
-          <td>Miguel Santos</td>
-          <td>07/08/2025</td>
-          <td>
-            <div class="actions">
-              <button class="action-btn" title="Visualizar">
-                <svg class="icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
-              </button>
-              <button class="action-btn" title="Editar">
-                <svg class="icon" viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1.003 1.003 0 0 0 0-1.41l-2.34-2.34a1.003 1.003 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>
-              </button>
-              <button class="action-btn" title="Gerar PDF">
-                <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM13 3.5L18.5 9H13V3.5zM6 20V4h6v5h5v11H6z"/></svg>
-              </button>
-            </div>
-          </td>
-        </tr>
+    // garante que usuário esteja logado, caso contrário vai para login
+    Auth.initAuth({ redirectIfMissing: true});
+  </script>
 
-      </tbody>
-    </table>
-  </div>
-
-  <!-- template para uso via JS: clone this template and populate before appending to #desembargos-list -->
-  <template id="row-template">
-    <tr data-id="{{id}}">
-      <td class="col-termo">{{termo}}</td>
-      <td class="col-processo">{{processo}}</td>
-      <td class="col-sep">{{sep}}</td>
-      <td class="col-edocs">{{edocs}}</td>
-      <td class="col-autuado">{{autuado}}</td>
-      <td class="col-tipo muted">{{tipo}}</td>
-      <td class="col-status muted">{{col-status}}</td>
-      <!-- td class="col-responsavel">{{responsavel}}</td -->
-      <td class="col-data">{{data}}</td>
-      <td class="col-acoes">
-        <div class="actions">
-          <button class="action-btn" data-action="view" title="Visualizar">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
-          </button>
-          <button class="action-btn" data-action="pdf" title="Gerar PDF">
-            <svg class="icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zM13 3.5L18.5 9H13V3.5zM6 20V4h6v5h5v11H6z"/></svg>
-          </button>
-        </div>
-      </td>
-    </tr>
-  </template>
-  <div class="sv-actions">
-    <button type="button" class="btn back" onclick="window.location.href='menuPrincipal.html'">
-      <i class="fa-solid fa-arrow-left"></i> Voltar
-    </button>
-  </div>
-</div>
-<script src="js/auth.js"></script>
-<script src="js/userHeader.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('logoutBtn');
-    if (btn) btn.addEventListener('click', () => Auth.logout(true));
-  });
-</script>
-
-<script>
-  // garante que usuário esteja logado, caso contrário vai para login
-  Auth.initAuth({ redirectIfMissing: true});
-</script>
-
-
-<script src="js/mainListaDesembargos.js"></script>
+  <script src="js/mainListaDesembargos.js"></script>
 </body>
 </html>

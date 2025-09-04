@@ -1,7 +1,8 @@
+// backend/src/controllers/desembargoController.js
 const { formSchema } = require("../validators/formValidator");
 const desembargoService = require("../services/desembargoService");
 
-// inserir
+// inserir (mantido igual)
 exports.inserir = async (req, res) => {
   try {
     const { error, value } = formSchema.validate(req.body, { allowUnknown: true });
@@ -15,30 +16,79 @@ exports.inserir = async (req, res) => {
   }
 };
 
-// listar
+// listar com paginação/filtros/ordem server-side (melhorado para extrair username do token caso req.user não exista)
 exports.listarDesembargos = async (req, res) => {
   try {
-    const { search } = req.query;
-    let desembargos = await desembargoService.listarDesembargos();
+    // params esperados: page, pageSize, search, status, owner, sortKey, sortDir
+    const {
+      page = 1,
+      pageSize = 10,
+      search = '',
+      status = '',
+      owner = '',
+      sortKey = '',
+      sortDir = ''
+    } = req.query;
 
-    if (search) {
-      const lowerSearch = search.toLowerCase();
-      desembargos = desembargos.filter(d =>
-        String(d.termo ?? '').toLowerCase().includes(lowerSearch) ||
-        String(d.processo ?? '').toLowerCase().includes(lowerSearch) ||
-        String(d.sep ?? '').toLowerCase().includes(lowerSearch) ||
-        String(d.edocs ?? '').toLowerCase().includes(lowerSearch) ||
-        String(d.autuado ?? '').toLowerCase().includes(lowerSearch) ||
-        String(d.tipo ?? '').toLowerCase().includes(lowerSearch) ||
-        String(d.responsavel ?? '').toLowerCase().includes(lowerSearch) ||
-        String(d.status ?? '').toLowerCase().includes(lowerSearch) ||
-        formatDateToSearch(d.data).includes(lowerSearch)
-      );
+    // trying to get requesting user from req.user (set by auth middleware)
+    let requestingUser = req.user || null;
+
+    // if owner=mine and req.user is missing, try to decode username from Authorization header (best-effort, no verification)
+    if (!requestingUser && String(owner || '').toLowerCase() === 'mine') {
+      const authHeader = req.headers && (req.headers.authorization || req.headers.Authorization);
+      if (authHeader && typeof authHeader === 'string') {
+        const parts = authHeader.split(' ');
+        if (parts.length === 2 && /^Bearer$/i.test(parts[0])) {
+          const token = parts[1];
+          try {
+            // decode payload (base64url) without verification
+            const payloadB64 = token.split('.')[1] || '';
+            const b64 = payloadB64.replace(/-/g, '+').replace(/_/g, '/');
+            const json = Buffer.from(b64, 'base64').toString('utf8');
+            const parsed = JSON.parse(json);
+            requestingUser = {
+              username: parsed.username || parsed.preferred_username || parsed.sub || parsed.name || null,
+              role: (parsed.role || parsed.roles || '').toString().toUpperCase()
+            };
+          } catch (e) {
+            // ignore decode errors - we'll treat as unauthenticated
+            requestingUser = null;
+          }
+        }
+      }
     }
 
-    res.json({ success: true, data: desembargos });
+    // transforma page/pageSize em inteiros defensivos
+    const p = Math.max(1, parseInt(page, 10) || 1);
+    const ps = Math.max(1, Math.min(200, parseInt(pageSize, 10) || 10));
+
+    const params = {
+      page: p,
+      pageSize: ps,
+      search,
+      status,
+      owner,
+      sortKey,
+      sortDir,
+      requestingUser
+    };
+
+    const result = await desembargoService.listarDesembargos(params);
+    // result: { rows, total }
+    const totalPages = Math.max(1, Math.ceil((result.total || 0) / ps));
+
+    res.json({
+      success: true,
+      data: result.rows,
+      meta: {
+        total: result.total || 0,
+        page: p,
+        pageSize: ps,
+        totalPages
+      }
+    });
   } catch (err) {
-    console.error(err);
+    console.error("Erro ao listar desembargos:", err);
     res.status(500).json({ success: false, message: 'Erro ao listar desembargos' });
   }
 };
@@ -75,7 +125,6 @@ exports.updateDesembargo = async (req, res) => {
     // se responsavel não foi enviado, tenta preencher com info do usuário autenticado
     if (!value.responsavelDesembargo || value.responsavelDesembargo === '') {
       if (req.user) {
-        // ajuste conforme o que existirá em req.user (username ou name)
         value.responsavelDesembargo = req.user.username || req.user.name || req.user.id || null;
       }
     }
@@ -89,16 +138,6 @@ exports.updateDesembargo = async (req, res) => {
     res.status(500).json({ error: "Erro no servidor" });
   }
 };
-
-function formatDateToSearch(date) {
-  if (!date) return '';
-  const d = new Date(date);
-  const day = String(d.getDate()).padStart(2, '0');
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const year = d.getFullYear();
-  return `${day}/${month}/${year}`;
-}
-
 
 exports.gerarPdf = async (req, res) => {
   const { id } = req.params;

@@ -1,183 +1,294 @@
+// frontend/js/mainListaDesembargos.js (versão server-side pagination)
 document.addEventListener('DOMContentLoaded', async () => {
-  const token = localStorage.getItem('token');
   const tbody = document.getElementById('desembargos-list');
   const template = document.getElementById('row-template').content;
   const searchInput = document.getElementById('search');
+  const tabsContainer = document.getElementById('tabs');
+  const pageSizeSelect = document.getElementById('pageSize');
+  const paginationControls = document.getElementById('paginationControls');
+  const summaryText = document.getElementById('summaryText');
+  const currentFilterLabel = document.getElementById('current-filter');
 
-  // formata data dd/mm/yyyy
-  function formatDate(isoDate) {
-    if (!isoDate) return '';
-    const d = new Date(isoDate);
-    return d.toLocaleDateString('pt-BR');
-  }
-
-  // Substitua a linha: const token = localStorage.getItem('token');
   function getStoredToken() {
-  // tenta Auth helper (recomendado)
-  if (window.Auth && typeof Auth.getSessionToken === 'function') {
-    const t = Auth.getSessionToken();
-    if (t) return t;
+    if (window.Auth && typeof Auth.getSessionToken === 'function') {
+      const t = Auth.getSessionToken();
+      if (t) return t;
+    }
+    return localStorage.getItem('sessionToken') || localStorage.getItem('token') || null;
   }
-  // fallbacks legacy
-  return localStorage.getItem('sessionToken') || localStorage.getItem('token') || null;
-}
 
-
-  // busca desembargos do backend
-  async function fetchDesembargos(searchTerm = '') {
+  function decodeJwtPayload(token) {
     try {
-      const url = `/api/desembargos/list${searchTerm ? '?search=' + encodeURIComponent(searchTerm) : ''}`;
-      const token = getStoredToken();
-      const res = await fetch(url, {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      if (!token) return null;
+      const parts = token.split('.');
+      if (parts.length < 2) return null;
+      const payload = parts[1];
+      const b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const json = decodeURIComponent(atob(b64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+      return JSON.parse(json);
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function getCurrentUser() {
+    try {
+      if (window.Auth && typeof Auth.getCurrentUser === 'function') {
+        const u = Auth.getCurrentUser();
+        return { username: u.username || u.name || u.email, role: (u.role||'COMUM').toString().toUpperCase() };
+      }
+    } catch (e) {}
+    const token = getStoredToken();
+    const payload = decodeJwtPayload(token);
+    if (payload) {
+      return {
+        username: payload.username || payload.preferred_username || payload.sub || payload.name || null,
+        role: (payload.role || payload.roles || '').toString().toUpperCase()
+      };
+    }
+    return { username: null, role: 'COMUM' };
+  }
+
+  const currentUser = getCurrentUser();
+  const isGerente = String(currentUser.role || '').toUpperCase() === 'GERENTE';
+
+  // tabs config
+  const tabsConfig = [
+    { id: 'mine', label: 'Meus Desembargos', ownerParam: 'mine' },
+    { id: 'approved', label: 'Desembargos Aprovados', status: 'APROVADO' }
+  ];
+  if (isGerente) tabsConfig.push({ id: 'analysis', label: 'Desembargos em Análise', status: 'EM ANÁLISE,REVISÃO PENDENTE' });
+
+  let activeTab = 'mine';
+  let page = 1;
+  let pageSize = parseInt(pageSizeSelect.value, 10) || 10;
+  let sortKey = null;
+  let sortDir = null;
+
+  function renderTabs() {
+    tabsContainer.innerHTML = '';
+    tabsConfig.forEach(t => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'tab';
+      btn.textContent = t.label;
+      btn.dataset.tab = t.id;
+      if (t.id === activeTab) btn.classList.add('active');
+      btn.addEventListener('click', () => {
+        activeTab = t.id;
+        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        btn.classList.add('active');
+        page = 1;
+        fetchAndRender();
       });
-      const data = await res.json();
-      if (!data.success) throw new Error(data.message || 'Erro ao buscar desembargos');
-      return data.data;
+      tabsContainer.appendChild(btn);
+    });
+    updateCurrentFilterLabel();
+  }
+
+  function updateCurrentFilterLabel() {
+    const active = tabsConfig.find(t => t.id === activeTab);
+    currentFilterLabel.textContent = active ? `${active.label}` : '';
+  }
+
+  function buildListUrl() {
+    const active = tabsConfig.find(t => t.id === activeTab);
+    const params = new URLSearchParams();
+    params.set('page', page);
+    params.set('pageSize', pageSize);
+    const q = (searchInput.value || '').trim();
+    if (q) params.set('search', q);
+    if (active && active.status) params.set('status', active.status);
+    if (active && active.ownerParam) params.set('owner', active.ownerParam);
+    if (sortKey) params.set('sortKey', sortKey);
+    if (sortDir) params.set('sortDir', sortDir);
+    return `/api/desembargos/list?${params.toString()}`;
+  }
+
+  async function fetchAndRender() {
+    try {
+      const url = buildListUrl();
+      const token = getStoredToken();
+      const res = await fetch(url, { headers: token ? { 'Authorization': `Bearer ${token}` } : {} });
+      if (!res.ok) {
+        const txt = await res.text().catch(()=>null);
+        console.error('Erro fetch list:', res.status, txt);
+        throw new Error('Erro ao buscar desembargos');
+      }
+      const payload = await res.json();
+      if (!payload.success) throw new Error(payload.message || 'Erro desconhecido');
+      const rows = payload.data || [];
+      const meta = payload.meta || { total: 0, page: 1, pageSize };
+
+      renderRows(rows);
+      renderPagination(meta);
+      summaryText.textContent = `Resultados: ${meta.total || 0}`;
+      updateCurrentFilterLabel();
+      highlightSortHeader();
     } catch (err) {
       console.error(err);
-      return [];
+      tbody.innerHTML = `<tr><td colspan="9">Erro ao carregar desembargos.</td></tr>`;
     }
   }
 
-  // renderiza tabela
-  // renderiza tabela
-function renderTable(data) {
-  tbody.innerHTML = '';
-  data.forEach(d => {
-    const clone = document.importNode(template, true);
-
-    // seta o id no <tr>
-    clone.querySelector('tr').dataset.id = d.id;
-
-    clone.querySelector('.col-termo').textContent = d.termo;
-    clone.querySelector('.col-processo').textContent = d.processo;
-    clone.querySelector('.col-sep').textContent = d.sep || '';
-    clone.querySelector('.col-edocs').textContent = d.edocs || '';
-    clone.querySelector('.col-autuado').textContent = d.autuado;
-    clone.querySelector('.col-tipo').textContent = d.tipo;
-    clone.querySelector('.col-status').textContent = d.status ? `${d.status}` : '';
-    //clone.querySelector('.col-responsavel').textContent = d.responsavel;
-    clone.querySelector('.col-data').textContent = formatDate(d.data);
-
-    const viewBtn = clone.querySelector('button[data-action="view"]');
-        const pdfBtn = clone.querySelector('button[data-action="pdf"]');
-
-        if (viewBtn) {
-          viewBtn.addEventListener('click', () => handleAction('view', d.id));
-        }
-
-        if (pdfBtn) {
-          // se status diferente de "APROVADO", desabilita o botão de PDF
-          const isAprovado = String(d.status ?? '').trim().toUpperCase() === 'APROVADO';
-          pdfBtn.disabled = !isAprovado;
-          pdfBtn.setAttribute('aria-disabled', (!isAprovado).toString());
-          pdfBtn.title = isAprovado ? 'Gerar PDF' : 'PDF disponível somente para desembargos com status "APROVADO"';
-
-          pdfBtn.addEventListener('click', () => {
-            // segurança: se, por algum motivo, estiver desabilitado, não executar
-            if (pdfBtn.disabled) return;
-            handleAction('pdf', d.id);
-          });
-        }
-
-    tbody.appendChild(clone);
-  });
-}
-
-// actions
-async function handleAction(action, id) {
-  switch(action) {
-    case 'view':
-      window.location.href = `visualizacaoDesembargo.html?id=${id}`;
-      break;
-    case 'edit':
-      alert(`Editar ID: ${id}`);
-      break;
-    case 'pdf':
-  try {
-    const token = getStoredToken();
-    if (!token) {
-      alert('Sessão expirada. Faça login novamente.');
-      window.location.href = 'login.html';
+  function renderRows(rows) {
+    tbody.innerHTML = '';
+    if (!rows || rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9">Nenhum desembargo encontrado.</td></tr>';
       return;
     }
+    rows.forEach(d => {
+      const clone = document.importNode(template, true);
+      const tr = clone.querySelector('tr');
+      tr.dataset.id = d.id;
 
-    console.log('Gerando PDF — token presente? ', !!token);
-    const response = await fetch(`/api/desembargos/${id}/pdf`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
+      clone.querySelector('.col-termo').textContent = d.termo || `${d.numero || ''} ${d.serie || ''}`.trim();
+      clone.querySelector('.col-processo').textContent = d.processo || '';
+      clone.querySelector('.col-sep').textContent = d.sep || '';
+      clone.querySelector('.col-edocs').textContent = d.edocs || '';
+      clone.querySelector('.col-autuado').textContent = d.autuado || '';
+      clone.querySelector('.col-tipo').textContent = d.tipo || '';
+      clone.querySelector('.col-status').textContent = d.status || '';
+      clone.querySelector('.col-data').textContent = (d.data) ? new Date(d.data).toLocaleDateString('pt-BR') : '';
+
+      const viewBtn = clone.querySelector('button[data-action="view"]');
+      const pdfBtn = clone.querySelector('button[data-action="pdf"]');
+      const editBtn = clone.querySelector('button[data-action="edit"]');
+
+      if (viewBtn) viewBtn.addEventListener('click', () => window.location.href = `visualizacaoDesembargo.html?id=${d.id}`);
+      if (pdfBtn) {
+        const isAprovado = String(d.status ?? '').trim().toUpperCase() === 'APROVADO';
+        pdfBtn.disabled = !isAprovado;
+        pdfBtn.setAttribute('aria-disabled', (!isAprovado).toString());
+        pdfBtn.title = isAprovado ? 'Gerar PDF' : 'PDF disponível somente para desembargos com status "APROVADO"';
+        pdfBtn.addEventListener('click', async () => {
+          if (!isAprovado) return;
+          try {
+            const token = getStoredToken();
+            const resp = await fetch(`/api/desembargos/${d.id}/pdf`, { headers: token ? { 'Authorization': `Bearer ${token}` } : {}});
+            if (!resp.ok) throw new Error('Erro ao gerar PDF');
+            const blob = await resp.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `termo_desembargo_${d.id}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+          } catch (err) {
+            console.error(err);
+            alert('Não foi possível gerar o PDF.');
+          }
+        });
+      }
+      if (editBtn) {
+        const isOwner = currentUser.username && String(d.responsavel || '').toLowerCase() === String(currentUser.username).toLowerCase();
+        if (isGerente || isOwner) {
+          editBtn.style.display = '';
+          editBtn.addEventListener('click', () => window.location.href = `formularioDesembargos.html?id=${d.id}`);
+        } else {
+          editBtn.style.display = 'none';
+        }
+      }
+
+      tbody.appendChild(clone);
+    });
+  }
+
+  function renderPagination(meta) {
+    paginationControls.innerHTML = '';
+    const { total = 0, page: current = 1, pageSize: ps = pageSize, totalPages = 1 } = meta;
+
+    const prev = document.createElement('button');
+    prev.className = 'page-btn';
+    prev.textContent = 'Anterior';
+    if (current <= 1) prev.classList.add('disabled');
+    prev.addEventListener('click', () => {
+      if (current > 1) { page = current - 1; fetchAndRender(); }
+    });
+    paginationControls.appendChild(prev);
+
+    // Range pages
+    const maxLinks = 7;
+    let startPage = Math.max(1, current - Math.floor(maxLinks / 2));
+    let endPage = Math.min(totalPages, startPage + maxLinks - 1);
+    if (endPage - startPage + 1 < maxLinks) {
+      startPage = Math.max(1, endPage - maxLinks + 1);
+    }
+
+    for (let p = startPage; p <= endPage; p++) {
+      const btn = document.createElement('button');
+      btn.className = 'page-btn';
+      if (p === current) btn.style.fontWeight = '700';
+      btn.textContent = p;
+      btn.addEventListener('click', () => { page = p; fetchAndRender(); });
+      paginationControls.appendChild(btn);
+    }
+
+    const next = document.createElement('button');
+    next.className = 'page-btn';
+    next.textContent = 'Próximo';
+    if (current >= totalPages) next.classList.add('disabled');
+    next.addEventListener('click', () => {
+      if (current < totalPages) { page = current + 1; fetchAndRender(); }
+    });
+    paginationControls.appendChild(next);
+
+    const info = document.createElement('div');
+    info.className = 'small-muted';
+    info.style.marginLeft = '12px';
+    const startIndex = (current - 1) * ps + 1;
+    const endIndex = Math.min(total, current * ps);
+    info.textContent = `Mostrando ${startIndex}-${endIndex} de ${total}`;
+    paginationControls.appendChild(info);
+  }
+
+  // sorting headers
+  function highlightSortHeader() {
+    document.querySelectorAll('th.sortable').forEach(th => {
+      th.classList.remove('asc','desc');
+      const key = th.dataset.key;
+      if (key && key === sortKey) {
+        th.classList.add(sortDir === 'asc' ? 'asc' : 'desc');
       }
     });
+  }
 
-    console.log('Resposta do servidor ao pedir PDF:', response.status, response.statusText);
-
-    if (response.status === 401) {
-      alert('Não autorizado. Sua sessão expirou ou não tem permissão.');
-      // opcional: logout centralizado
-      if (window.Auth && typeof Auth.logout === 'function') Auth.logout(true);
-      else {
-        localStorage.removeItem('sessionToken');
-        localStorage.removeItem('token');
-        window.location.href = 'login.html';
+  document.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.key;
+      if (!key) return;
+      if (sortKey === key) {
+        if (!sortDir) sortDir = 'asc';
+        else if (sortDir === 'asc') sortDir = 'desc';
+        else sortDir = null;
+      } else {
+        sortKey = key;
+        sortDir = 'asc';
       }
-      return;
-    }
+      page = 1;
+      fetchAndRender();
+    });
+  });
 
-    if (!response.ok) {
-      const txt = await response.text().catch(()=>null);
-      console.error('Erro ao gerar PDF — body:', txt);
-      throw new Error("Erro ao gerar PDF");
-    }
-
-    // pega o blob e cria um link para download
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `termo_desembargo_${id}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
-
-  } catch (err) {
-    console.error(err);
-    alert("Não foi possível gerar o PDF deste desembargo.");
-  }
-  break;
-
-  }
-}
-
-
-  // busca inicial
-  renderTable(await fetchDesembargos());
-
-  // debounce helper
-  function debounce(fn, delay) {
-    let timeout;
+  function debounce(fn, delay = 300) {
+    let t;
     return (...args) => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => fn(...args), delay);
+      clearTimeout(t);
+      t = setTimeout(() => fn(...args), delay);
     };
   }
 
-  // live search
-  searchInput.addEventListener('input', debounce(async () => {
-    const term = searchInput.value.trim();
-    const resultados = await fetchDesembargos(term);
-    renderTable(resultados);
-  }, 300));
+  searchInput.addEventListener('input', debounce(() => { page = 1; fetchAndRender(); }, 300));
+  pageSizeSelect.addEventListener('change', () => {
+    pageSize = parseInt(pageSizeSelect.value, 10) || 10;
+    page = 1;
+    fetchAndRender();
+  });
+
+  // inicial
+  renderTabs();
+  fetchAndRender();
+
 });
-
-// Supondo que você tem uma tabela/lista com botões ou links "Visualizar"
-function abrirDesembargo(id) {
-  // Guarda o ID do desembargo no sessionStorage
-  sessionStorage.setItem("desembargoId", id);
-  
-  // Redireciona para a página de visualização
-  window.location.href = "visualizacaoDesembargo.html";
-}
-

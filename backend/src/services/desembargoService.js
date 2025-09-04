@@ -1,3 +1,4 @@
+// backend/src/services/desembargoService.js
 const db = require("../config/db");
 const fs = require("fs");
 const path = require("path");
@@ -26,9 +27,99 @@ async function inserirDesembargo({ numero, serie, nomeAutuado, area, processoSim
   return result.rows[0];
 }
 
-// listar
-async function listarDesembargos () {
-  const query = `
+// listar com paginação/filtragem/ordenação server-side
+async function listarDesembargos(params = {}) {
+  const {
+    page = 1,
+    pageSize = 10,
+    search = '',
+    status = '',
+    owner = '',
+    sortKey = '',
+    sortDir = '',
+    requestingUser = null
+  } = params;
+
+  const offset = (Math.max(1, parseInt(page, 10)) - 1) * Math.max(1, parseInt(pageSize, 10));
+  const limit = Math.max(1, parseInt(pageSize, 10));
+
+  const where = [];
+  const values = [];
+  let idx = 1;
+
+  // Busca global (protege colunas não-texto com cast)
+  if (search && String(search).trim() !== '') {
+    const term = `%${String(search).trim()}%`;
+    // castamos explicitamente colunas que podem ser numéricas para text.
+    where.push(`(
+      (COALESCE(CONCAT(COALESCE(NUMERO_EMBARGO::text,''),' ',COALESCE(SERIE_EMBARGO,'')), '') ILIKE $${idx})
+      OR (COALESCE(PROCESSO_SIMLAM, '') ILIKE $${idx})
+      OR (COALESCE(NUMERO_SEP::text, '') ILIKE $${idx})
+      OR (COALESCE(NUMERO_EDOCS::text, '') ILIKE $${idx})
+      OR (COALESCE(NOME_AUTUADO, '') ILIKE $${idx})
+      OR (COALESCE(TIPO_DESEMBARGO, '') ILIKE $${idx})
+      OR (COALESCE(RESPONSAVEL_DESEMBARGO, '') ILIKE $${idx})
+      OR (TO_CHAR(DATA_DESEMBARGO,'DD/MM/YYYY') ILIKE $${idx})
+    )`);
+    values.push(term);
+    idx++;
+  }
+
+  // status filter (comma separated)
+  if (status && String(status).trim() !== '') {
+    const statuses = String(status).split(',').map(s => s.trim()).filter(Boolean);
+    if (statuses.length > 0) {
+      const placeholders = statuses.map(s => {
+        values.push(s);
+        return `$${idx++}`;
+      }).join(', ');
+      where.push(`STATUS IN (${placeholders})`);
+    }
+  }
+
+  // owner filter: if owner === 'mine', use requestingUser.username, else owner can be username string
+  if (owner && String(owner).trim() !== '') {
+    if (String(owner).toLowerCase() === 'mine') {
+      if (!requestingUser || !requestingUser.username) {
+        // sem usuário autenticado: não retorna nada
+        where.push(`1=0`);
+      } else {
+        // case-insensitive exact match OR contains (para cobrir formatos diferentes)
+        values.push(requestingUser.username);
+        where.push(`(LOWER(COALESCE(RESPONSAVEL_DESEMBARGO,'')) = LOWER($${idx}) OR LOWER(COALESCE(RESPONSAVEL_DESEMBARGO,'')) LIKE '%' || LOWER($${idx}) || '%')`);
+        idx++;
+      }
+    } else {
+      values.push(owner);
+      where.push(`(LOWER(COALESCE(RESPONSAVEL_DESEMBARGO,'')) = LOWER($${idx}) OR LOWER(COALESCE(RESPONSAVEL_DESEMBARGO,'')) LIKE '%' || LOWER($${idx}) || '%')`);
+      idx++;
+    }
+  }
+
+  // monta WHERE final
+  const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+  // ordenação: só permite chaves conhecidas para evitar SQL injection
+  const sortableColumns = {
+    termo: "NUMERO_EMBARGO",
+    processo: "PROCESSO_SIMLAM",
+    sep: "NUMERO_SEP",
+    edocs: "NUMERO_EDOCS",
+    autuado: "NOME_AUTUADO",
+    tipo: "TIPO_DESEMBARGO",
+    status: "STATUS",
+    data: "DATA_DESEMBARGO"
+  };
+
+  let orderClause = 'ORDER BY DATA_DESEMBARGO DESC';
+  if (sortKey && sortableColumns[sortKey]) {
+    const col = sortableColumns[sortKey];
+    const dir = (String(sortDir || '').toUpperCase() === 'ASC') ? 'ASC' : 'DESC';
+    orderClause = `ORDER BY ${col} ${dir}`;
+  }
+
+  // query principal com LIMIT/OFFSET
+  const listQuery = `
     SELECT 
       ID as id,
       CONCAT(NUMERO_EMBARGO, ' ', SERIE_EMBARGO) AS termo,
@@ -41,10 +132,26 @@ async function listarDesembargos () {
       RESPONSAVEL_DESEMBARGO AS responsavel,
       DATA_DESEMBARGO AS data
     FROM desembargos
-    ORDER BY DATA_DESEMBARGO DESC
+    ${whereClause}
+    ${orderClause}
+    LIMIT $${idx++} OFFSET $${idx++}
   `;
-  const { rows } = await db.query(query);
-  return rows;
+
+  values.push(limit, offset);
+
+  const countQuery = `
+    SELECT COUNT(*)::int AS total
+    FROM desembargos
+    ${whereClause}
+  `;
+
+  // Execute count e list usando db.query (compatível com sua implementação)
+  const countParams = values.slice(0, values.length - 2);
+  const countResult = await db.query(countQuery, countParams);
+  const total = countResult.rows[0] ? parseInt(countResult.rows[0].total, 10) : 0;
+
+  const listResult = await db.query(listQuery, values);
+  return { rows: listResult.rows || [], total };
 }
 
 // buscar por ID
