@@ -2,8 +2,17 @@ const pool = require('../config/db.js');
 
 exports.findByNumero = async (numero) => {
   const result = await pool.query(
-    'SELECT * FROM embargos WHERE numero = $1',
+    'SELECT n_iuf_emb, northing, easting, sep_edocs, processo FROM embargos WHERE n_iuf_emb = $1',
     [numero]
+  );
+  return result.rows[0] || null;
+};
+
+exports.findByProcesso = async (processo) => {
+  // procura pelo campo processo (ajuste o nome da coluna se for outro no seu schema)
+  const result = await pool.query(
+    `SELECT n_iuf_emb, northing, easting, sep_edocs, processo FROM embargos WHERE processo = $1 LIMIT 1`,
+    [processo]
   );
   return result.rows[0] || null;
 };

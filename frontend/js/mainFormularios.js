@@ -104,7 +104,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       } else if (campo === 'dataDesembargo' && data.dataDesembargo) {
         document.getElementById('dataDesembargo').value = new Date(data.dataDesembargo).toISOString().split("T")[0];
-      } else {
+      } 
+      else if (campo === 'dataDesembargo' && !data.dataDesembargo) {
+        document.getElementById('dataDesembargo').value = new Date().toISOString().split('T')[0];
+      } 
+      else {
         const input = document.getElementById(campo);
         if (input) input.value = data[campo] ?? '';
       }
@@ -209,43 +213,83 @@ document.addEventListener('DOMContentLoaded', () => {
   const dataEl = document.getElementById('dataDesembargo');
   if (dataEl) dataEl.value = new Date().toISOString().split('T')[0];
 
-  // ------------------ BUSCA POR PROCESSO SIMLAM (igual ao original, preservado) ------------------
-  const btnBuscarProcesso = document.getElementById('btnBuscarProcesso');
-  if (btnBuscarProcesso) {
-    btnBuscarProcesso.addEventListener('click', async () => {
-      const proc = document.getElementById('processoSimlam').value.trim();
-      if (!proc) return;
+// ------------------ BUSCA POR PROCESSO (usa tabela embargos) ------------------
+const btnBuscarProcesso = document.getElementById('btnBuscarProcesso');
+if (btnBuscarProcesso) {
+  btnBuscarProcesso.addEventListener('click', async () => {
+    const proc = document.getElementById('processoSimlam').value.trim();
+    if (!proc) return;
 
-      try {
-        const res = await fetch(`/api/desembargos/processo?valor=${encodeURIComponent(proc)}`, {
-          method: 'GET',
-          headers: getAuthHeaders()
-        });
+    try {
+      // novo endpoint: /api/embargos/processo?valor=...
+      const res = await fetch(`/api/embargos/processo?valor=${encodeURIComponent(proc)}`, {
+        method: 'GET',
+        headers: getAuthHeaders()
+      });
 
-        const data = await res.json();
+      const data = await res.json();
 
-        if (res.ok) {
-          const msgEl = document.getElementById("mensagem-busca");
-          if (msgEl) { msgEl.textContent = "Processo encontrado!"; msgEl.classList.add("sucesso"); }
-          preencherFormulario(data);
+      if (res.ok && data) {
+        const msgEl = document.getElementById("mensagem-busca");
+        if (msgEl) { msgEl.textContent = "Registro de embargo encontrado!"; msgEl.classList.remove('erro'); msgEl.classList.add("sucesso"); }
 
-          // Validação backend após preencher
-          const formData = obterDadosFormulario();
-          await validarFormularioBackend(formData);
+        // mapear campos do registro de embargo para o formato esperado pelo preencherFormulario
+        const mapped = {
+          // n_iuf_emb é o número do embargo (se o DB usar outro nome, aproveite ambos)
+          numero: data.n_iuf_emb || data.numero || '',
+          serie: data.serie || '',
 
-          //console.log("Processo:", data);
-        } else {
-          const msgEl = document.getElementById("mensagem-busca");
-          if (msgEl) { msgEl.textContent = data.message || "Não encontrado"; msgEl.classList.add("erro"); }
+          // processo
+          processoSimlam: data.processo || data.processo_simlam || proc,
+
+          // sep_edocs pode conter apenas dígitos (SEP) ou ter '-' (e-Docs)
+          numeroSEP: null,
+          numeroEdocs: null,
+
+          // nome/autuado
+          nomeAutuado: data.nome_autuado || data.autuado || data.nome || '',
+
+          // área (se existir)
+          area: (data.area_desembargada ?? data.area) ?? '',
+
+          // coordenadas (northing = Y, easting = X)
+          coordenadaX: (data.easting ?? data.easting_m ?? data.coordenada_x ?? data.coordenadaX ?? '') ,
+          coordenadaY: (data.northing ?? data.northing_m ?? data.coordenada_y ?? data.coordenadaY ?? ''),
+
+          descricao: data.descricao || data.obs || ''
+        };
+
+        // se veio coluna sep_edocs, distribuir entre SEP ou eDocs
+        if (data.sep_edocs) {
+          const seped = String(data.sep_edocs);
+          if (seped.includes('-')) mapped.numeroEdocs = seped;
+          else mapped.numeroSEP = seped;
+        } else if (data.sep) {
+          mapped.numeroSEP = String(data.sep);
+        } else if (data.numero_edocs) {
+          mapped.numeroEdocs = String(data.numero_edocs);
         }
 
-      } catch (err) {
-        console.error("Erro na busca:", err);
+        // Preenche o formulário usando sua função existente
+        preencherFormulario(mapped);
+
+        // Validação backend após preencher
+        const formData = obterDadosFormulario();
+        await validarFormularioBackend(formData);
+
+      } else {
         const msgEl = document.getElementById("mensagem-busca");
-        if (msgEl) { msgEl.textContent = "Erro ao consultar o servidor"; msgEl.classList.add("erro"); }
+        if (msgEl) { msgEl.textContent = data.message || "Não encontrado"; msgEl.classList.remove('sucesso'); msgEl.classList.add("erro"); }
       }
-    });
-  }
+
+    } catch (err) {
+      console.error("Erro na busca (embargos):", err);
+      const msgEl = document.getElementById("mensagem-busca");
+      if (msgEl) { msgEl.textContent = "Erro ao consultar o servidor"; msgEl.classList.remove('sucesso'); msgEl.classList.add("erro"); }
+    }
+  });
+}
+
 
   // ------------------ GERAR PRÉVIA (reaproveitado, sem salvar arquivo) ------------------
   function gerarPreviewPDFDoc(previewObj) {
