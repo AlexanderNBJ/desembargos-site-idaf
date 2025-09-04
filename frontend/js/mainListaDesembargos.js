@@ -1,4 +1,4 @@
-// frontend/js/mainListaDesembargos.js (versão server-side pagination)
+// frontend/js/mainListaDesembargos.js (badge integrada no final de renderRows)
 document.addEventListener('DOMContentLoaded', async () => {
   const tbody = document.getElementById('desembargos-list');
   const template = document.getElementById('row-template').content;
@@ -148,6 +148,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       clone.querySelector('.col-edocs').textContent = d.edocs || '';
       clone.querySelector('.col-autuado').textContent = d.autuado || '';
       clone.querySelector('.col-tipo').textContent = d.tipo || '';
+      // ensure status cell is plain text first (we'll decorate after DOM insertion)
       clone.querySelector('.col-status').textContent = d.status || '';
       clone.querySelector('.col-data').textContent = (d.data) ? new Date(d.data).toLocaleDateString('pt-BR') : '';
 
@@ -194,6 +195,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       tbody.appendChild(clone);
     });
+
+    // Depois que todas as linhas foram inseridas no DOM, decora os status como badges
+    decorateStatusBadges();
   }
 
   function renderPagination(meta) {
@@ -290,5 +294,37 @@ document.addEventListener('DOMContentLoaded', async () => {
   // inicial
   renderTabs();
   fetchAndRender();
+
+  /* ===== função que cria badges de status - sempre chamada APÓS renderRows ===== */
+  function decorateStatusBadges(){
+    // normaliza e remove diacríticos (acentos)
+    const normalize = s => String(s||'').toUpperCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').trim();
+    const map = {
+      'APROVADO': 'status-aprovado',
+      'APROVADOS': 'status-aprovado',
+      'EM ANALISE': 'status-em-analise',
+      'EM ANALISES': 'status-em-analise',
+      'REVISAO PENDENTE': 'status-revisao-pendente',
+      'REVISAO PENDENTES': 'status-revisao-pendente',
+      'REVISAO PENDENTE': 'status-revisao-pendente',
+      'REVISÃO PENDENTE': 'status-revisao-pendente',
+      'REJEITADO': 'status-rejeitado',
+      'REJEITADOS': 'status-rejeitado'
+    };
+
+    document.querySelectorAll('#desembargos-list .col-status').forEach(td => {
+      const raw = (td.textContent || '').trim();
+      if (!raw) return;
+      // se já tem badge, skip
+      if (td.querySelector('.status-badge')) return;
+      const key = normalize(raw.replace(/\s+/g,' '));
+      const cls = map[key] || null;
+      const span = document.createElement('span');
+      span.className = 'status-badge' + (cls ? ` ${cls}` : '');
+      span.textContent = raw;
+      td.innerHTML = '';
+      td.appendChild(span);
+    });
+  }
 
 });
