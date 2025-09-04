@@ -1,4 +1,6 @@
 const db = require("../config/db");
+const fs = require("fs");
+const path = require("path");
 const { jsPDF } = require("jspdf");
 
 // inserir
@@ -92,16 +94,20 @@ async function updateDesembargo(id, dados) {
   return result.rows[0];
 }
 
-
 async function gerarPdfDesembargo(desembargo) {
   // desembargo já vem como objeto do banco
   const doc = new jsPDF({ unit: "pt", format: "a4" });
+  const imgPath = path.join(__dirname, "../../../frontend/assets/logos.png");
+  const imageData = fs.readFileSync(imgPath).toString("base64");
+
   let y = 40;
   const primaryColor = "#17903f"; // verde do site
   const secondaryColor = "#444";   // cinza
   const lineHeight = 18;
 
   // ================= Cabeçalho =================
+  doc.addImage("data:image/png;base64,"+imageData,"PNG", 30, 20, 540, 90);
+  y += 100;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.setTextColor(primaryColor);
@@ -150,11 +156,12 @@ async function gerarPdfDesembargo(desembargo) {
   const valueX = 250; 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.setTextColor(primaryColor);
+  
   infoFields.forEach(item => {
     const label = String(item.label || "");
     const value = String(item.value || "-");
 
+    //doc.setTextColor(primaryColor);
     doc.setFont("helvetica", "bold");
     doc.text(label + ":", labelX, y);
     doc.setFont("helvetica", "normal");
