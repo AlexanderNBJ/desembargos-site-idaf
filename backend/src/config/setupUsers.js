@@ -13,26 +13,26 @@ async function runMigration() {
   console.log('Migration executed.');
 }
 
-async function upsertUser(username, password, role) {
+async function upsertUser(username, password, role, name) {
   const hash = await bcrypt.hash(password, 10);
   const q = `
-    INSERT INTO users (username, password_hash, role)
-    VALUES ($1, $2, $3)
+    INSERT INTO users (username, password_hash, role, name)
+    VALUES ($1, $2, $3, $4)
     ON CONFLICT (username) DO UPDATE
       SET password_hash = EXCLUDED.password_hash,
           role = EXCLUDED.role
     RETURNING id;
   `;
-  const { rows } = await db.query(q, [username, hash, role]);
+  const { rows } = await db.query(q, [username, hash, role, name]);
   return rows[0].id;
 }
 
 (async () => {
   try {
     await runMigration();
-    const id1 = await upsertUser('gerente@example.com', 'gerente123', 'GERENTE');
-    const id2 = await upsertUser('comum1@example.com', 'comum123', 'COMUM');
-    const id3 = await upsertUser('comum2@example.com', 'comum123', 'COMUM');
+    const id1 = await upsertUser('gerente@example.com', 'gerente123', 'GERENTE', 'Alexander Gerente', 'Gerente');
+    const id2 = await upsertUser('comum1@example.com', 'comum123', 'COMUM', 'Alexander Comum1', 'Secretário');
+    const id3 = await upsertUser('comum2@example.com', 'comum123', 'COMUM', 'Alexander Comum2', 'Secretário');
     console.log('Users created/updated:', id1, id2, id3);
     process.exit(0);
   } catch (err) {
