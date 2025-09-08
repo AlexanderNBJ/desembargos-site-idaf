@@ -1,4 +1,5 @@
 // src/controllers/formController.js
+const audit = require('../utils/auditLogger');
 const { formSchema } = require('../validators/formValidator');
 const desembargoService  = require('../services/desembargoService');
 
@@ -60,6 +61,14 @@ async function criarDesembargo(req, res) {
 
     // 3️⃣ Insere no banco
     const novo = await desembargoService.inserirDesembargo(refatorado);
+
+    await audit.logAction({
+      req,
+      action: 'desembargo.create',
+      details: {
+        id: novo.id
+      }
+    });
 
     return res.status(201).json({ success: true, data: novo });
   } catch (err) {

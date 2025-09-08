@@ -1,14 +1,23 @@
-// backend/src/controllers/desembargoController.js
+const audit = require('../utils/auditLogger');
 const { formSchema } = require("../validators/formValidator");
 const desembargoService = require("../services/desembargoService");
 
-// inserir (mantido igual)
 exports.inserir = async (req, res) => {
   try {
     const { error, value } = formSchema.validate(req.body, { allowUnknown: true });
     if (error) return res.status(400).json({ error: error.details[0].message });
 
     const novoDesembargo = await desembargoService.inserirDesembargo(value);
+
+    await audit.logAction({
+      req,
+      action: 'desembargo.create',
+      details: {
+        id: novoDesembargo.id
+      }
+    });
+
+
     res.status(201).json({ success: true, data: novoDesembargo });
   } catch (err) {
     console.error("Erro ao inserir desembargo:", err);
@@ -128,9 +137,27 @@ exports.updateDesembargo = async (req, res) => {
         value.responsavelDesembargo = req.user.username || req.user.name || req.user.id || null;
       }
     }
-
+    const antes = await desembargoService.getDesembargoById(id);
     const updated = await desembargoService.updateDesembargo(id, value);
+
+    let changed = {};
+    if (antes && updated) {
+      for (const campo of Object.keys(value)) {
+        const antesVal = antes[campo];
+        const depoisVal = updated[campo];
+        if (antesVal !== depoisVal) {
+          changed[campo] = { antes: antesVal, depois: depoisVal };
+        }
+      }
+    }
+
     if (!updated) return res.status(404).json({ error: "Desembargo não encontrado" });
+
+    await audit.logAction({
+      req,
+      action: 'desembargo.update',
+      details: { id, changed }
+    });
 
     res.json({ success: true, data: updated });
   } catch (err) {
@@ -153,10 +180,17 @@ exports.gerarPdf = async (req, res) => {
     // gera PDF usando service
     const pdfBuffer = await desembargoService.gerarPdfDesembargo(desembargo);
 
+    await audit.logAction({
+      req,
+      action: 'desembargo.generate_pdf',
+      details: { id }
+    });
+
     // envia PDF para o navegador
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `inline; filename=desembargo_${id}.pdf`);
     res.send(Buffer.from(pdfBuffer));
+    
   } catch (err) {
     console.error("Erro ao gerar PDF:", err);
     res.status(500).json({ error: "Erro ao gerar PDF" });

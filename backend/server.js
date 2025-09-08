@@ -13,6 +13,8 @@ dotenv.config();
 
 const app = express();
 
+app.set('trust proxy', true);
+
 // middlewares
 app.use(cors());
 app.use(express.json());
@@ -33,6 +35,7 @@ app.use('/auth', authRoutes);
 app.get('/api', (req, res) => {
   res.json({ message: 'API funcionando' });
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
