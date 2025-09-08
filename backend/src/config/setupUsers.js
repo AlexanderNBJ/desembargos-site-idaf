@@ -13,17 +13,17 @@ async function runMigration() {
   console.log('Migration executed.');
 }
 
-async function upsertUser(username, password, role, name) {
+async function upsertUser(username, password, role, name, position) {
   const hash = await bcrypt.hash(password, 10);
   const q = `
-    INSERT INTO users (username, password_hash, role, name)
-    VALUES ($1, $2, $3, $4)
+    INSERT INTO users (username, password_hash, role, name, position)
+    VALUES ($1, $2, $3, $4, $5)
     ON CONFLICT (username) DO UPDATE
       SET password_hash = EXCLUDED.password_hash,
           role = EXCLUDED.role
     RETURNING id;
   `;
-  const { rows } = await db.query(q, [username, hash, role, name]);
+  const { rows } = await db.query(q, [username, hash, role, name, position]);
   return rows[0].id;
 }
 

@@ -3,6 +3,7 @@ const db = require("../config/db");
 const fs = require("fs");
 const path = require("path");
 const { jsPDF } = require("jspdf");
+const desembargoTable = 'desembargos_test';
 
 // inserir
 async function inserirDesembargo({ numero, serie, nomeAutuado, area, processoSimlam,
@@ -10,7 +11,7 @@ async function inserirDesembargo({ numero, serie, nomeAutuado, area, processoSim
                                   dataDesembargo, coordenadaX, coordenadaY, descricao, responsavelDesembargo }) {
 
   const query = `
-    INSERT INTO desembargos(
+    INSERT INTO ${desembargoTable}(
         NUMERO_EMBARGO, SERIE_EMBARGO, NOME_AUTUADO, AREA_DESEMBARGADA, PROCESSO_SIMLAM,
         NUMERO_SEP, NUMERO_EDOCS, TIPO_DESEMBARGO, DATA_DESEMBARGO, COORDENADA_X, COORDENADA_Y,
         DESCRICAO, STATUS, RESPONSAVEL_DESEMBARGO
@@ -131,7 +132,7 @@ async function listarDesembargos(params = {}) {
       STATUS AS status,
       RESPONSAVEL_DESEMBARGO AS responsavel,
       DATA_DESEMBARGO AS data
-    FROM desembargos
+    FROM ${desembargoTable}
     ${whereClause}
     ${orderClause}
     LIMIT $${idx++} OFFSET $${idx++}
@@ -141,7 +142,7 @@ async function listarDesembargos(params = {}) {
 
   const countQuery = `
     SELECT COUNT(*)::int AS total
-    FROM desembargos
+    FROM ${desembargoTable}
     ${whereClause}
   `;
 
@@ -160,7 +161,7 @@ async function getDesembargoById(id) {
     SELECT d.*,
            u.name    AS aprovador_name,
            u.position AS aprovador_position
-    FROM desembargos d
+    FROM ${desembargoTable} d
     LEFT JOIN users u ON d.aprovado_por = u.username
     WHERE d.id = $1
     LIMIT 1
@@ -173,7 +174,7 @@ async function getDesembargoById(id) {
 // buscar por SIMLAM
 async function getDesembargoByProcesso(processo) {
   const result = await db.query(
-    "SELECT * FROM desembargos WHERE processo_simlam = $1",
+    `SELECT * FROM ${desembargoTable} WHERE processo_simlam = $1`,
     [processo]
   );
   return result.rows[0];
@@ -187,7 +188,7 @@ async function updateDesembargo(id, dados) {
   } = dados;
 
   const result = await db.query(
-    `UPDATE desembargos
+    `UPDATE ${desembargoTable}
      SET numero_embargo = $1, serie_embargo = $2, processo_simlam = $3, numero_sep = $4,
          numero_edocs = $5, coordenada_x = $6, coordenada_y = $7, nome_autuado = $8,
          area_desembargada = $9, tipo_desembargo = $10, data_desembargo = $11::date, descricao = $12,
