@@ -100,7 +100,9 @@ table.desembargos {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0 12px;
-  table-layout: fixed;
+  /* trocar para auto para permitir colunas responsivas conforme conteúdo,
+     com min-widths evitando colapso em textos maiores */
+  table-layout: auto;
   min-width: 980px;
 }
 
@@ -137,18 +139,28 @@ tbody td {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  box-sizing: border-box;
 }
 
-/* columns (harmonizadas) */
-.col-termo        { width: 5%; text-align:center; font-weight:800; color:var(--green-dark); }
-.col-processo     { width: 8%; text-align:center; }
-.col-sep          { width: 8%; text-align:center; color:var(--muted); }
-.col-edocs        { width: 8%; text-align:center; color:var(--muted); }
-.col-autuado      { width: 18%; text-align:left; font-weight:600; }
-.col-tipo         { width: 8%; text-align:left; color:var(--muted); text-transform:uppercase; font-size:12px; }
-.col-status       { width: 100%; text-align:center; }
-.col-data         { width: 7%; text-align:center; color:var(--muted); }
-.col-acoes        { width: 4%; text-align:center; }
+/* columns (harmonizadas) -- ajustadas para dar mais folga ao STATUS */
+.col-termo        { width: 10%;  min-width: 64px;  text-align:center; font-weight:800; color:var(--green-dark); }
+.col-processo     { width:10%;  min-width: 96px;  text-align:center; }
+.col-sep          { width: 10%;  min-width: 80px;  text-align:center; color:var(--muted); }
+.col-edocs        { width: 10%;  min-width: 80px;  text-align:center; color:var(--muted); }
+.col-autuado      { width:30%;  min-width:220px;  text-align:left; font-weight:600; }
+.col-tipo         { width: 8%;  min-width: 80px;  text-align:left; color:var(--muted); text-transform:uppercase; font-size:12px; }
+.col-status {
+  width: 10%;
+  min-width: 180px;    /* aumentar se necessário */
+  text-align: center;
+  /* permitir que o conteúdo da célula quebre se preciso */
+  white-space: normal;
+  padding: 12px 8px;
+  box-sizing: border-box;
+}
+.col-data         { width: 7%;  min-width: 72px;  text-align:center; color:var(--muted); }
+.col-acoes        { width: 5%;  min-width: 60px;  text-align:center; }
+
 
 /* actions */
 .actions{ display:flex; gap:10px; justify-content:center; align-items:center; }
@@ -163,17 +175,28 @@ tbody td {
 /* STATUS BADGES */
 .col-status { display:flex; justify-content:center; align-items:center; }
 .status-badge {
-  display:inline-block;
-  padding:6px 10px;
-  border-radius:999px;
-  font-weight:800;
-  font-size:12px;
-  letter-spacing:0.4px;
-  text-transform:uppercase;
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
   color: #144a2b;
   background: linear-gradient(180deg, rgba(16,168,74,0.08), rgba(16,168,74,0.04));
   border: 1px solid rgba(16,168,74,0.12);
+
+  /* mudanças importantes */
+  white-space: normal;                 /* permite quebra de linha dentro do badge */
+  max-width: calc(100% - 8px);        /* não ultrapassar a célula */
+  overflow: hidden;
+  text-overflow: clip;                /* sem elipse aqui — preferimos quebra */
+  line-height: 1.1;
+  box-sizing: border-box;
+  vertical-align: middle;
+  word-break: break-word;             /* garante quebra em palavras longas */
 }
+
 .status-aprovado { color: #0b4829; background: linear-gradient(180deg,#e9f8ee,#f6fff9); border-color:#bfe7c7; }
 .status-em-analise { color: #806600; background: linear-gradient(180deg,#fffbe7,#fffdf2); border-color:#f2e6a8; }
 .status-revisao-pendente { color: #6a3b00; background: linear-gradient(180deg,#fff3e6,#fffbf5); border-color:#f6d6a8; }
@@ -230,3 +253,83 @@ tbody td {
   .search-wrapper { display:none; }
   th, td { font-size:13px; }
 }
+
+/* sorting visual indicators */
+thead th.sortable {
+  cursor: pointer;
+  position: relative;
+  padding-right: 32px; /* espaço para o ícone */
+  user-select: none;
+}
+
+thead th.sortable::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 11px;
+  opacity: 0.55;
+  transition: opacity .12s ease, transform .12s ease;
+  pointer-events: none;
+}
+
+/* arrows */
+thead th.sortable.asc::after  { content: '▲'; transform: translateY(-50%) translateY(-1px); opacity: 0.95; }
+thead th.sortable.desc::after { content: '▼'; transform: translateY(-50%) translateY(1px); opacity: 0.95; }
+
+/* visual emphasis on active sort */
+thead th.sortable.active-sort { color: var(--green-dark); }
+thead th.sortable:focus { outline: 2px solid rgba(16,168,74,0.14); outline-offset: 2px; }
+
+/* =========================
+   FIX RESPONSIVO PARA TABELA
+   ========================= */
+
+/* permite scroll horizontal apenas no card da tabela (não na página inteira) */
+.table-card {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch; /* scroll suave em mobile */
+  padding-bottom: 6px; /* evita que a sombra/padding esconda a barra de scroll */
+}
+
+/* garante que a tabela não force a página inteira a crescer */
+table.desembargos {
+  width: 100%;
+  table-layout: auto; /* mantemos auto para desktops */
+  min-width: 720px;   /* valor seguro para a maioria das telas; ajustável */
+}
+
+/* reduz um pouco os min-widths (foco em telas menores) */
+.col-termo{ min-width:60px; }
+.col-processo{ min-width:80px; }
+.col-sep{ min-width:70px; }
+.col-edocs{ min-width:80px; }
+.col-autuado{ min-width:180px; }
+.col-tipo{ min-width:78px; }
+.col-status{ min-width:140px; }
+.col-data{ min-width:70px; }
+.col-acoes{ min-width:60px; }
+
+/* ---- breakpoints ---- */
+/* para telas estreitas, permitir table-layout: fixed (ajusta melhor colunas) e reduzir min-widths */
+@media (max-width: 1200px) {
+  table.desembargos { table-layout: fixed; min-width: 640px; }
+  .col-autuado { min-width: 150px; }
+  .col-status  { min-width: 140px; }
+}
+
+/* em telas bem pequenas (mobile), escondemos colunas menos importantes e deixamos o status legível */
+@media (max-width: 760px) {
+  table.desembargos { min-width: 520px; }
+  .col-sep, .col-edocs, .col-tipo, .col-data { display: none; }
+  tbody td { white-space: normal; }     /* permitir quebra de texto nas células */
+  .col-status { display: table-cell; min-width: 120px; }
+}
+
+/* garante que o conteúdo não empurre o header visualmente */
+.page-container, .table-card, header.top-bar { box-sizing: border-box; max-width: 100%; }
+
+/* opcional: se preferir que o usuário saiba que existe conteúdo rolável, um pequeno efeito visual */
+.table-card::-webkit-scrollbar { height: 10px; }
+.table-card::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.06); border-radius: 8px; }

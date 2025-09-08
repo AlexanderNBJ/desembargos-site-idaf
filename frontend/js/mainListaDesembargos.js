@@ -259,22 +259,54 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  document.querySelectorAll('th.sortable').forEach(th => {
-    th.addEventListener('click', () => {
+    // sorting headers (2-state toggle: asc <-> desc)
+  function updateSortIndicators() {
+    document.querySelectorAll('th.sortable').forEach(th => {
+      th.classList.remove('asc','desc','active-sort');
+      th.setAttribute('aria-sort','none');
       const key = th.dataset.key;
-      if (!key) return;
-      if (sortKey === key) {
-        if (!sortDir) sortDir = 'asc';
-        else if (sortDir === 'asc') sortDir = 'desc';
-        else sortDir = null;
+      if (key && key === sortKey) {
+        th.classList.add(sortDir === 'asc' ? 'asc' : 'desc');
+        th.classList.add('active-sort');
+        th.setAttribute('aria-sort', sortDir === 'asc' ? 'ascending' : 'descending');
+        th.title = `Ordenado: ${sortDir === 'asc' ? 'crescente' : 'decrescente'} — clique para inverter`;
       } else {
-        sortKey = key;
-        sortDir = 'asc';
+        th.title = 'Clique para ordenar';
       }
-      page = 1;
-      fetchAndRender();
+    });
+  }
+
+  function toggleSort(key) {
+    if (!key) return;
+    if (sortKey === key) {
+      // 2-state toggle: asc -> desc -> asc ...
+      sortDir = (sortDir === 'asc') ? 'desc' : 'asc';
+    } else {
+      sortKey = key;
+      sortDir = 'asc';
+    }
+    page = 1;
+    fetchAndRender();
+  }
+
+  // attach handlers
+  document.querySelectorAll('th.sortable').forEach(th => {
+    th.setAttribute('role','button');
+    th.setAttribute('tabindex','0');
+    // click
+    th.addEventListener('click', () => toggleSort(th.dataset.key));
+    // keyboard (Enter / Space)
+    th.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleSort(th.dataset.key);
+      }
     });
   });
+
+  // call once initially (to set titles / aria)
+  updateSortIndicators();
+
 
   function debounce(fn, delay = 300) {
     let t;
@@ -322,8 +354,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       const span = document.createElement('span');
       span.className = 'status-badge' + (cls ? ` ${cls}` : '');
       span.textContent = raw;
+      // tooltip e acessibilidade: sempre mostrar texto completo ao passar o mouse ou leitores
+      span.title = raw;
+      span.setAttribute('aria-label', raw);
       td.innerHTML = '';
       td.appendChild(span);
+
     });
   }
 
