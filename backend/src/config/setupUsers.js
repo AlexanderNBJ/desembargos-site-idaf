@@ -31,15 +31,10 @@ async function upsertUser(username, password, role, name, position) {
 (async () => {
   try {
     await runMigration();
-    const id1 = await upsertUser('ahnaiazds',       'senha', 'GERENTE', 'AHNAIÁ ZANOTELLI DIAS DA SILVA', 'Gerente da Gerência de Licenciamento e Controle Florestal – GELCOF');
-    const id2 = await upsertUser('fabianocg',       'senha', 'GERENTE', 'FABIANO CAMPOS GRAZZIOTTI', 'Gerente de Licenciamento e Controle Florestal - IDAF');
-    const id3 = await upsertUser('fabriciovz',      'senha', 'GERENTE', 'FABRICIO VALENTIM ZANZARINI', 'Gerente da Gerência de Licenciamento e Controle Florestal – GELCOF');
-    const id4 = await upsertUser('desconhecido@',   'senha', 'GERENTE', 'DESCONHECIDO', 'Gerente');
-    const id5 = await upsertUser('gabrielhf',       'senha', 'GERENTE', 'GABRIEL HECTOR FONTANA', 'Gerente substituto da Gerência de Licenciamento e Controle Florestal – GELCOF');
-    const id6 = await upsertUser('isiscs',          'senha', 'GERENTE', 'ISIS DE CASTRO SOUZA', 'Gerente de Licenciamento e Controle Florestal - GELCOF');
-    const id7 = await upsertUser('jesusfmb',        'senha', 'GERENTE', 'JÉSUS FERNANDO MIRANDA BARBOSA', 'Gerente da Gerência de Licenciamento e Controle Florestal – GELCOF');
-    const id8 = await upsertUser('wilmondesmo',        'senha', 'GERENTE', 'WILMONDES MAGALHÃES DE OLIVEIRA', 'Gerente da Gerência de Licenciamento e Controle Florestal – GELCOF');
-    console.log('Users created/updated:', id1, id2, id3, id4, id5, id6, id7, id8);
+    const id1 = await upsertUser('nomeDeUsuario', 'senha', 'GERENTE', 'nomeGerente', 'Cargo');
+    const id2 = await upsertUser('nomeDeusuario', 'senha', 'COMUM', 'nomeAcessoComum', 'Cargo');
+  
+    console.log('Users created/updated:', id1, id2);
     process.exit(0);
   } catch (err) {
     console.error(err);
