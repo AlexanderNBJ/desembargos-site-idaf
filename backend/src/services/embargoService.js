@@ -10,7 +10,6 @@ exports.findByNumero = async (numero) => {
 };
 
 exports.findByProcesso = async (processo) => {
-  // procura pelo campo processo (ajuste o nome da coluna se for outro no seu schema)
   const result = await pool.query(
     `SELECT n_iuf_emb, northing, easting, sep_edocs, processo FROM ${embargosTable} WHERE processo = $1 LIMIT 1`,
     [processo]

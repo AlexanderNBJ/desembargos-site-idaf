@@ -90,3 +90,4 @@ CREATE TABLE EMBARGOS(
 - Em seguida, o script irá cadastrar os usuários descritos em cada id, seguindo o padrão `NomeDeUsuario, SenhaDeUsuario, CargoDoUsuario, NomeDoUSuario, CargoDoUsuario`
 - O cargo do usuário deve ser `GERENTE` ou `COMUM`.
 - É importante cadastrar os usuários por meio do script, em função da criptografia aplicada. 
+- Para executar o script, basta ir na pasta `backend` e, a partir dela, executar no terminal `node src/config/setupUsers.js`

@@ -1,5 +1,5 @@
 const db = require('../config/db');
-const userTable = 'users';
+const userTable = 'users_test';
 
 exports.listarUsuarios = async () => {
   const query = `SELECT id, username, name, position FROM ${userTable} ORDER BY username`;

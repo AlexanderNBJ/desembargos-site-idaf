@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const { jsPDF } = require("jspdf");
 const desembargoTable = 'desembargos_test';
+const usersTable = 'users_test';
 
 // inserir
 async function inserirDesembargo({ numero, serie, nomeAutuado, area, processoSimlam,
@@ -162,7 +163,7 @@ async function getDesembargoById(id) {
            u.name    AS aprovador_name,
            u.position AS aprovador_position
     FROM ${desembargoTable} d
-    LEFT JOIN users u ON d.aprovado_por = u.username
+    LEFT JOIN ${usersTable} u ON d.aprovado_por = u.username
     WHERE d.id = $1
     LIMIT 1
   `;
