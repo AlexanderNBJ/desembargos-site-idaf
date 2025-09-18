@@ -34,7 +34,7 @@ async function upsertUser(username, password, role, name, position) {
     await runMigration();
     const id1 = await upsertUser('testecomum', 'senha', 'COMUM', 'Teste Comum', 'Usuário com acesso comum');
     const id2 = await upsertUser('testegerente', 'senha', 'GERENTE', 'Teste Gerente', 'Usuário com acesso de gerente');
-    console.log('Users created/updated:', id1);
+    console.log('Users created/updated:', id1, id2);
     process.exit(0);
   } catch (err) {
     console.error(err);

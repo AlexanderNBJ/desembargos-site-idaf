@@ -1,5 +1,5 @@
 const db = require('../config/db');
-const userTable = 'users_test';
+const userTable = 'users';
 const schema = '_desembargo';
 
 exports.listarUsuarios = async () => {
