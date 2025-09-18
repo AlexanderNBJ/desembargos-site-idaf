@@ -1,6 +1,6 @@
 // backend/src/utils/auditLogger.js
 const db = require('../config/db');
-const userLogsTable = 'user_logs';
+const userLogsTable = '_desembargo.user_logs';
 
 function normalizeIpValue(raw) {
   if (!raw) return null;
