@@ -1,0 +1,111 @@
+// backend/src/utils/fetchPermissions.js
+const MAPPIA_DB_URL = process.env.MAPPIA_DB_URL;
+const isComumQuery = parseInt(process.env.MAPPIA_IS_COMUM_QUERY || '314', 10);
+const isGerenteQuery = parseInt(process.env.MAPPIA_IS_GERENTE_QUERY || '313', 10);
+const MAPPIA_DEBUG = !!process.env.MAPPIA_DEBUG;
+
+// Simple in-memory cache
+const cache = new Map();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function getCachedPermissions(token) {
+  const entry = cache.get(token);
+  if (!entry) return null;
+  const now = Date.now();
+  if (now > entry.expireAt) {
+    cache.delete(token);
+    return null;
+  }
+  return entry.permissions;
+}
+
+function setCachedPermissions(token, permissions) {
+  cache.set(token, {
+    permissions,
+    expireAt: Date.now() + CACHE_TTL_MS,
+  });
+}
+
+// tenta extrair um "valor" booleano/número da resposta do Mappia
+function extractValue(respJson) {
+  if (respJson == null) return -1;
+
+  // caso seja array: pega o primeiro elemento
+  if (Array.isArray(respJson) && respJson.length > 0) {
+    respJson = respJson[0];
+  }
+
+  // se tem "value"
+  if (Object.prototype.hasOwnProperty.call(respJson, 'value')) {
+    return respJson.value;
+  }
+
+  // se tem '?column?' (ex.: { '?column?': 1 })
+  if (Object.prototype.hasOwnProperty.call(respJson, '?column?')) {
+    return respJson['?column?'];
+  }
+
+  // procura a primeira propriedade numérica (heurística)
+  for (const k of Object.keys(respJson)) {
+    const v = respJson[k];
+    if (typeof v === 'number' || (!isNaN(Number(v)) && v !== null)) {
+      return Number(v);
+    }
+  }
+
+  // nada encontrado
+  return -1;
+}
+
+async function fetchPermissions(token) {
+  if (!MAPPIA_DB_URL) {
+    if (MAPPIA_DEBUG) console.warn('[mappia] MAPPIA_DB_URL not set, returning falses');
+    return [false, false];
+  }
+
+  const cached = getCachedPermissions(token);
+  if (cached) {
+    if (MAPPIA_DEBUG) console.log('[mappia] cache hit for token');
+    return cached;
+  }
+
+  const permissions = [false, false];
+
+  try {
+    const base = MAPPIA_DB_URL.replace(/\/$/, '');
+    const urlComum = `${base}/run/${isComumQuery}?token=${encodeURIComponent(token)}`;
+    const urlGerente = `${base}/run/${isGerenteQuery}?token=${encodeURIComponent(token)}`;
+
+    if (MAPPIA_DEBUG) console.log('[mappia] requesting isComum:', urlComum);
+    const dashboardResp = await fetch(urlComum);
+    if (dashboardResp.ok) {
+      const dashboardData = await dashboardResp.json();
+      if (MAPPIA_DEBUG) console.log('[mappia] isComum resp:', dashboardData);
+      const val = extractValue(dashboardData);
+      if (val !== -1) permissions[0] = true;
+    } else {
+      console.warn('[mappia] isComum status', dashboardResp.status);
+    }
+
+    if (MAPPIA_DEBUG) console.log('[mappia] requesting isGerente:', urlGerente);
+    const metricsResp = await fetch(urlGerente);
+    if (metricsResp.ok) {
+      const metricsData = await metricsResp.json();
+      if (MAPPIA_DEBUG) console.log('[mappia] isGerente resp:', metricsData);
+      const val = extractValue(metricsData);
+      if (val !== -1) permissions[1] = true;
+    } else {
+      console.warn('[mappia] isGerente status', metricsResp.status);
+    }
+
+    setCachedPermissions(token, permissions);
+  } catch (err) {
+    console.error('Error fetching permissions from Mappia:', err);
+  }
+
+  return permissions;
+}
+
+module.exports = {
+  fetchPermissions
+};
