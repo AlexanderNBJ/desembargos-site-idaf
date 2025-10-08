@@ -57,7 +57,7 @@ async function criarDesembargo(req, res) {
       responsavelDesembargo: responsavel
     };
 
-    console.log('Dados refatorados para inserção:', refatorado);
+    //console.log('Dados refatorados para inserção:', refatorado);
 
     // 3️⃣ Insere no banco
     const novo = await desembargoService.inserirDesembargo(refatorado);

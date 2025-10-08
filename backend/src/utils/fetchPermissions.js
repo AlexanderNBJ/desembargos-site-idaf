@@ -84,7 +84,7 @@ async function fetchPermissions(token) {
       const val = extractValue(dashboardData);
       if (val !== -1) permissions[0] = true;
     } else {
-      console.warn('[mappia] isComum status', dashboardResp.status);
+      if (MAPPIA_DEBUG) console.warn('[mappia] isComum status', dashboardResp.status);
     }
 
     if (MAPPIA_DEBUG) console.log('[mappia] requesting isGerente:', urlGerente);
@@ -95,7 +95,7 @@ async function fetchPermissions(token) {
       const val = extractValue(metricsData);
       if (val !== -1) permissions[1] = true;
     } else {
-      console.warn('[mappia] isGerente status', metricsResp.status);
+      if (MAPPIA_DEBUG) console.warn('[mappia] isGerente status', metricsResp.status);
     }
 
     setCachedPermissions(token, permissions);

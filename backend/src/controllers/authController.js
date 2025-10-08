@@ -10,6 +10,7 @@ class AuthController {
       }
 
       const data = await authService.login(username, password);
+      
       // retorna no formato que seu frontend espera
       return res.json({ code: 200, value: { token: data.token, user: data.user } });
     } catch (err) {

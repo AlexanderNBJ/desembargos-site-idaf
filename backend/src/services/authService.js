@@ -53,6 +53,11 @@ class AuthService {
           } catch (err) {
             console.error('Erro ao buscar permissões após login Mappia:', err);
           }
+          console.log(role);
+
+          if (!['COMUM', 'GERENTE'].includes(role)) {
+            throw new Error('User does not have COMUM permission');
+          }
 
           // cria JWT local contendo mappiaToken para uso futuro
           const payload = {
@@ -91,6 +96,10 @@ class AuthService {
 
     const ok = await bcrypt.compare(password, userRow.password_hash);
     if (!ok) throw new Error('Invalid credentials');
+
+    if (!['COMUM', 'GERENTE'].includes(userRow.role)) {
+      throw new Error('User does not have COMUM permission');
+    }
 
     const payload = { id: userRow.id, username: userRow.username, role: userRow.role };
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });

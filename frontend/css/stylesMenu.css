@@ -6,7 +6,7 @@
   align-items: center;
   padding: 36px 20px;
   box-sizing: border-box;
-  min-height: calc(100vh - 200px); /* mantém espaço considerando header */
+  min-height: calc(10vh - 200px); /* mantém espaço considerando header */
   background: linear-gradient(180deg, rgba(11,107,71,0.03), rgba(255,255,255,0));
   font-family: "Hanken Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, Arial;
 }
