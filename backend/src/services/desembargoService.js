@@ -233,7 +233,14 @@ async function gerarPdfDesembargo(desembargo) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.setTextColor(primaryColor);
-  doc.text(`TERMO DE DESEMBARGO Nº ${desembargo.id}/IDAF`, 40, y);
+
+  if(desembargo.tipo_desembargo === "INDEFERIMENTO"){
+    doc.text(`OFÍCIO DE INDEFERIMENTO Nº ${desembargo.id}/IDAF`, 40, y);
+  }
+  else{
+    doc.text(`TERMO DE DESEMBARGO Nº ${desembargo.id}/IDAF`, 40, y);
+  }
+  
   y += 10;
   doc.setTextColor(secondaryColor);
   doc.setDrawColor(200);
