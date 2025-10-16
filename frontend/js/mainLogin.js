@@ -77,7 +77,6 @@ document.addEventListener('DOMContentLoaded', () => {
       toast.style.opacity = "1";
     });
 
-    // remove depois do tempo
     setTimeout(() => {
       toast.style.transform = "translateY(-12px)";
       toast.style.opacity = "0";
@@ -90,7 +89,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, duration);
   };
 
-  // ------------------ helpers para feedback no botão ------------------
   function setSubmitting(isSubmitting) {
     if (!submitBtn) return;
     if (isSubmitting) {
@@ -111,16 +109,14 @@ document.addEventListener('DOMContentLoaded', () => {
     msg.textContent = '';
   }
 
-  // ------------------ lógica de login ------------------
   async function doLogin(e) {
     e && e.preventDefault();
-    hideInlineMessage(); // garante que nada fique visível inline
+    hideInlineMessage();
 
     const username = usuario ? usuario.value.trim() : '';
     const password = senha ? senha.value.trim() : '';
 
     if (!username || !password) {
-      // EXCLUSIVAMENTE toast (sem mensagem inline)
       showToast('Preencha usuário e senha.', 'error');
       return;
     }
@@ -138,25 +134,18 @@ document.addEventListener('DOMContentLoaded', () => {
       try { json = await res.json(); } catch (e) { json = null; }
 
       if (res.ok && json && json.code === 200 && json.value && json.value.token) {
-        // guarda sessão e redireciona
         Auth.setSession(json.value.token, json.value.user || { username });
-
-        // tentar buscar permissões (não bloqueia)
         try {
           const pRes = await Auth.fetchWithAuth('/auth/permissions');
           if (pRes && pRes.ok) {
             const perm = await pRes.json();
             localStorage.setItem('dashboardPerm', JSON.stringify(perm));
           }
-        } catch (err) { /* não bloqueia o login */ }
-
-        // toast de sucesso e redireciona
-        //showToast('Login efetuado! Redirecionando...', 'success', { duration: 1000 });
-        //setTimeout(() => , 600);
+        } catch (err) { }
         window.location.href = 'menuPrincipal.html'
+
       } else {
         const serverMsg = (json && (json.message || json.msg || json.error)) ? (json.message || json.msg || json.error) : 'Login falhou — verifique suas credenciais.';
-        // mostra somente toast (sem exibir a mensagem inline no formulário)
         showToast(serverMsg, 'error', { duration: 6000 });
       }
     } catch (err) {
@@ -168,9 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // liga eventos
   if (form) form.addEventListener('submit', doLogin);
-  // suporte enter nas caixas
   [usuario, senha].forEach(input => input && input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();

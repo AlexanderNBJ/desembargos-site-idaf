@@ -1,4 +1,3 @@
-// frontend/js/mainListaDesembargos.js (badge integrada no final de renderRows)
 document.addEventListener('DOMContentLoaded', async () => {
   const tbody = document.getElementById('desembargos-list');
   const template = document.getElementById('row-template').content;
@@ -51,8 +50,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const currentUser = getCurrentUser();
   const isGerente = String(currentUser.role || '').toUpperCase() === 'GERENTE';
-
-  // tabs config
   const tabsConfig = [
     { id: 'mine', label: 'Meus Desembargos', ownerParam: 'mine' },
     { id: 'approved', label: 'Desembargos Aprovados', status: 'APROVADO' }
@@ -187,7 +184,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isOwner = currentUser.username && String(d.responsavel || '').toLowerCase() === String(currentUser.username).toLowerCase();
         if (isGerente || isOwner) {
           editBtn.style.display = '';
-          editBtn.addEventListener('click', () => window.location.href = `formularioDesembargos.html?id=${d.id}`);
+          editBtn.addEventListener('click', () => window.location.href = `cadastroDesembargos.html?id=${d.id}`);
         } else {
           editBtn.style.display = 'none';
         }
@@ -196,7 +193,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       tbody.appendChild(clone);
     });
 
-    // Depois que todas as linhas foram inseridas no DOM, decora os status como badges
     decorateStatusBadges();
   }
 
@@ -213,7 +209,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     paginationControls.appendChild(prev);
 
-    // Range pages
     const maxLinks = 7;
     let startPage = Math.max(1, current - Math.floor(maxLinks / 2));
     let endPage = Math.min(totalPages, startPage + maxLinks - 1);
@@ -248,7 +243,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     paginationControls.appendChild(info);
   }
 
-  // sorting headers
   function highlightSortHeader() {
     document.querySelectorAll('th.sortable').forEach(th => {
       th.classList.remove('asc','desc');
@@ -259,7 +253,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-    // sorting headers (2-state toggle: asc <-> desc)
   function updateSortIndicators() {
     document.querySelectorAll('th.sortable').forEach(th => {
       th.classList.remove('asc','desc','active-sort');
@@ -279,7 +272,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   function toggleSort(key) {
     if (!key) return;
     if (sortKey === key) {
-      // 2-state toggle: asc -> desc -> asc ...
       sortDir = (sortDir === 'asc') ? 'desc' : 'asc';
     } else {
       sortKey = key;
@@ -289,13 +281,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     fetchAndRender();
   }
 
-  // attach handlers
   document.querySelectorAll('th.sortable').forEach(th => {
     th.setAttribute('role','button');
     th.setAttribute('tabindex','0');
-    // click
     th.addEventListener('click', () => toggleSort(th.dataset.key));
-    // keyboard (Enter / Space)
     th.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
@@ -304,9 +293,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // call once initially (to set titles / aria)
   updateSortIndicators();
-
 
   function debounce(fn, delay = 300) {
     let t;
@@ -323,13 +310,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     fetchAndRender();
   });
 
-  // inicial
   renderTabs();
   fetchAndRender();
 
-  /* ===== função que cria badges de status - sempre chamada APÓS renderRows ===== */
   function decorateStatusBadges(){
-    // normaliza e remove diacríticos (acentos)
     const normalize = s => String(s||'').toUpperCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').trim();
     const map = {
       'APROVADO': 'status-aprovado',
@@ -347,14 +331,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('#desembargos-list .col-status').forEach(td => {
       const raw = (td.textContent || '').trim();
       if (!raw) return;
-      // se já tem badge, skip
       if (td.querySelector('.status-badge')) return;
       const key = normalize(raw.replace(/\s+/g,' '));
       const cls = map[key] || null;
       const span = document.createElement('span');
       span.className = 'status-badge' + (cls ? ` ${cls}` : '');
       span.textContent = raw;
-      // tooltip e acessibilidade: sempre mostrar texto completo ao passar o mouse ou leitores
       span.title = raw;
       span.setAttribute('aria-label', raw);
       td.innerHTML = '';
@@ -362,5 +344,4 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     });
   }
-
 });

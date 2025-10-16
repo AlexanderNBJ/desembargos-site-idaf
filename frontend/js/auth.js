@@ -1,11 +1,6 @@
-// frontend/js/auth.js
-// helpers de sessão / autenticação entre frontend e seu backend
-// uso: importar este script em todas as pages que precisam checar login
-
 (function (global) {
   const KEY_TOKEN = 'sessionToken';
   const KEY_EXPIRY = 'tokenExpiry';
-  // armazena também informações do usuário (opcional)
   const KEY_USER = 'sessionUser';
 
   function setSession(token, user) {
@@ -38,7 +33,6 @@
     const expiry = localStorage.getItem(KEY_EXPIRY);
     if (!token) return false;
     if (expiry && Date.now() > parseInt(expiry)) {
-      // session expirada
       clearSession();
       return false;
     }
@@ -58,7 +52,6 @@
       const payload = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'));
       return JSON.parse(decodeURIComponent(escape(payload)));
     } catch (err) {
-      // fallback simples
       try {
         return JSON.parse(atob(token.split('.')[1]));
       } catch {
@@ -78,13 +71,11 @@
     return fetch(url, opts);
   }
 
-  // função para inicializar numa página: se redirectIfMissing true, manda pro login se não logado
   function initAuth({ redirectIfMissing = true, onReady } = {}) {
     if (!isLoggedIn()) {
       if (redirectIfMissing) window.location.href = 'login.html';
       return false;
     }
-    // se tiver onReady, passa o usuário decodificado
     if (typeof onReady === 'function') {
       const decoded = parseJwt(getSessionToken());
       onReady(decoded, getSessionUser());
@@ -92,7 +83,6 @@
     return true;
   }
 
-  // expose
   global.Auth = {
     setSession,
     clearSession,

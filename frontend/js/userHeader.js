@@ -1,5 +1,3 @@
-// userHeader.js
-// incluir DEPOIS de auth.js
 (function () {
   const CACHE_KEY = 'displayName';
   const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
@@ -10,7 +8,7 @@
     try {
       const entry = { name, ts: nowMs() };
       sessionStorage.setItem(CACHE_KEY, JSON.stringify(entry));
-    } catch (e) { /* ignore */ }
+    } catch (e) {}
   }
 
   function readCache() {
@@ -29,12 +27,10 @@
     }
   }
 
-  // robust base64 -> utf8 decode for JWT payload
   function base64UrlDecodeUtf8(b64url) {
     try {
       const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
       const str = atob(b64);
-      // convert binary string to percent-encoded, then decode
       const pct = Array.prototype.map.call(str, c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('');
       return decodeURIComponent(pct);
     } catch (e) {
@@ -73,9 +69,7 @@
     return localStorage.getItem('sessionToken') || localStorage.getItem('token') || null;
   }
 
-  // try sync methods (Auth.getSessionUser or JWT payload) — quick and no network
   function getDisplayNameSync() {
-    // 1) Auth.getSessionUser()
     try {
       if (window.Auth && typeof Auth.getSessionUser === 'function') {
         const u = Auth.getSessionUser();
@@ -88,9 +82,8 @@
           if (u.email) return cleanEmailToName(u.email);
         }
       }
-    } catch (e) { /* ignore */ }
+    } catch (e) {}
 
-    // 2) token payload
     const t = getStoredToken();
     const p = parseJwt(t);
     if (p) {
@@ -104,17 +97,14 @@
       if (p.sub) return cleanEmailToName(p.sub);
     }
 
-    // 3) fallback localStorage raw
     const fallback = localStorage.getItem('username') || localStorage.getItem('user') || null;
     if (fallback) return fallback.includes('@') ? cleanEmailToName(fallback) : fallback;
 
     return null;
   }
 
-  // async fetch from backend /api/usuarios/me
   async function tryFetchNameFromApi() {
     try {
-      // check cache first
       const cached = readCache();
       if (cached) return cached;
 
@@ -125,12 +115,11 @@
       });
       if (!res.ok) return null;
       const j = await res.json();
-      // support { success:true, data: {...} } or { name, position } or { success:true, name, position }
       let name = null;
       if (j) {
         if (j.name) name = j.name;
         else if (j.data && j.data.name) name = j.data.name;
-        else if (j.data && j.data.username && j.data.name) name = j.data.name; // defensive
+        else if (j.data && j.data.username && j.data.name) name = j.data.name; 
         else if (j.data && j.data.username && !j.data.name) name = j.data.username;
         else if (j.username) name = j.username;
       }
@@ -161,7 +150,6 @@
   async function renderUserName(force = false) {
     const span = ensureUserSpan();
     if (!span) return;
-    // if not forced, try cache first
     if (!force) {
       const cached = readCache();
       if (cached) {
@@ -170,12 +158,9 @@
       }
     }
 
-    // try sync fast options
     let name = getDisplayNameSync();
-    // if sync returned something useful, show it but still try API to get nicer name (unless forced=false and we accept sync)
     if (name) {
       span.textContent = name;
-      // try update from API in background to improve UX
       const apiName = await tryFetchNameFromApi();
       if (apiName && apiName !== name) {
         span.textContent = apiName;
@@ -183,14 +168,12 @@
       return;
     }
 
-    // no sync name — try full API
     const apiName = await tryFetchNameFromApi();
     if (apiName) {
       span.textContent = apiName;
       return;
     }
 
-    // fallback to token/email cleaned or generic
     const t = getStoredToken();
     const p = parseJwt(t);
     let fallback = null;
@@ -204,7 +187,6 @@
     span.textContent = 'Usuário';
   }
 
-  // expose refresh function (useful after login/logout)
   window.refreshUserName = function (opts = {}) {
     return renderUserName(Boolean(opts.force));
   };

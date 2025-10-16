@@ -1,4 +1,3 @@
-// backend/src/services/authService.js
 require('dotenv').config();
 const db = require('../config/db');
 const bcrypt = require('bcrypt');
@@ -17,9 +16,6 @@ class AuthService {
     this.MAPPIA_DB_URL = process.env.MAPPIA_DB_URL;
   }
 
-  // login: tenta Mappia (se configurado), senão fallback local
-  // Quando Mappia responde com token, criamos um JWT local que
-  // inclui mappiaToken para futuras consultas de permissão.
   async login(username, password) {
     if (this.MAPPIA_DB_URL) {
       try {
@@ -36,16 +32,13 @@ class AuthService {
         const json = await resp.json();
         if (MAPPIA_DEBUG) console.log('[mappia] /user/login json:', json);
 
-        // heurísticas para extrair token e user
         const mappiaToken = json?.value?.token || json?.token || json?.data?.token || json?.access_token;
         let userFromMappia = json?.value || json?.user || json?.data || null;
 
         if (mappiaToken) {
-          // normalize user fields
           const userId = (userFromMappia && (userFromMappia.user_id || userFromMappia.id)) || null;
           const userEmail = (userFromMappia && (userFromMappia.email || userFromMappia.username)) || username;
 
-          // tenta buscar permissões diretamente usando o mappiaToken
           let role = 'NONE';
           try {
             const perms = await fetchPermissions(mappiaToken); // [isComum, isGerente]
@@ -53,13 +46,11 @@ class AuthService {
           } catch (err) {
             console.error('Erro ao buscar permissões após login Mappia:', err);
           }
-          console.log(role);
 
           if (!['COMUM', 'GERENTE'].includes(role)) {
             throw new Error('User does not have COMUM permission');
           }
 
-          // cria JWT local contendo mappiaToken para uso futuro
           const payload = {
             id: userId,
             username: userEmail,
@@ -68,8 +59,6 @@ class AuthService {
           };
 
           const localJwt = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-
-          // user retornado para frontend (normalize)
           const user = {
             id: userId,
             username: userEmail,
@@ -80,15 +69,12 @@ class AuthService {
           return { token: localJwt, user };
         }
 
-        // se não veio token, fallback local (continua abaixo)
         if (MAPPIA_DEBUG) console.warn('[mappia] login não retornou token, fazendo fallback local. JSON retornado:', JSON.stringify(json));
       } catch (err) {
         console.error('Erro comunicando com Mappia no login:', err);
-        // segue para fallback local
       }
     }
 
-    // fallback local: Postgres + bcrypt + JWT
     const q = `SELECT id, username, password_hash, role FROM ${schema}.${usersTable} WHERE username = $1`;
     const { rows } = await db.query(q, [username]);
     const userRow = rows[0];
@@ -115,15 +101,7 @@ class AuthService {
     }
   }
 
-  /**
-   * Retorna [isComum, isGerente]
-   * Lógica:
-   * - se o token decodifica para um JWT local que contém mappiaToken => usa esse mappiaToken para consultar Mappia
-   * - caso contrário, se MAPPIA_DB_URL definido, tenta usar o token diretamente (suporta raw mappia tokens)
-   * - se nenhum dos anteriores funcionar, decodifica o JWT local e infere pela role
-   */
   async fetchPermissionsFromToken(token) {
-    // tenta decodificar localmente (pode ser nosso JWT)
     const decoded = this.verifyToken(token);
     if (decoded && decoded.mappiaToken && this.MAPPIA_DB_URL) {
       try {
@@ -134,7 +112,6 @@ class AuthService {
       }
     }
 
-    // se tivermos MAPPIA configurado, tente usar o token direto (caso o token seja o mappia token puro)
     if (this.MAPPIA_DB_URL) {
       try {
         const perms = await fetchPermissions(token);
@@ -144,7 +121,6 @@ class AuthService {
       }
     }
 
-    // fallback: inferir a partir do JWT local (caso o token seja JWT)
     if (decoded) {
       const role = decoded.role;
       const isComum = role === 'COMUM' || role === 'GERENTE';
@@ -152,7 +128,6 @@ class AuthService {
       return [isComum, isGerente];
     }
 
-    // sem informação -> rejeita
     throw new Error('Invalid token for permission check');
   }
 }
