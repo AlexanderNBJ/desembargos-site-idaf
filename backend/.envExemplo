@@ -1,0 +1,8 @@
+DB_HOST=ipDoBancoDeDados
+DB_PORT=portaDoBancoDeDados
+DB_NAME=nomeDaDatabase
+DB_USER=usuarioDoBancoDeDados
+DB_PASS=senhaDoBancoDeDados
+PORT=portaDaAplicacao
+SECRET=senhaSecretDaAplicacao
+MAPPIA_DB_URL=urlDaAPIMappiaDB
