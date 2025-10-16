@@ -12,7 +12,9 @@ exports.findByNumero = async (numero) => {
 
 exports.findByProcesso = async (processo) => {
   const result = await pool.query(
-    `SELECT n_iuf_emb, northing, easting, sep_edocs, processo FROM ${schema}.${embargosTable} WHERE processo = $1 LIMIT 1`,
+    `SELECT n_iuf_emb, northing, easting, sep_edocs, processo, 
+      (public.ST_area(geom)/1000.00) AS area    
+      FROM ${schema}.${embargosTable} WHERE processo = $1 LIMIT 1`,
     [processo]
   );
   return result.rows[0] || null;

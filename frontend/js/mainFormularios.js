@@ -347,6 +347,21 @@ if (btnBuscarProcesso) {
           descricao: data.descricao || data.obs || ''
         };
 
+        let effectiveTipo = mapped.tipoDesembargo;
+        if (!effectiveTipo) {
+          const sel = document.querySelector('input[name="tipoDesembargo"]:checked');
+          if (sel && sel.value) effectiveTipo = sel.value.toString().toUpperCase();
+        }
+
+        // Preenche a área somente se for TOTAL
+        if (effectiveTipo === 'TOTAL') {
+          mapped.area = (data.area_desembargada ?? data.area ?? '') ;
+          showToast("O valor de área é válido apenas para desembargo TOTAL", "info", { duration: 4500 });
+        } else {
+          // garante string vazia (campo não será preenchido)
+          mapped.area = '';
+        }
+
         if (data.sep_edocs) {
           const seped = String(data.sep_edocs);
           if (seped.includes('-')) mapped.numeroEdocs = seped;
@@ -420,7 +435,13 @@ if (btnBuscarProcesso) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.setTextColor(primaryColor);
-    doc.text(`TERMO DE DESEMBARGO Nº X/IDAF`, 40, y);
+    if (previewObj.tipo_desembargo.toUpperCase() != 'INDEFERIMENTO'){
+      doc.text(`TERMO DE DESEMBARGO Nº ${previewObj.numero_embargo || '-'} ${previewObj.serie_embargo.toUpperCase() || '-'}/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center');
+    }
+    else{
+      doc.text(`OFÍCIO DE INDEFERIMENTO Nº ${previewObj.numero_embargo || '-'} ${previewObj.serie_embargo.toUpperCase() || '-'}/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center');
+    }
+    
     y += 10;
 
     doc.setTextColor(secondaryColor);
@@ -435,7 +456,7 @@ if (btnBuscarProcesso) {
       { label: "Processo Simlam", value: previewObj.processo_simlam || '-' },
       { label: "Processo E-Docs", value: previewObj.numero_edocs || '-' },
       { label: "Número do SEP", value: previewObj.numero_sep || '-' },
-      { label: "Autuado", value: previewObj.nome_autuado || '-' },
+      { label: "Autuado", value: previewObj.nome_autuado.toUpperCase() || '-' },
       { label: "Área Desembargada", value: `${previewObj.area_desembargada ?? '-'} ${previewObj.area_desembargada && previewObj.area_desembargada !== '-' ? 'ha' : ''}` },
       { label: "Tipo de Desembargo", value: (previewObj.tipo_desembargo || '-').toUpperCase() },
       { label: "Data do Desembargo", value: previewObj.data_desembargo ? (new Date(previewObj.data_desembargo)).toLocaleDateString() : '-' },
@@ -476,21 +497,23 @@ if (btnBuscarProcesso) {
 
     doc.setFont("helvetica", "normal");
     doc.setTextColor(secondaryColor);
-    const descricaoSplit = doc.splitTextToSize(previewObj.descricao || '-', 515);
+    const descricaoSplit = doc.splitTextToSize(previewObj.descricao || '-', 515, { maxWidth: 500,align: 'justify'});
     doc.text(descricaoSplit, 40, y);
     y += descricaoSplit.length * lineHeight + 10;
 
     // ================= Assinatura =================
     doc.setFont("helvetica", "bold");
     doc.setTextColor(primaryColor);
-    doc.text("Prévia de Desembargo feita por:", 40, y);
-    y += lineHeight;
+    //doc.text("Prévia de Desembargo feita por:", 40, y);
+    //y += lineHeight;
 
     doc.setTextColor(secondaryColor);
-    doc.text(String(previewObj.responsavel_desembargo || "-"), 40, y);
+    doc.text(String(previewObj.responsavel_desembargo || "-"), doc.internal.pageSize.getWidth() / 2, y, 'center');
     y += lineHeight;
+
     doc.setFont("helvetica", "normal");
-    doc.text(String(previewObj.cargo_responsavel || "-"), 40, y);
+    doc.setTextColor(primaryColor);
+    doc.text(String(previewObj.cargo_responsavel || "-"), doc.internal.pageSize.getWidth() / 2, y, 'center');
     y += 2*lineHeight;
 
     // ================= Disclaimer =================
