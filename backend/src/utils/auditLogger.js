@@ -1,5 +1,6 @@
 require('dotenv').config();
 const db = require('../config/db');
+const schema = process.env.SCHEMA;
 const userLogsTable = process.env.USER_LOG_TABLE;
 
 function normalizeIpValue(raw) {
@@ -109,7 +110,7 @@ async function logAction({ req = null, username = null, action = '', details = n
     const ua = req && req.headers ? (req.headers['user-agent'] || null) : null;
 
     const query = `
-      INSERT INTO ${userLogsTable} (username, action, details, ip, user_agent)
+      INSERT INTO ${schema}.${userLogsTable} (username, action, details, ip, user_agent)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id
     `;

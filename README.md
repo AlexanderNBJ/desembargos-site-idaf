@@ -1,48 +1,49 @@
 # Portal de Cadastro de Desembargos - IDAF
----
+
 ## Preparativos
+
 1. Instalar as dependências do Node rodando o seguinte comando na pasta `./backend`:
-`npm install`
 
-2. Adicionar o arquivo `.env` na pasta `./backend`, preenchendo-o com as informações relativas ao seu banco de dados. Siga conforme o exemplo a seguir e o arquivo em `./backend/.envExemplo`
+												`npm install`
 
+  
+
+2. Adicionar o arquivo `.env` na pasta `./backend`, preenchendo-o com as informações relativas ao banco de dados, à porta que a aplicação vai ser executada, a senha secreta da aplicação e a URL da API de login. Siga conforme o exemplo a seguir e o arquivo em `./backend/.envExemplo`
 ```
-	DB_HOST=ipDoBancoDeDados
-	DB_PORT=portaDoBancoDeDados
-	DB_NAME=nomeDaDatabase
-	DB_USER=usuarioDoBancoDeDados
-	DB_PASS=senhaDoBancoDeDados
-	PORT=portaDaAplicacao
-	SECRET=senhaSecretDaAplicacao
-	MAPPIA_DB_URL=urlDaAPIMappiaDB
+DB_HOST=ipDoBancoDeDados
+DB_PORT=portaDoBancoDeDados
+DB_NAME=nomeDaDatabase
+DB_USER=usuarioDoBancoDeDados
+DB_PASS=senhaDoBancoDeDados
+PORT=portaDaAplicacao
+SECRET=senhaSecretDaAplicacao
+MAPPIA_DB_URL=urlDaAPIMappiaDB
+SCHEMA=schemaNoBancoDeDados
+USER_TABLE=tabelaDeUsuariosNoBancoDeDados
+DESEMBARGO_TABLE=tabelaDeDesembargosNoBancoDeDados
+EMBARGO_TABLE=tabelaDeEmbargosNoBancoDeDados
+USER_LOG_TABLE=tabelaDeLogDeUsuarios
 ```
 
-3. Confira os arquivos `.js` em `./backend/src/services`:
-- Cada um dos arquivos possui ums variável que referencia o nome da tabela no Banco de Dados em que as queries serão realizadas. Por exemplo, em `desembargoService.js`:
+4. A estrutura utilizada (em PostgreSQL) para as tabelas no BD nos ambientes de teste foram as seguintes:
 
-```
-const desembargoTable = 'desembargos_test';
-```
-
-- A tabela em que as queries de desembargo serão realizadas será a tabela ***desemabargos_test***. Altere para que fique coerente com o seu Banco de Dados em todos os arquivos em `./backend/src/services`.
-
-4. A estrutura utulizada (em PostgreSQL) para as tabelas no BD nos ambientes de teste foram as seguintes:
 - Tabela de Usuários:
+
 ```
-CREATE TABLE USERS_TEST(
-	ID BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-	USERNAME TEXT UNIQUE,
-	PASSWORD_HASH TEXT,
-	ROLE TEXT CHECK(ROLE IN ('COMUM', 'GERENTE')),
-	CREATED_AT TIMESTAMPTZ DEFAULT NOW(),
+CREATE TABLE SCHEMA.USERS_TEST(
+	ID BIGINT GENERATED ALWAYS AS IDENTITY,
+	USERNAME TEXT PRIMARY KEY,
 	NAME TEXT,
-	POSITION TEXT
+	POSITION TEXT,
+	CREATED_AT TIMESTAMPTZ DEFAULT NOW()
 );
 ```
 
 - Tabela de Desembargos:
+
 ```
-CREATE TABLE DESEMBARGOS_TEST(
+
+CREATE TABLE SCHEMA.DESEMBARGOS_TEST(
 	ID BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
 	NUMERO_EMBARGO INTEGER,
 	SERIE_EMBARGO CHAR CHECK(SERIE_EMBARGO IN ('A','B','C','D','E')),
@@ -55,19 +56,22 @@ CREATE TABLE DESEMBARGOS_TEST(
 	AREA_DESEMBARGADA DOUBLE PRECISION,
 	TIPO_DESEMBARGO TEXT CHECK(TIPO_DESEMBARGO IN('TOTAL','PARCIAL','INDEFERIMENTO')),
 	DATA_DESEMBARGO DATE,
-	RESPONSAVEL_DESEMBARGO TEXT NOT NULL REFERENCES USERS_TEST(USERNAME),
+	RESPONSAVEL_DESEMBARGO TEXT NOT NULL,
 	DESCRICAO TEXT,
 	STATUS TEXT CHECK(STATUS IN('APROVADO','EM ANÁLISE', 'REVISÃO PENDENTE')),
-	APROVADO_POR TEXT REFERENCES USERS_TEST(USERNAME)
+	APROVADO_POR TEXT
 );
+
 ```
+
+  
 
 - Tabela de Log de Usuários:
 ```
-CREATE TABLE USER_LOGS(
-	ID BIGSERIAL PRIMARY KEY,
-	USERNAME TEXT NOT NULL REFERENCES USERS_TEST(USERNAME),
-	ACTION TEXT NOT NULL,
+CREATE TABLE SCHEMA.LOG_TESTE(
+	ID BIGINT GENERATED ALWAYS AS IDENTITY,
+	USERNAME TEXT,
+	ACTION TEXT,
 	DETAILS JSONB,
 	IP INET,
 	USER_AGENT TEXT,
@@ -76,19 +80,13 @@ CREATE TABLE USER_LOGS(
 ```
 
 - Tabela de Embargos:
+
 ```
-CREATE TABLE EMBARGOS(
-    N_UIF_EMB INTEGER,
-    NORTHING DOUBLE PRECISION,
-    EASTING DOUBLE PRECISION,
-    PROCESSO TEXT,
-    SEP_EDOCS TEXT
+CREATE TABLE SCHEMA.EMBARGOS_TESTE(
+	N_UIF_EMB INTEGER,
+	NORTHING DOUBLE PRECISION,
+	EASTING DOUBLE PRECISION,
+	PROCESSO TEXT,
+	SEP_EDOCS TEXT
 );
 ```
-
-5. Para cadastrar os Usuários, pode-se utilizar o script em `./backend/src/config/setupUsers.js`.
-- O script tentará criar a tabela `USERS_TEST` caso ela não exista. Para impedir esse funcionamento, basta comentar a linha `await runMigration();`.
-- Em seguida, o script irá cadastrar os usuários descritos em cada id, seguindo o padrão `NomeDeUsuario, SenhaDeUsuario, CargoDoUsuario, NomeDoUSuario, CargoDoUsuario`
-- O cargo do usuário deve ser `GERENTE` ou `COMUM`.
-- É importante cadastrar os usuários por meio do script, em função da criptografia aplicada. 
-- Para executar o script, basta ir na pasta `backend` e, a partir dela, executar no terminal `node src/config/setupUsers.js`
