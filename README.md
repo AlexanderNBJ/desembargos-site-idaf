@@ -4,16 +4,17 @@
 1. Instalar as dependências do Node rodando o seguinte comando na pasta `./backend`:
 `npm install`
 
-2. Adicionar o arquivo `.env` na pasta `./backend`, preenchendo-o com as seguintes informações relativas ao seu banco de dados:
+2. Adicionar o arquivo `.env` na pasta `./backend`, preenchendo-o com as informações relativas ao seu banco de dados. Siga conforme o exemplo a seguir e o arquivo em `./backend/.envExemplo`
 
 ```
-    DB_HOST=IPdoBanco
-    DB_PORT=PortaDoBanco
-    DB_NAME=NomeDaDatabase
-    DB_USER=UsuarioDoBanco
-    DB_PASS=SenhaDoUsuarioDoBanco
-    PORT=PortaQueVaiRodarOServidor
-    SECRET=SenhaSecretaParaLogin
+	DB_HOST=ipDoBancoDeDados
+	DB_PORT=portaDoBancoDeDados
+	DB_NAME=nomeDaDatabase
+	DB_USER=usuarioDoBancoDeDados
+	DB_PASS=senhaDoBancoDeDados
+	PORT=portaDaAplicacao
+	SECRET=senhaSecretDaAplicacao
+	MAPPIA_DB_URL=urlDaAPIMappiaDB
 ```
 
 3. Confira os arquivos `.js` em `./backend/src/services`:

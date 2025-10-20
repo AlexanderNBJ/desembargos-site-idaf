@@ -4,11 +4,11 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { fetchPermissions } = require('../utils/fetchPermissions');
 
-const JWT_SECRET = process.env.SECRET || 'dev_secret_change';
+const JWT_SECRET = process.env.SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
 
-const usersTable = 'users';
-const schema = '_desembargo';
+const usersTable = process.env.USER_TABLE;
+const schema = process.env.SCHEMA;
 const MAPPIA_DEBUG = !!process.env.MAPPIA_DEBUG;
 
 class AuthService {

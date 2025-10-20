@@ -1,6 +1,7 @@
+require('dotenv').config();
 const db = require('../config/db');
-const userTable = 'users';
-const schema = '_desembargo';
+const userTable = process.env.USER_TABLE;
+const schema = process.env.SCHEMA;
 
 exports.listarUsuarios = async () => {
   const query = `SELECT id, username, name, position FROM ${schema}.${userTable} ORDER BY username`;

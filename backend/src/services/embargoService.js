@@ -1,6 +1,7 @@
+require('dotenv').config();
 const pool = require('../config/db.js');
-const embargosTable = 'p_selo_verde_es_2025__inp_areas_fiscalizadas_es_idaf';
-const schema = '_desembargo';
+const embargosTable = process.env.EMBARGO_TABLE;
+const schema = process.env.SCHEMA;
 
 exports.findByNumero = async (numero) => {
   const result = await pool.query(
