@@ -13,6 +13,8 @@ router.get('/list', desembargoController.listarDesembargos)
 // visualizar e editar desembargo
 router.get("/:id", desembargoController.getDesembargoById);
 router.put("/:id",requireAuth, desembargoController.updateDesembargo);
+
+// gerar PDF do desembargo
 router.get("/:id/pdf", requireAuth, desembargoController.gerarPdf);
 
 module.exports = router;

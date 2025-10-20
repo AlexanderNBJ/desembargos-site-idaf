@@ -1,4 +1,3 @@
-// backend/src/utils/fetchPermissions.js
 const MAPPIA_DB_URL = process.env.MAPPIA_DB_URL;
 const isComumQuery = parseInt(process.env.MAPPIA_IS_COMUM_QUERY || '314', 10);
 const isGerenteQuery = parseInt(process.env.MAPPIA_IS_GERENTE_QUERY || '313', 10);

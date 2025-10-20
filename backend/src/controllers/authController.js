@@ -1,4 +1,3 @@
-// backend/src/controllers/authController.js
 const authService = require('../services/authService');
 
 class AuthController {
@@ -11,7 +10,6 @@ class AuthController {
 
       const data = await authService.login(username, password);
       
-      // retorna no formato que seu frontend espera
       return res.json({ code: 200, value: { token: data.token, user: data.user } });
     } catch (err) {
       console.error('login error', err);

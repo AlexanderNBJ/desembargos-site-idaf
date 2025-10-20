@@ -1,4 +1,3 @@
-// backend/src/middleware/permissionsMiddleware.js
 const authService = require('../services/authService');
 
 const canSeeDashboard = async (req, res, next) => {

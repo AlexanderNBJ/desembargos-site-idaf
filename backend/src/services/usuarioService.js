@@ -9,7 +9,6 @@ exports.listarUsuarios = async () => {
   return rows;
 };
 
-// Pega um usuário pelo ID
 exports.buscarUsuarioPorId = async (id) => {
   const query = `SELECT id, username, name, position FROM ${schema}.${userTable} WHERE id = $1`;
   const { rows } = await db.query(query, [id]);

@@ -1,4 +1,3 @@
-// backend/src/middleware/authMiddleware.js
 const authService = require('../services/authService');
 
 function requireAuth(req, res, next) {

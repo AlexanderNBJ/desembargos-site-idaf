@@ -1,6 +1,6 @@
-// backend/src/utils/auditLogger.js
+require('dotenv').config();
 const db = require('../config/db');
-const userLogsTable = '_desembargo.user_logs';
+const userLogsTable = process.env.USER_LOG_TABLE;
 
 function normalizeIpValue(raw) {
   if (!raw) return null;

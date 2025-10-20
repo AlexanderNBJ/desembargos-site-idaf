@@ -1,11 +1,8 @@
-// backend/src/controllers/usuarioController.js
 const usuarioService = require('../services/usuarioService');
 
-// controller
 exports.listarUsuarios = async (req, res) => {
   try {
     const usuarios = await usuarioService.listarUsuarios();
-    // retorna objeto completo pra frontend (id, username, name, position)
     res.json({ success: true, data: usuarios });
   } catch (err) {
     console.error(err);

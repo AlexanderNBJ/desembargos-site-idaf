@@ -7,7 +7,6 @@ const desembargoTable = process.env.DESEMBARGO_TABLE;
 const usersTable = process.env.USER_TABLE;
 const schema = process.env.SCHEMA;
 
-// inserir
 async function inserirDesembargo({ numero, serie, nomeAutuado, area, processoSimlam,
                                   numeroSEP, numeroEdocs, tipoDesembargo,
                                   dataDesembargo, coordenadaX, coordenadaY, descricao, responsavelDesembargo }) {
