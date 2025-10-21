@@ -75,22 +75,7 @@ class AuthService {
       }
     }
 
-    const q = `SELECT id, username, password_hash, role FROM ${schema}.${usersTable} WHERE username = $1`;
-    const { rows } = await db.query(q, [username]);
-    const userRow = rows[0];
-    if (!userRow) throw new Error('Invalid credentials');
-
-    const ok = await bcrypt.compare(password, userRow.password_hash);
-    if (!ok) throw new Error('Invalid credentials');
-
-    if (!['COMUM', 'GERENTE'].includes(userRow.role)) {
-      throw new Error('User does not have COMUM permission');
-    }
-
-    const payload = { id: userRow.id, username: userRow.username, role: userRow.role };
-    const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
-
-    return { token, user: payload };
+    throw new Error('Invalid credentials');
   }
 
   verifyToken(token) {

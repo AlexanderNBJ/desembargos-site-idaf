@@ -5,15 +5,15 @@ class AuthController {
     try {
       const { username, password } = req.body;
       if (!username || !password) {
-        return res.status(400).json({ code: 400, message: 'Username and password are required' });
+        return res.status(400).json({ code: 400, message: 'Preencha usuário e senha' });
       }
 
       const data = await authService.login(username, password);
       
       return res.json({ code: 200, value: { token: data.token, user: data.user } });
     } catch (err) {
-      console.error('login error', err);
-      return res.status(403).json({ code: 403, message: 'User not authorized', error: err.message });
+      //console.error('login error', err);
+      return res.status(403).json({ code: 403, message: 'Usuário não autorizado', error: err.message });
     }
   }
 
