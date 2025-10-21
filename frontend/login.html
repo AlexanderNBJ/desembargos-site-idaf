@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SeloVerde ES - Área Técnica</title>
     <link rel="icon" type="image/x-icon" href="assets/favicon.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="css/stylesHeader.css">
     <link rel="stylesheet" href="css/stylesLogin.css">
 </head>
@@ -21,25 +22,38 @@
     </header>
 
     <main>
-        <div class="login-wrapper">
-            <div class="login-container">
-                <form id="loginForm">
-                    <div class="login-group">
-                        <label for="usuario">Usuário:</label>
-                        <input type="text" id="usuario" required placeholder="exemplo@exemplo.com">
-                    </div>
-
-                    <div class="login-group">
-                        <label for="senha">Senha:</label>
-                        <input type="password" id="senha" required placeholder="********">
-                    </div>
-                    
-                    <button type="submit" class="login-btn">LOGIN</button>
-                </form>
-                <p id="loginMessage" style="color:red; display:none;"></p>
+      <div class="login-stage" role="main" aria-labelledby="login-title">
+        <div class="login-card" aria-hidden="false">
+          <form id="loginForm" class="login-form" autocomplete="on" novalidate>
+            <div class="field">
+              <label for="usuario" class="label">E-mail</label>
+              <input id="usuario" name="username" type="email" inputmode="email" required
+                     placeholder="exemplo@exemplo.com" autocomplete="username" />
             </div>
+
+            <div class="field">
+              <label for="senha" class="label">Senha</label>
+              <input id="senha" name="password" type="password" required
+                     placeholder="••••••••" autocomplete="current-password" />
+            </div>
+
+            <div class="row between">
+              <a class="forgot" href="https://csr.ufmg.br/mappiadb/reset_password" target="_blank"> 
+                Esqueci a senha 
+              </a>
+
+            </div>
+
+            <div class="actions">
+              <button type="submit" class="btn primary" aria-label="Entrar">Entrar</button>
+            </div>
+
+            <p id="loginMessage" class="msg" role="status" aria-live="polite" hidden></p>
+          </form>
         </div>
+      </div>
     </main>
+
     <script src="js/auth.js"></script>
     <script src="js/mainLogin.js"></script>
 </body>

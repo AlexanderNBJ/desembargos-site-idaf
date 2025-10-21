@@ -213,12 +213,108 @@ document.addEventListener('DOMContentLoaded', () => {
   const dataEl = document.getElementById('dataDesembargo');
   if (dataEl) dataEl.value = new Date().toISOString().split('T')[0];
 
-// ------------------ BUSCA POR PROCESSO (usa tabela embargos) ------------------
+// ------------------ BUSCA POR PROCESSO (usa tabela embargos) - versão com loading/clear ------------------
 const btnBuscarProcesso = document.getElementById('btnBuscarProcesso');
+
 if (btnBuscarProcesso) {
+
+  // helper: cria e mostra overlay de loading (se já existir, apenas mostra)
+  function showLoadingOverlay(msg = "Buscando processo...") {
+    let overlay = document.getElementById('overlayLoading');
+    if (!overlay) {
+      // estilo base do overlay e spinner (injetado via JS pra evitar editar CSS externo)
+      const style = document.createElement('style');
+      style.id = 'overlayLoadingStyles';
+      style.innerHTML = `
+        #overlayLoading {
+          position: fixed;
+          inset: 0;
+          background: rgba(0,0,0,0.45);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 13000;
+        }
+        #overlayLoading .box {
+          background: #fff;
+          padding: 14px 18px;
+          border-radius: 10px;
+          display:flex;
+          align-items:center;
+          gap:12px;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+          font-weight:600;
+          color:#222;
+        }
+        #overlayLoading .spinner {
+          width:28px;
+          height:28px;
+          border-radius:50%;
+          border:4px solid rgba(0,0,0,0.12);
+          border-top-color: #17903f;
+          animation: overlaySpin 800ms linear infinite;
+          box-sizing: border-box;
+        }
+        @keyframes overlaySpin { to { transform: rotate(360deg); } }
+      `;
+      document.head.appendChild(style);
+
+      overlay = document.createElement('div');
+      overlay.id = 'overlayLoading';
+      overlay.setAttribute('role', 'status');
+      overlay.setAttribute('aria-live', 'polite');
+      overlay.innerHTML = `<div class="box"><div class="spinner" aria-hidden="true"></div><div class="text">${msg}</div></div>`;
+      document.body.appendChild(overlay);
+    } else {
+      const text = overlay.querySelector('.text');
+      if (text) text.textContent = msg;
+      overlay.style.display = 'flex';
+    }
+    // sinal de busy para leitores de tela
+    document.body.setAttribute('aria-busy', 'true');
+  }
+
+  function hideLoadingOverlay() {
+    const overlay = document.getElementById('overlayLoading');
+    if (overlay) overlay.style.display = 'none';
+    document.body.removeAttribute('aria-busy');
+  }
+
+  // helper: limpa formulário e mensagens
+  function limparFormularioEMensagens() {
+    try {
+      if (form) form.reset();
+      // data volta para hoje (mesma lógica anterior)
+      const dataElLocal = document.getElementById('dataDesembargo');
+      if (dataElLocal) dataElLocal.value = new Date().toISOString().split('T')[0];
+
+      // limpa erros por campo
+      const els = document.querySelectorAll('[id^="error-"]');
+      els.forEach(e => { e.textContent = ''; });
+
+      // limpa mensagens de busca/insercao
+      const msgBusca = document.getElementById('mensagem-busca');
+      if (msgBusca) { msgBusca.textContent = ''; msgBusca.classList.remove('sucesso', 'erro'); }
+
+      const mensagemInsercao = document.getElementById('mensagem-insercao');
+      if (mensagemInsercao) mensagemInsercao.textContent = '';
+
+      // limpa iframe preview se estiver aberto
+      const iframePreviewLocal = document.getElementById('pdfPreview');
+      if (iframePreviewLocal) iframePreviewLocal.src = 'about:blank';
+    } catch (e) {
+      // se algo falhar ao limpar, ignora, mas loga
+      console.error('Erro ao limpar formulário:', e);
+    }
+  }
+
   btnBuscarProcesso.addEventListener('click', async () => {
     const proc = document.getElementById('processoSimlam').value.trim();
     if (!proc) return;
+
+    // desabilita botão e mostra overlay
+    btnBuscarProcesso.disabled = true;
+    showLoadingOverlay('Buscando processo...');
 
     try {
       // novo endpoint: /api/embargos/processo?valor=...
@@ -227,39 +323,45 @@ if (btnBuscarProcesso) {
         headers: getAuthHeaders()
       });
 
-      const data = await res.json();
+      // tenta ler json; se falhar, assume sem resultado
+      let data = null;
+      try { data = await res.json(); } catch (e) { data = null; }
 
-      if (res.ok && data) {
+      // sucesso HTTP e payload com algo útil
+      if (res.ok && data && Object.keys(data).length > 0) {
+        // mensagem de sucesso na UI
         const msgEl = document.getElementById("mensagem-busca");
         if (msgEl) { msgEl.textContent = "Registro de embargo encontrado!"; msgEl.classList.remove('erro'); msgEl.classList.add("sucesso"); }
 
         // mapear campos do registro de embargo para o formato esperado pelo preencherFormulario
         const mapped = {
-          // n_iuf_emb é o número do embargo (se o DB usar outro nome, aproveite ambos)
           numero: data.n_iuf_emb || data.numero || '',
           serie: data.serie || '',
-
-          // processo
           processoSimlam: data.processo || data.processo_simlam || proc,
-
-          // sep_edocs pode conter apenas dígitos (SEP) ou ter '-' (e-Docs)
           numeroSEP: null,
           numeroEdocs: null,
-
-          // nome/autuado
           nomeAutuado: data.nome_autuado || data.autuado || data.nome || '',
-
-          // área (se existir)
           area: (data.area_desembargada ?? data.area) ?? '',
-
-          // coordenadas (northing = Y, easting = X)
           coordenadaX: (data.easting ?? data.easting_m ?? data.coordenada_x ?? data.coordenadaX ?? '') ,
           coordenadaY: (data.northing ?? data.northing_m ?? data.coordenada_y ?? data.coordenadaY ?? ''),
-
           descricao: data.descricao || data.obs || ''
         };
 
-        // se veio coluna sep_edocs, distribuir entre SEP ou eDocs
+        let effectiveTipo = mapped.tipoDesembargo;
+        if (!effectiveTipo) {
+          const sel = document.querySelector('input[name="tipoDesembargo"]:checked');
+          if (sel && sel.value) effectiveTipo = sel.value.toString().toUpperCase();
+        }
+
+        // Preenche a área somente se for TOTAL
+        if (effectiveTipo === 'TOTAL') {
+          mapped.area = (data.area_desembargada ?? data.area ?? '') ;
+          showToast("O valor de área é válido apenas para desembargo TOTAL", "info", { duration: 4500 });
+        } else {
+          // garante string vazia (campo não será preenchido)
+          mapped.area = '';
+        }
+
         if (data.sep_edocs) {
           const seped = String(data.sep_edocs);
           if (seped.includes('-')) mapped.numeroEdocs = seped;
@@ -273,22 +375,31 @@ if (btnBuscarProcesso) {
         // Preenche o formulário usando sua função existente
         preencherFormulario(mapped);
 
-        // Validação backend após preencher
+        // Validação backend após preencher (mantém comportamento original)
         const formData = obterDadosFormulario();
         await validarFormularioBackend(formData);
 
       } else {
-        const msgEl = document.getElementById("mensagem-busca");
-        if (msgEl) { msgEl.textContent = data.message || "Não encontrado"; msgEl.classList.remove('sucesso'); msgEl.classList.add("erro"); }
+        // nenhum registro encontrado: limpa formulário e dá feedback
+        limparFormularioEMensagens();
+        showToast("Nenhum registro encontrado para o processo informado.", "info", { duration: 4500 });
       }
 
     } catch (err) {
       console.error("Erro na busca (embargos):", err);
+      // erro de rede: limpa e avisa
+      limparFormularioEMensagens();
       const msgEl = document.getElementById("mensagem-busca");
       if (msgEl) { msgEl.textContent = "Erro ao consultar o servidor"; msgEl.classList.remove('sucesso'); msgEl.classList.add("erro"); }
+      showToast("Erro ao consultar o servidor. Verifique sua conexão.", "error", { duration: 6000 });
+    } finally {
+      // sempre reativa botão e remove overlay
+      btnBuscarProcesso.disabled = false;
+      hideLoadingOverlay();
     }
   });
 }
+
 
 
   // ------------------ GERAR PRÉVIA (reaproveitado, sem salvar arquivo) ------------------
@@ -324,7 +435,13 @@ if (btnBuscarProcesso) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.setTextColor(primaryColor);
-    doc.text(`TERMO DE DESEMBARGO Nº X/IDAF`, 40, y);
+    if (previewObj.tipo_desembargo.toUpperCase() != 'INDEFERIMENTO'){
+      doc.text(`TERMO DE DESEMBARGO Nº ${previewObj.numero_embargo || '-'} ${previewObj.serie_embargo.toUpperCase() || '-'}/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center');
+    }
+    else{
+      doc.text(`OFÍCIO DE INDEFERIMENTO Nº ${previewObj.numero_embargo || '-'} ${previewObj.serie_embargo.toUpperCase() || '-'}/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center');
+    }
+    
     y += 10;
 
     doc.setTextColor(secondaryColor);
@@ -339,7 +456,7 @@ if (btnBuscarProcesso) {
       { label: "Processo Simlam", value: previewObj.processo_simlam || '-' },
       { label: "Processo E-Docs", value: previewObj.numero_edocs || '-' },
       { label: "Número do SEP", value: previewObj.numero_sep || '-' },
-      { label: "Autuado", value: previewObj.nome_autuado || '-' },
+      { label: "Autuado", value: previewObj.nome_autuado.toUpperCase() || '-' },
       { label: "Área Desembargada", value: `${previewObj.area_desembargada ?? '-'} ${previewObj.area_desembargada && previewObj.area_desembargada !== '-' ? 'ha' : ''}` },
       { label: "Tipo de Desembargo", value: (previewObj.tipo_desembargo || '-').toUpperCase() },
       { label: "Data do Desembargo", value: previewObj.data_desembargo ? (new Date(previewObj.data_desembargo)).toLocaleDateString() : '-' },
@@ -380,21 +497,23 @@ if (btnBuscarProcesso) {
 
     doc.setFont("helvetica", "normal");
     doc.setTextColor(secondaryColor);
-    const descricaoSplit = doc.splitTextToSize(previewObj.descricao || '-', 515);
+    const descricaoSplit = doc.splitTextToSize(previewObj.descricao || '-', 515, { maxWidth: 500,align: 'justify'});
     doc.text(descricaoSplit, 40, y);
     y += descricaoSplit.length * lineHeight + 10;
 
     // ================= Assinatura =================
     doc.setFont("helvetica", "bold");
     doc.setTextColor(primaryColor);
-    doc.text("Prévia de Desembargo feita por:", 40, y);
-    y += lineHeight;
+    //doc.text("Prévia de Desembargo feita por:", 40, y);
+    //y += lineHeight;
 
     doc.setTextColor(secondaryColor);
-    doc.text(String(previewObj.responsavel_desembargo || "-"), 40, y);
+    doc.text(String(previewObj.responsavel_desembargo || "-"), doc.internal.pageSize.getWidth() / 2, y, 'center');
     y += lineHeight;
+
     doc.setFont("helvetica", "normal");
-    doc.text(String(previewObj.cargo_responsavel || "-"), 40, y);
+    doc.setTextColor(primaryColor);
+    doc.text(String(previewObj.cargo_responsavel || "-"), doc.internal.pageSize.getWidth() / 2, y, 'center');
     y += 2*lineHeight;
 
     // ================= Disclaimer =================

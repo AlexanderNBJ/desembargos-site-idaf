@@ -1,9 +1,5 @@
-// src/validators/formValidator.js
 const Joi = require('joi');
-
-// regex que aceita letras (inclui acentos) e espaços — usa u flag para Unicode
 const nomeRegex = /^[\p{L}\s'.-]+$/u;
-// série: uma letra (maiúscula ou minúscula)
 const serieRegex = /^[A-Za-z]$/;
 
 const formSchema = Joi.object({

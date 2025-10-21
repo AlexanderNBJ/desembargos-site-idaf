@@ -9,7 +9,6 @@
   <link rel="stylesheet" href="css/stylesForm.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <style>
-    /* Estilos rápidos para o modal "redondinho" e responsivo */
     .hidden { display: none !important; }
     .modal {
       position: fixed;
@@ -59,7 +58,6 @@
   </style>
 </head>
 <body>
-  <!-- Modal (inicia hidden; abre somente ao SUBMIT) -->
   <div id="modalPrevia" class="modal hidden" aria-hidden="true" role="dialog" aria-labelledby="modalTitle">
     <div class="modal-content" role="document">
       <div class="modal-header">
@@ -97,8 +95,6 @@
   <main>
     <form id="desembargoForm" class="sv-grid" autocomplete="off" novalidate>
       <p class="sv-intro">Preencha as seguintes informações:</p>
-
-      <!-- (restante do formulário sem alterações) -->
       <div class="termo">
         <div class="section-title">Termo de Embargo Ambiental</div>
         <div class="termo-small">
@@ -145,7 +141,7 @@
 
       <div class="sep">
         <label for="numeroSEP" class="semirequired">Número do SEP:</label>
-        <input id="numeroSEP" name="numeroSEP" class="input" type="text" placeholder="Ex: 123456781" />
+        <input id="numeroSEP" name="numeroSEP" class="input" type="text" placeholder="Ex: 123456789" />
         <span class="error-msg" id="error-numeroSEP"></span>
       </div>
 
@@ -194,7 +190,6 @@
       </div>
     </form>
 
-    <!-- Buttons: REMOVIDO o botão "Gerar Prévia". Modal só abre no Enviar -->
     <div class="sv-actions">
       <button type="button" class="btn back" onclick="window.location.href='menuPrincipal.html'">
         <i class="fa-solid fa-arrow-left"></i> Voltar
@@ -225,9 +220,8 @@
       document.getElementById('dataDesembargo').value = new Date().toISOString().split('T')[0];
     });
   </script>
-
-  <!-- jspdf deve estar disponível antes do mainFormularios -->
+  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="js/mainFormularios.js"></script>
+  <script src="js/mainCadastroDesembargos.js"></script>
 </body>
 </html>

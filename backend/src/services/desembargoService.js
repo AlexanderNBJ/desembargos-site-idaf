@@ -1,13 +1,12 @@
-// backend/src/services/desembargoService.js
+require('dotenv').config();
 const db = require("../config/db");
 const fs = require("fs");
 const path = require("path");
 const { jsPDF } = require("jspdf");
-const desembargoTable = 'desembargos';
-const usersTable = 'users';
-const schema = '_desembargo';
+const desembargoTable = process.env.DESEMBARGO_TABLE;
+const usersTable = process.env.USER_TABLE;
+const schema = process.env.SCHEMA;
 
-// inserir
 async function inserirDesembargo({ numero, serie, nomeAutuado, area, processoSimlam,
                                   numeroSEP, numeroEdocs, tipoDesembargo,
                                   dataDesembargo, coordenadaX, coordenadaY, descricao, responsavelDesembargo }) {
@@ -233,7 +232,14 @@ async function gerarPdfDesembargo(desembargo) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(14);
   doc.setTextColor(primaryColor);
-  doc.text(`TERMO DE DESEMBARGO Nº ${desembargo.id}/IDAF`, 40, y);
+
+  if(desembargo.tipo_desembargo === "INDEFERIMENTO"){
+    doc.text(`OFÍCIO DE INDEFERIMENTO Nº ${desembargo.numero_embargo}-${desembargo.serie_embargo}/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center');
+  }
+  else{
+    doc.text(`TERMO DE DESEMBARGO Nº ${desembargo.numero_embargo}-${desembargo.serie_embargo}/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center');
+  }
+  
   y += 10;
   doc.setTextColor(secondaryColor);
   doc.setDrawColor(200);
@@ -289,7 +295,7 @@ async function gerarPdfDesembargo(desembargo) {
   doc.setFont("helvetica", "normal");
   doc.setTextColor(secondaryColor);
   const descricaoSplit = doc.splitTextToSize(desembargo.descricao || '-', 500);
-  doc.text(descricaoSplit, 40, y); 
+  doc.text(descricaoSplit, 40, y, { maxWidth: 500,align: 'justify'}); 
   y += descricaoSplit.length * lineHeight + 10;
 
   // ================= Assinatura =================
@@ -298,21 +304,27 @@ async function gerarPdfDesembargo(desembargo) {
 
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryColor);
-  doc.text("Desembargo aprovado por:", 40, y);
+
+  //if(desembargo.tipo_desembargo === "INDEFERIMENTO"){
+  //  doc.text("Ofício de indeferimento aprovado por:", 40, y);
+  //}
+  //else{
+  //  doc.text("Desembargo aprovado por:", 40, y);
+  //}
   y += lineHeight;
   doc.setTextColor(secondaryColor);
-  doc.text(String(aprovadorName), 40, y);
+  doc.text(String(aprovadorName), doc.internal.pageSize.getWidth() / 2, y, 'center');
   y += lineHeight;
 
   doc.setTextColor(primaryColor);
   doc.setFont("helvetica", "normal");
-  doc.text(String(aprovadorPosition), 40, y);
+  doc.text(String(aprovadorPosition), doc.internal.pageSize.getWidth() / 2, y, 'center');
   y += 2*lineHeight;
 
   // ================= Disclaimer =================
   doc.setFontSize(10);
   doc.setTextColor("#666");
-  doc.text("Este documento somente terá validade após sua inclusão e assinatura no sistema EDOC-s.", 40, y);
+  doc.text("Este documento somente terá validade após sua inclusão e assinatura no sistema EDOC-s.", doc.internal.pageSize.getWidth() / 2, y, 'center');
   y += 15;
 
   // retorna buffer para enviar como arquivo

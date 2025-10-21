@@ -1,13 +1,51 @@
-// userHeader.js
-// incluir DEPOIS de auth.js
 (function () {
+  const CACHE_KEY = 'displayName';
+  const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+
+  function nowMs() { return Date.now(); }
+
+  function saveCache(name) {
+    try {
+      const entry = { name, ts: nowMs() };
+      sessionStorage.setItem(CACHE_KEY, JSON.stringify(entry));
+    } catch (e) {}
+  }
+
+  function readCache() {
+    try {
+      const raw = sessionStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      const obj = JSON.parse(raw);
+      if (!obj || !obj.ts || !obj.name) return null;
+      if (nowMs() - obj.ts > CACHE_TTL_MS) {
+        sessionStorage.removeItem(CACHE_KEY);
+        return null;
+      }
+      return obj.name;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function base64UrlDecodeUtf8(b64url) {
+    try {
+      const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+      const str = atob(b64);
+      const pct = Array.prototype.map.call(str, c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join('');
+      return decodeURIComponent(pct);
+    } catch (e) {
+      return null;
+    }
+  }
+
   function parseJwt(token) {
     if (!token) return null;
     try {
       const part = token.split('.')[1];
       if (!part) return null;
-      const json = atob(part.replace(/-/g, '+').replace(/_/g, '/'));
-      return JSON.parse(decodeURIComponent(escape(json)));
+      const json = base64UrlDecodeUtf8(part);
+      if (!json) return null;
+      return JSON.parse(json);
     } catch (e) {
       return null;
     }
@@ -26,14 +64,12 @@
 
   function getStoredToken() {
     if (window.Auth && typeof Auth.getSessionToken === 'function') {
-      try { const t = Auth.getSessionToken(); if (t) return t; } catch {}
+      try { const t = Auth.getSessionToken(); if (t) return t; } catch (e) { /* continue */ }
     }
     return localStorage.getItem('sessionToken') || localStorage.getItem('token') || null;
   }
 
-  // retorna um displayName (preferindo name). NÃO faz fetch por /api (sync)
   function getDisplayNameSync() {
-    // 1) Auth.getSessionUser()
     try {
       if (window.Auth && typeof Auth.getSessionUser === 'function') {
         const u = Auth.getSessionUser();
@@ -48,7 +84,6 @@
       }
     } catch (e) {}
 
-    // 2) token payload
     const t = getStoredToken();
     const p = parseJwt(t);
     if (p) {
@@ -62,26 +97,36 @@
       if (p.sub) return cleanEmailToName(p.sub);
     }
 
-    // fallback
     const fallback = localStorage.getItem('username') || localStorage.getItem('user') || null;
     if (fallback) return fallback.includes('@') ? cleanEmailToName(fallback) : fallback;
 
-    return 'Usuário';
+    return null;
   }
 
-  // opcional: se preferir buscar do backend (assincrono) quando nada for encontrado:
   async function tryFetchNameFromApi() {
     try {
+      const cached = readCache();
+      if (cached) return cached;
+
       const token = getStoredToken();
       if (!token) return null;
       const res = await fetch('/api/usuarios/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
       });
       if (!res.ok) return null;
       const j = await res.json();
-      // assume { success: true, name, position } or { name, position }
-      if (j.name) return j.name;
-      if (j.data && j.data.name) return j.data.name;
+      let name = null;
+      if (j) {
+        if (j.name) name = j.name;
+        else if (j.data && j.data.name) name = j.data.name;
+        else if (j.data && j.data.username && j.data.name) name = j.data.name; 
+        else if (j.data && j.data.username && !j.data.name) name = j.data.username;
+        else if (j.username) name = j.username;
+      }
+      if (name) {
+        saveCache(name);
+        return name;
+      }
       return null;
     } catch (e) {
       return null;
@@ -102,21 +147,52 @@
     return span;
   }
 
-  async function renderUserName() {
+  async function renderUserName(force = false) {
     const span = ensureUserSpan();
     if (!span) return;
-    // try sync first
-    let name = getDisplayNameSync();
-    // if the sync method returns 'Usuário' or an email-ish fallback, try API for a nicer name
-    if (name === 'Usuário' || (typeof name === 'string' && name.includes('@'))) {
-      const apiName = await tryFetchNameFromApi();
-      if (apiName) name = apiName;
-      else if (name && name.includes('@')) name = cleanEmailToName(name);
+    if (!force) {
+      const cached = readCache();
+      if (cached) {
+        span.textContent = cached;
+        return;
+      }
     }
-    span.textContent = name;
+
+    let name = getDisplayNameSync();
+    if (name) {
+      span.textContent = name;
+      const apiName = await tryFetchNameFromApi();
+      if (apiName && apiName !== name) {
+        span.textContent = apiName;
+      }
+      return;
+    }
+
+    const apiName = await tryFetchNameFromApi();
+    if (apiName) {
+      span.textContent = apiName;
+      return;
+    }
+
+    const t = getStoredToken();
+    const p = parseJwt(t);
+    let fallback = null;
+    if (p) fallback = p.name || p.username || p.email || p.sub || null;
+    if (!fallback) fallback = localStorage.getItem('username') || localStorage.getItem('user') || null;
+    if (fallback) {
+      span.textContent = (typeof fallback === 'string' && fallback.includes('@')) ? cleanEmailToName(fallback) : String(fallback);
+      return;
+    }
+
+    span.textContent = 'Usuário';
   }
+
+  window.refreshUserName = function (opts = {}) {
+    return renderUserName(Boolean(opts.force));
+  };
 
   document.addEventListener('DOMContentLoaded', () => {
     renderUserName();
   });
+
 })();

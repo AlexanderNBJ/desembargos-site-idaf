@@ -1,4 +1,3 @@
-// src/controllers/formController.js
 const audit = require('../utils/auditLogger');
 const { formSchema } = require('../validators/formValidator');
 const desembargoService  = require('../services/desembargoService');
@@ -27,7 +26,7 @@ async function validarFormulario(req, res) {
 
 async function criarDesembargo(req, res) {
   try {
-    // 1️⃣ Valida os dados com Joi
+    // valida os dados
     const { error, value } = formSchema.validate(req.body, { abortEarly: false });
 
     if (error) {
@@ -38,7 +37,7 @@ async function criarDesembargo(req, res) {
       return res.status(400).json({ errors });
     }
 
-    // 2️⃣ Refatora / normaliza os dados
+    // refatora os dados
     const responsavel = req.user?.username || req.user?.name || "DESCONHECIDO";
 
     const refatorado = {
@@ -57,9 +56,7 @@ async function criarDesembargo(req, res) {
       responsavelDesembargo: responsavel
     };
 
-    console.log('Dados refatorados para inserção:', refatorado);
-
-    // 3️⃣ Insere no banco
+    // Insere no BD
     const novo = await desembargoService.inserirDesembargo(refatorado);
 
     await audit.logAction({

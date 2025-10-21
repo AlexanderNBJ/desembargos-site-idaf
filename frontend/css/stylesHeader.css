@@ -111,11 +111,10 @@ body {
     .title-text h2 { display: none; } /* opcional */
 }
 
-
 .usuario-nome {
     font-family: "Hanken Grotesk", sans-serif;
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 15px;
+    font-weight: 400;
     color: white;
     white-space: nowrap;
 }

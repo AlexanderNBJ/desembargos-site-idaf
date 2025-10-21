@@ -1,6 +1,7 @@
-// backend/src/utils/auditLogger.js
+require('dotenv').config();
 const db = require('../config/db');
-const userLogsTable = '_desembargo.user_logs';
+const schema = process.env.SCHEMA;
+const userLogsTable = process.env.USER_LOG_TABLE;
 
 function normalizeIpValue(raw) {
   if (!raw) return null;
@@ -34,14 +35,24 @@ function safeStringify(obj) {
 /* extrai IP padrão (x-forwarded-for / req.ip / connection) */
 async function extractIpFromReq(req) {
   if (!req) return null;
+  // Se 'trust proxy' estiver habilitado no Express, req.ip já conterá o IP do cliente final.
+  // A lógica de fallback para headers ainda é útil caso o 'trust proxy' não esteja configurado
+  // ou se houver cenários de múltiplos proxies.
+  const ipFromTrustProxy = req.ip ? normalizeIpValue(req.ip) : null;
+  if (ipFromTrustProxy) {
+    return ipFromTrustProxy;
+  }
+
+  // Lógica de fallback manual (seu código original, que é robusto)
   const xf = (req.headers && (req.headers['x-forwarded-for'] || req.headers['x-real-ip'])) || null;
   if (xf) {
-    // x-forwarded-for can be "client, proxy1, proxy2"
+    // x-forwarded-for pode ser "cliente, proxy1, proxy2"
     const first = Array.isArray(xf) ? xf[0] : String(xf).split(',')[0];
     return normalizeIpValue(first);
   }
-  if (req.ip) return normalizeIpValue(req.ip);
-  if (req.connection && req.connection.remoteAddress) return normalizeIpValue(req.connection.remoteAddress);
+  if (req.connection && req.connection.remoteAddress) {
+    return normalizeIpValue(req.connection.remoteAddress);
+  }
   return null;
 }
 
@@ -99,7 +110,7 @@ async function logAction({ req = null, username = null, action = '', details = n
     const ua = req && req.headers ? (req.headers['user-agent'] || null) : null;
 
     const query = `
-      INSERT INTO ${userLogsTable} (username, action, details, ip, user_agent)
+      INSERT INTO ${schema}.${userLogsTable} (username, action, details, ip, user_agent)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id
     `;

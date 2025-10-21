@@ -1,9 +1,3 @@
-// mainVisualizacaoDesembargo.js
-// Atualizado para:
-// - GERENTE: pode alterar responsavel via dropdown (carregado do BD).
-// - COMUM: não pode alterar responsavel (nem status).
-// - Exibe nome do usuário no header em qualquer página.
-
 document.addEventListener("DOMContentLoaded", () => {
   const urlParams = new URLSearchParams(window.location.search);
   const id = urlParams.get("id");
@@ -20,14 +14,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const btnBuscar = document.getElementById("btnBuscarProcesso");
   const mensagemBusca = document.getElementById("mensagem-busca");
 
-  // Initially lock everything (checkbox remains for now)
   Array.from(form.elements).forEach(el => {
     if (["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName)) el.disabled = true;
   });
   if (updateBtn) updateBtn.disabled = true;
   if (btnBuscar) btnBuscar.disabled = true;
 
-  // ---------- Auth helpers ----------
   function getStoredToken() {
     return (window.Auth && typeof Auth.getSessionToken === 'function')
       ? Auth.getSessionToken()
@@ -58,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
           username: (u && (u.username || u.email || u.name)) || (p && (p.username || p.email || p.name || p.sub)) || null,
           role: (p && (p.role || p.roles)) || (u && u.role) || null
         };
-      } catch (e) { /* fallback */ }
+      } catch (e) {  }
     }
     const t = getStoredToken();
     const p = parseJwtPayload(t);
@@ -81,27 +73,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return String(raw).toUpperCase();
   }
 
-//  // show user name in header (in any page)
-//  (function showUserInHeader() {
-//    const info = getCurrentUserInfo();
-//    const username = info.username || (info.payload && (info.payload.name || info.payload.username || info.payload.email)) || null;
-//    if (!username) return;
-//    // find or create span#usuarioNome inside header .logout-container
-//    let span = document.getElementById('usuarioNome');
-//    if (!span) {
-//      const logoutContainer = document.querySelector('header .logout-container');
-//      if (logoutContainer) {
-//        span = document.createElement('span');
-//        span.id = 'usuarioNome';
-//        span.className = 'usuario-nome';
-//        span.style.marginRight = '8px';
-//        logoutContainer.insertBefore(span, logoutContainer.firstChild);
-//      }
-//    }
-//    if (span) span.textContent = username;
-//  })();
-
-  // ---------- Normalize & UI helpers ----------
   function normalizeRow(row) {
     if (!row) return null;
     const pick = (o, ...keys) => {
@@ -225,7 +196,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return null;
   }
 
-  // ---------- buscar por processo (mantido) ----------
   async function buscarPorProcessoSimlam(proc) {
     if (!enableEdit.checked) {
       mensagemBusca.textContent = 'Habilite edição para usar a busca por processo.';
@@ -289,7 +259,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // ---------- fetchById + permission logic + responsavel dropdown ----------
   async function fetchById() {
     const userInfo = getCurrentUserInfo();
     const username = userInfo.username ? String(userInfo.username).trim().toLowerCase() : null;
@@ -313,7 +282,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const norm = normalizeRow(payload);
       preencherFormulario(norm);
 
-      // If APROVADO => lock everything
       if (norm.status && String(norm.status).toUpperCase() === "APROVADO") {
         const editToggle = document.querySelector(".edit-toggle");
         if (editToggle) editToggle.style.display = "none";
@@ -327,7 +295,6 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      // Determine permissions
       const responsavel = norm.responsavelDesembargo ? String(norm.responsavelDesembargo).trim().toLowerCase() : null;
       const statusUpper = norm.status ? String(norm.status).toUpperCase() : '';
 
@@ -344,12 +311,9 @@ document.addEventListener("DOMContentLoaded", () => {
         canEditRecord = false;
       }
 
-      // If GERENTE: replace responsavel input with select and load users
       const currentRespEl = document.getElementById('responsavelDesembargo');
       if (role === "GERENTE") {
-        // create select only if not already select
         if (!currentRespEl || currentRespEl.tagName !== 'SELECT') {
-          // preserve id/class/name
           const origValue = currentRespEl ? currentRespEl.value : (norm.responsavelDesembargo ?? '');
           const select = document.createElement('select');
           select.id = 'responsavelDesembargo';
@@ -373,28 +337,22 @@ document.addEventListener("DOMContentLoaded", () => {
             // Normalize and fill options
             users.forEach(u => {
             const opt = document.createElement('option');
-            // ajuste aqui
-            // preferir username como value, exibir name quando disponível
-          const val = u.username || u.id || u.name || u.email;
-          const label = u.name || u.username || u.email || String(u.id || '');
-          opt.value = val;
-          opt.textContent = label;
-          opt.dataset.alt = (u.name || u.username || '').toLowerCase();
+            const val = u.username || u.id || u.name || u.email;
+            const label = u.name || u.username || u.email || String(u.id || '');
+            opt.value = val;
+            opt.textContent = label;
+            opt.dataset.alt = (u.name || u.username || '').toLowerCase();
 
             opt.dataset.alt = label.toLowerCase();
             select.appendChild(opt);
           });
 
-            // try to match current responsavel
             setSelectValue(select, norm.responsavelDesembargo ?? '');
-            // if no match, try matching by name
-            // após popular options
-            // tentativa 1: valor explícito
+
             if (norm.responsavelDesembargo) {
               setSelectValue(select, norm.responsavelDesembargo);
             }
 
-            // tentativa 2: buscar por nome (case-insensitive)
             if (!select.value) {
               const maybe = (norm.responsavelDesembargo || '').toLowerCase();
               const matchOpt = Array.from(select.options).find(o =>
@@ -406,7 +364,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
           } else {
-            // no users found: leave a single option with current value for manual edit
             const opt = document.createElement('option');
             opt.value = norm.responsavelDesembargo ?? '';
             opt.textContent = norm.responsavelDesembargo ?? '(sem responsável)';
@@ -415,7 +372,6 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         }
       } else {
-        // not gerente -> ensure responsavel is an input (we keep it read-only for COMUM)
         if (!currentRespEl || currentRespEl.tagName === 'SELECT') {
           // if it's select, convert to input with the currently selected text/value
           const sel = document.getElementById('responsavelDesembargo');
