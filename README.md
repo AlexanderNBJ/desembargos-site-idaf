@@ -98,6 +98,7 @@ CREATE TABLE SCHEMA.EMBARGOS_TESTE(
 ## Execução
 
 Para executar o backend, basta estar na pasta `./backend` e executar o seguinte comando:
-							`npm start`
+
+												`npm start`
 
 Note que o servidor será executado na porta definida no arquivo `.env`, e o acesso ao endereço `localhost:PORTA`, substituindo PORTA pelo valor definido no `.env`, redirecionará ao site.
