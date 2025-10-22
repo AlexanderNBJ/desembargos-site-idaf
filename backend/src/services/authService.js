@@ -1,15 +1,9 @@
 require('dotenv').config();
-const db = require('../config/db');
-const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { fetchPermissions } = require('../utils/fetchPermissions');
 
 const JWT_SECRET = process.env.SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
-
-const usersTable = process.env.USER_TABLE;
-const schema = process.env.SCHEMA;
-const MAPPIA_DEBUG = !!process.env.MAPPIA_DEBUG;
 
 class AuthService {
   constructor() {
@@ -28,10 +22,7 @@ class AuthService {
           body,
         });
 
-        if (MAPPIA_DEBUG) console.log('[mappia] /user/login status', resp.status);
         const json = await resp.json();
-        if (MAPPIA_DEBUG) console.log('[mappia] /user/login json:', json);
-
         const mappiaToken = json?.value?.token || json?.token || json?.data?.token || json?.access_token;
         let userFromMappia = json?.value || json?.user || json?.data || null;
 
@@ -68,8 +59,6 @@ class AuthService {
 
           return { token: localJwt, user };
         }
-
-        if (MAPPIA_DEBUG) console.warn('[mappia] login não retornou token, fazendo fallback local. JSON retornado:', JSON.stringify(json));
       } catch (err) {
         console.error('Erro comunicando com Mappia no login:', err);
       }

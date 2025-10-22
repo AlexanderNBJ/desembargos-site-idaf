@@ -1,7 +1,6 @@
 const MAPPIA_DB_URL = process.env.MAPPIA_DB_URL;
 const isComumQuery = parseInt(process.env.MAPPIA_IS_COMUM_QUERY, 10);
 const isGerenteQuery = parseInt(process.env.MAPPIA_IS_GERENTE_QUERY, 10);
-const MAPPIA_DEBUG = !!process.env.MAPPIA_DEBUG;
 
 // Simple in-memory cache
 const cache = new Map();
@@ -58,13 +57,11 @@ function extractValue(respJson) {
 
 async function fetchPermissions(token) {
   if (!MAPPIA_DB_URL) {
-    if (MAPPIA_DEBUG) console.warn('[mappia] MAPPIA_DB_URL not set, returning falses');
     return [false, false];
   }
 
   const cached = getCachedPermissions(token);
   if (cached) {
-    if (MAPPIA_DEBUG) console.log('[mappia] cache hit for token');
     return cached;
   }
 
@@ -75,31 +72,30 @@ async function fetchPermissions(token) {
     const urlComum = `${base}/run/${isComumQuery}?token=${encodeURIComponent(token)}`;
     const urlGerente = `${base}/run/${isGerenteQuery}?token=${encodeURIComponent(token)}`;
 
-    if (MAPPIA_DEBUG) console.log('[mappia] requesting isComum:', urlComum);
     const dashboardResp = await fetch(urlComum);
+
     if (dashboardResp.ok) {
       const dashboardData = await dashboardResp.json();
-      if (MAPPIA_DEBUG) console.log('[mappia] isComum resp:', dashboardData);
       const val = extractValue(dashboardData);
-      if (val !== -1) permissions[0] = true;
-    } else {
-      if (MAPPIA_DEBUG) console.warn('[mappia] isComum status', dashboardResp.status);
-    }
 
-    if (MAPPIA_DEBUG) console.log('[mappia] requesting isGerente:', urlGerente);
+      if (val !== -1) 
+        permissions[0] = true;
+    } 
+
     const metricsResp = await fetch(urlGerente);
+
     if (metricsResp.ok) {
       const metricsData = await metricsResp.json();
-      if (MAPPIA_DEBUG) console.log('[mappia] isGerente resp:', metricsData);
       const val = extractValue(metricsData);
-      if (val !== -1) permissions[1] = true;
-    } else {
-      if (MAPPIA_DEBUG) console.warn('[mappia] isGerente status', metricsResp.status);
+
+      if (val !== -1)
+        permissions[1] = true;
     }
 
     setCachedPermissions(token, permissions);
-  } catch (err) {
-    console.error('Error fetching permissions from Mappia:', err);
+  } 
+  catch (err) {
+    console.error('Error fetching permissions:', err);
   }
 
   return permissions;
