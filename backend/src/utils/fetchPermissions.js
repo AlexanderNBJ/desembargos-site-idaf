@@ -1,6 +1,6 @@
 const MAPPIA_DB_URL = process.env.MAPPIA_DB_URL;
-const isComumQuery = parseInt(process.env.MAPPIA_IS_COMUM_QUERY || '314', 10);
-const isGerenteQuery = parseInt(process.env.MAPPIA_IS_GERENTE_QUERY || '313', 10);
+const isComumQuery = parseInt(process.env.MAPPIA_IS_COMUM_QUERY, 10);
+const isGerenteQuery = parseInt(process.env.MAPPIA_IS_GERENTE_QUERY, 10);
 const MAPPIA_DEBUG = !!process.env.MAPPIA_DEBUG;
 
 // Simple in-memory cache

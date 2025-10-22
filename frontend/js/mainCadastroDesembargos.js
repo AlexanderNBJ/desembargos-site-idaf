@@ -435,12 +435,14 @@ if (btnBuscarProcesso) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.setTextColor(primaryColor);
+    texto_aux_header='OFÍCIO DE INDEFERIMENTO';
+
     if (previewObj.tipo_desembargo.toUpperCase() != 'INDEFERIMENTO'){
-      doc.text(`TERMO DE DESEMBARGO Nº ${previewObj.numero_embargo || '-'} ${previewObj.serie_embargo.toUpperCase() || '-'}/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center');
+      texto_aux_header= 'TERMO DE DESEMBARGO';
     }
-    else{
-      doc.text(`OFÍCIO DE INDEFERIMENTO Nº ${previewObj.numero_embargo || '-'} ${previewObj.serie_embargo.toUpperCase() || '-'}/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center');
-    }
+    
+    doc.text(`${texto_aux_header} Nº X/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center');
+
     
     y += 10;
 
@@ -452,7 +454,7 @@ if (btnBuscarProcesso) {
 
     // ================= Informações principais =================
     const infoFields = [
-      { label: "Termo de Embargo Ambiental", value: `${previewObj.numero_embargo || '-'} ${previewObj.serie_embargo || '-'}` },
+      { label: "Termo de Embargo Ambiental", value: `${previewObj.numero_embargo || '-'} ${previewObj.serie_embargo.toUpperCase() || '-'}` },
       { label: "Processo Simlam", value: previewObj.processo_simlam || '-' },
       { label: "Processo E-Docs", value: previewObj.numero_edocs || '-' },
       { label: "Número do SEP", value: previewObj.numero_sep || '-' },
