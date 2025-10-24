@@ -2,8 +2,9 @@
 
 ## Requisitos
 - Node 	(versão recomendada: 18.x)
-- npm 	(versão recomendada: 9.2.0)
+- npm 	(vem com o Node, versão recomendada: 9.2.0)
 - PostgreSQL (versão recomendada: 15.x)
+- Extensão PostGIS instalada no PostgreSQL (versão recomendada: 3.3)
 
 ## Preparativos
 
@@ -12,23 +13,30 @@
 												`npm install`
   
 
-2. Adicionar o arquivo `.env` na pasta `./backend`, preenchendo-o com as informações relativas ao banco de dados, à porta que a aplicação vai ser executada, a senha secreta da aplicação e a URL da API de login. Siga conforme o exemplo a seguir e o arquivo em `./backend/.env.example`
+2. Adicionar o arquivo `.env` na pasta `./backend`, preenchendo-o com as informações relativas ao banco de dados, ao ambiente de execução do site, e à API de login. Siga conforme o exemplo a seguir e o arquivo em `./backend/.env.example`
 ```
+# Dados para conexão com o banco de dados
 DB_HOST=ipDoBancoDeDados
 DB_PORT=portaDoBancoDeDados
 DB_NAME=nomeDaDatabase
 DB_USER=usuarioDoBancoDeDados
 DB_PASS=senhaDoBancoDeDados
-PORT=portaDaAplicacao
-SECRET=senhaSecretDaAplicacao
-MAPPIA_DB_URL=urlDaAPIMappiaDB
-MAPPIA_IS_GERENTE_QUERY=requestDaAPIParaGerente
-MAPPIA_IS_COMUM_QUERY=requestDaAPIParaComum
+
+# Dados para acesso às tabelas do banco de dados
 SCHEMA=schemaNoBancoDeDados
 USER_TABLE=tabelaDeUsuariosNoBancoDeDados
 DESEMBARGO_TABLE=tabelaDeDesembargosNoBancoDeDados
 EMBARGO_TABLE=tabelaDeEmbargosNoBancoDeDados
 USER_LOG_TABLE=tabelaDeLogDeUsuarios
+
+# Dados para utilização da API MappiaDB
+MAPPIA_DB_URL=urlDaAPIMappiaDB
+MAPPIA_IS_GERENTE_QUERY=requestDaAPIParaGerente
+MAPPIA_IS_COMUM_QUERY=requestDaAPIParaComum
+
+# Dados para a execução da aplicação
+PORT=portaDaAplicacao
+SECRET=senhaSecretDaAplicacao
 ```
 
 3. A estrutura utilizada (em PostgreSQL) para as tabelas no BD nos ambientes de teste estão dispostas a seguir. Lembre-se de alterar `SCHEMA` para o schema definido no `.env`, bem como o nome das tabelas.
@@ -98,7 +106,7 @@ CREATE TABLE SCHEMA.EMBARGOS_TESTE(
 
 - Tabela de Registro Sequencial separado por Ano:
 ```
-CREATE TABLE IF NOT EXISTS _desembargo.desembargo_year_seq (
+CREATE TABLE IF NOT EXISTS SCHEMA.desembargo_year_seq (
   ano INTEGER PRIMARY KEY,
   last_seq INTEGER NOT NULL DEFAULT 0
 );
@@ -150,6 +158,24 @@ CREATE TRIGGER trg_gen_numero_ano_if_null
 BEFORE INSERT ON SCHEMA.desembargos_teste
 FOR EACH ROW
 EXECUTE FUNCTION SCHEMA.gen_numero_ano_if_null();
+```
+
+### Script para popular a tabela `SCHEMA.desembargo_year_seq`:
+
+```
+WITH extracted AS (
+  SELECT
+    -- somente linhas que têm numero_ano bem formados "N-YYYY" (N dígitos, YYYY ano)
+    (split_part(numero_ano, '-', 2))::int AS ano,
+    max( (split_part(numero_ano, '-', 1))::int ) AS max_n
+  FROM SCHEMA.desembargos_teste
+  WHERE numero_ano ~ '^\d+-\d{4}$'
+  GROUP BY (split_part(numero_ano, '-', 2))::int
+)
+INSERT INTO SCHEMA.desembargo_year_seq (ano, last_seq)
+SELECT ano, max_n FROM extracted
+ON CONFLICT (ano) DO UPDATE
+  SET last_seq = GREATEST(SCHEMA.desembargo_year_seq.last_seq, EXCLUDED.last_seq);
 ```
 
 ## Execução
