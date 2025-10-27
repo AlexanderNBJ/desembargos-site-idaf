@@ -10,27 +10,34 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
 </head>
 <body>
+  <!-- Header -->
   <header class="top-bar">
     <div class="logo">
       <img src="assets/simbolo-seloverde.svg" alt="Logo Selo Verde">
     </div>
+
     <div class="title-text">
       <h1>SeloVerde ES - Área Técnica</h1>
       <h2>Formulário de Cadastro de Desembargos</h2>
       <span class="restricted-badge">Área Restrita</span>
     </div>
+
     <div class="logout-container">
       <button id="logoutBtn" class="logout-btn" aria-label="Logout" title="Sair">Logout</button>
     </div>
+
   </header>
 
   <div class="page-container" role="main">
     <div class="list-header" aria-hidden="false">
+
+      <!-- Texto -->
       <div class="list-title-group">
         <h3 class="list-title">Lista de desembargos</h3>
         <p class="list-subtitle">Visualize, filtre e gere documentos dos desembargos</p>
       </div>
 
+      <!-- Barra de pesquisa -->
       <div class="search-wrapper" title="Pesquisar desembargos">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
           <path fill="#666" d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zM9.5 14A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/>
@@ -38,20 +45,25 @@
 
         <input id="search" type="search" placeholder="Pesquisar por termo, processo, autuado, status..." aria-label="Pesquisar desembargos">
       </div>
+    
     </div>
 
-    <div id="tabs" class="tabs" role="tablist" aria-label="Filtros de desembargos">
-    </div>
+    <div id="tabs" class="tabs" role="tablist" aria-label="Filtros de desembargos"> </div>
 
+    <!-- "Header" da lista -->
     <div class="table-card" role="region" aria-label="Lista de desembargos">
       <div class="table-toolbar">
+
+        <!-- Linhas por página -->
         <div class="table-controls">
           <label for="pageSize" class="small-muted">Linhas por página</label>
+
           <select id="pageSize" class="page-size" aria-label="Linhas por página">
             <option value="5">5</option>
             <option value="10" selected>10</option>
             <option value="25">25</option>
           </select>
+
           <div id="current-filter" class="small-muted" style="margin-left:12px;"></div>
         </div>
 
@@ -60,6 +72,7 @@
         </div>
       </div>
 
+      <!-- Tabela dinâmica com as informações -->
       <table class="desembargos" role="table" aria-label="Tabela de desembargos">
         <thead>
           <tr>
@@ -82,6 +95,7 @@
       <div class="pagination" id="paginationControls" aria-label="Controles de paginação"></div>
     </div>
 
+    <!-- Template de linha para as informações da tabela-->
     <template id="row-template">
       <tr data-id="{{id}}">
         <td class="col-termo">{{termo}}</td>
@@ -92,6 +106,7 @@
         <td class="col-tipo muted">{{tipo}}</td>
         <td class="col-status muted">{{col-status}}</td>
         <td class="col-data">{{data}}</td>
+
         <td class="col-acoes">
           <div class="actions">
             <button class="action-btn" data-action="view" title="Visualizar" aria-label="Visualizar">
@@ -102,19 +117,24 @@
             </button>
           </div>
         </td>
+
       </tr>
     </template>
 
+    <!-- Botão de voltar para o menu principal -->
     <div class="sv-actions" style="margin-top:14px;">
       <button type="button" class="btn back" onclick="window.location.href='menuPrincipal.html'">
         <i class="fa-solid fa-arrow-left"></i> VOLTAR
       </button>
     </div>
+  
   </div>
 
+  <!-- Scripts de login/logout -->
   <script src="js/auth.js"></script>
   <script src="js/userHeader.js"></script>
 
+  <!-- Logout -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const btn = document.getElementById('logoutBtn');
@@ -124,6 +144,7 @@
     Auth.initAuth({ redirectIfMissing: true});
   </script>
 
+  <!-- Scripts -->
   <script src="js/mainListaDesembargos.js"></script>
 </body>
 </html>

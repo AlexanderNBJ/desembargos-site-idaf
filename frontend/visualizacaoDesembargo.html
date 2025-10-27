@@ -3,192 +3,240 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+
   <title>SeloVerde ES - Visualização de Desembargo</title>
+
   <link rel="icon" type="image/x-icon" href="assets/favicon.png">
   <link rel="stylesheet" href="css/stylesHeader.css">
   <link rel="stylesheet" href="css/stylesDesebargo.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
 </head>
 <body>
+  <!-- Header -->
   <header class="top-bar">
     <div class="logo"><img src="assets/simbolo-seloverde.svg" alt="Logo Selo Verde"></div>
+
     <div class="title-text">
       <h1>SeloVerde ES - Área Técnica</h1>
-      <h2>Visualização de Desembargo</h2>
+      <h2>Formulário de Cadastro de Desembargos</h2>
       <span class="restricted-badge">Área Restrita</span>
     </div>
+
     <div class="logout-container">
       <button id="logoutBtn" class="logout-btn" aria-label="Logout" title="Sair">Logout</button>
     </div>
+
   </header>
+  
 <main>
-    <form id="desembargoForm" class="sv-grid" autocomplete="off" novalidate>
-      <!-- intro + toggle na mesma linha -->
-      <div class="sv-intro-row">
-        <p class="sv-intro">Visualize ou edite as informações do desembargo:</p>
 
-        <div class="edit-toggle">
-          <label style="display:inline-flex;align-items:center;gap:8px;">
-            <input type="checkbox" id="enableEdit"> <span>Habilitar edição</span>
-          </label>
-        </div>
+  <!-- Início do formulário -->
+  <form id="desembargoForm" class="sv-grid" autocomplete="off" novalidate>
+
+    <!-- Texto acima do formulário -->
+    <div class="sv-intro-row">
+      <p class="sv-intro">Visualize ou edite as informações do desembargo:</p>
+
+      <!-- Opção para edição do desembargo -->
+      <div class="edit-toggle">
+        <label style="display:inline-flex;align-items:center;gap:8px;">
+          <input type="checkbox" id="enableEdit"> <span>Habilitar edição</span>
+        </label>
       </div>
+    
+    </div>
 
 
-      <!-- TERMO -->
-      <div class="termo">
-        <div class="section-title">Termo de Embargo Ambiental</div>
-        <div class="termo-small">
+    <!-- Termo de Embargo Ambiental -->
+    <div class="termo">
+      <div class="section-title">Termo de Embargo Ambiental</div>
+
+      <div class="termo-small">
+
+          <!-- Número de Embargo Ambiental -->
           <div class="small-wrap">
             <label for="numero" class="required">Número:</label>
             <input id="numero" name="numero" class="input-left" type="text" required disabled/>
             <span class="error-msg" id="error-numero"></span>
           </div>
+
+          <!-- Série de Embargo Ambiental -->
           <div class="small-wrap">
             <label for="serie" class="required">Série:</label>
             <input id="serie" name="serie" class="input-left" type="text" disabled/>
             <span class="error-msg" id="error-serie"></span>
           </div>
-        </div>
-      </div>
 
-      <!-- NOME -->
-      <div class="nome">
-        <label for="nomeAutuado" id="textoNomeAutuado">Nome do autuado:</label>
-        <input id="nomeAutuado" name="nomeAutuado" class="input" type="text" disabled />
-        <span class="error-msg" id="error-nomeAutuado"></span>
-      </div>
-
-      <!-- PROCESSO (com lupa) -->
-      <div class="processo">
-        <label for="processoSimlam" class="required">Processo Simlam:</label>
-        <div class="input-with-icon">
-          <input id="processoSimlam" name="processoSimlam" class="input" type="text" placeholder="Ex: 12345/2025" disabled/>
-          <button type="button" id="btnBuscarProcesso" class="icon-btn" title="Buscar no banco (por processo Simlam)" disabled aria-label="Buscar processo">
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.471 6.471 0 0 0 1.57-4.23C15.99 6.01 13.48 3.5 10.5 3.5S5.01 6.01 5.01 9s2.51 5.5 5.49 5.5c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14Zm-5 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14Z"/>
-            </svg>
-          </button>
-        </div>
-        <span class="error-msg" id="error-processoSimlam"></span>
-        <span id="mensagem-busca" class="mensagem-validacao"></span>
-      </div>
-
-      <!-- AREA -->
-      <div class="area">
-        <label for="area">Área desembargada (ha):</label>
-        <input id="area" name="area" class="input" type="text" disabled/>
-        <span class="error-msg" id="error-area"></span>
-      </div>
-
-      <!-- SEP -->
-      <div class="sep">
-        <label for="numeroSEP" class="semirequired">Número do SEP:</label>
-        <input id="numeroSEP" name="numeroSEP" class="input" type="text" disabled/>
-        <span class="error-msg" id="error-numeroSEP"></span>
-      </div>
-
-      <!-- TIPO -->
-      <div class="tipo">
-        <label class="label-bold required-section">Tipo de desembargo:</label>
-        <div class="tipo-controls">
-          <label><input type="radio" name="tipoDesembargo" value="TOTAL" disabled /> Total</label>
-          <label><input type="radio" name="tipoDesembargo" value="PARCIAL" disabled /> Parcial</label>
-          <label><input type="radio" name="tipoDesembargo" value="INDEFERIMENTO" disabled /> Indeferimento</label>
-        </div>
-        <span class="error-msg" id="error-tipoDesembargo"></span>
-      </div>
-
-      <!-- EDOCS -->
-      <div class="edocs">
-        <label for="numeroEdocs" class="semirequired">Número do processo e-Docs:</label>
-        <input id="numeroEdocs" name="numeroEdocs" class="input" type="text" disabled/>
-        <span class="error-msg" id="error-numeroEdocs"></span>
-      </div>
-
-      <!-- DATA -->
-      <div class="data">
-        <label for="dataDesembargo" class="required">Data de desembargo:</label>
-        <input id="dataDesembargo" name="dataDesembargo" class="input" type="date" disabled/>
-        <span class="error-msg" id="error-dataDesembargo"></span>
-      </div>
-
-      <!-- RESPONSÁVEL e STATUS (mesma linha) -->
-      <div class="responsavel">
-        <label for="responsavelDesembargo">Responsável pelo desembargo:</label>
-        <input id="responsavelDesembargo" name="responsavelDesembargo" class="input" type="text" disabled/>
-        <span class="error-msg" id="error-responsavelDesembargo"></span>
-      </div>
-
-      <div class="status-coord-wrapper">
-        <label for="status">Status:</label>
-        <select id="status" name="status" class="input" disabled>
-          <option value="">-- selecione --</option>
-          <option value="EM ANÁLISE">Em Análise</option>
-          <option value="REVISÃO PENDENTE">Revisão Pendente</option>
-          <option value="APROVADO">Aprovado</option>
-        </select>
-        <span class="error-msg" id="error-status"></span>
-      </div>
-
-      <!-- COORDENADAS (abaixo) -->
-      <div class="coordenadas">
-        <div class="section-title">Coordenadas UTM:</div>
-        <div class="coordenadas-small">
-          <div class="small-wrap">
-            <label for="coordenadaX">X(m)</label>
-            <input type="text" id="coordenadaX" name="coordenadaX" class="input-left" disabled>
-            <span class="error-msg" id="error-coordenadaX"></span>
-          </div>
-          <div class="small-wrap">
-            <label for="coordenadaY">Y(m)</label>
-            <input type="text" id="coordenadaY" name="coordenadaY" class="input-left" disabled>
-            <span class="error-msg" id="error-coordenadaY"></span>
-          </div>
-        </div>
-      </div>
-
-      <!-- DESCRIÇÃO -->
-      <div class="descricao">
-        <label for="descricao">Descrição do desembargo:</label>
-        <textarea id="descricao" name="descricao" class="textarea" disabled></textarea>
-        <span class="error-msg" id="error-descricao"></span>
-      </div>
-    </form>
-
-    <!-- AÇÕES -->
-    <div class="sv-actions">
-      <div class="buttons-container">
-        <button id="updateBtn" class="btn" disabled>
-          <i class="fa-solid fa-floppy-disk"></i> SALVAR ALTERAÇÕES
-        </button>
-        <button type="button" class="btn btn-secondary" onclick="window.location.href='listaDesembargos.html'">
-          <i class="fa-solid fa-arrow-left"></i> VOLTAR
-        </button>
       </div>
     </div>
 
+    <!-- Nome do Autuado -->
+    <div class="nome">
+      <label for="nomeAutuado" id="textoNomeAutuado">Nome do autuado:</label>
+      <input id="nomeAutuado" name="nomeAutuado" class="input" type="text" disabled />
+      <span class="error-msg" id="error-nomeAutuado"></span>
+    </div>
 
+    <!-- Processo Simlam -->
+    <div class="processo">
+      <label for="processoSimlam" class="required">Processo Simlam:</label>
 
+      <!-- Seção do Processo Simlam -->
+      <div class="input-with-icon">
+        <!-- Input -->
+        <input id="processoSimlam" name="processoSimlam" class="input" type="text" placeholder="Ex: 12345/2025" disabled/>
 
-    <div id="mensagem-insercao" class="mensagem"></div>
-  </main>
+        <!-- Botão de lupa -->
+        <button type="button" id="btnBuscarProcesso" class="icon-btn" title="Buscar no banco (por processo Simlam)" disabled aria-label="Buscar processo">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+            <path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.471 6.471 0 0 0 1.57-4.23C15.99 6.01 13.48 3.5 10.5 3.5S5.01 6.01 5.01 9s2.51 5.5 5.49 5.5c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14Zm-5 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14Z"/>
+          </svg>
+        </button>
+
+      </div>
+
+      <span class="error-msg" id="error-processoSimlam"></span>
+      <span id="mensagem-busca" class="mensagem-validacao"></span>
+    </div>
+
+    <!-- Área Desembargada -->
+    <div class="area">
+      <label for="area">Área desembargada (ha):</label>
+      <input id="area" name="area" class="input" type="text" disabled/>
+      <span class="error-msg" id="error-area"></span>
+    </div>
+
+    <!-- Número SEP -->
+    <div class="sep">
+      <label for="numeroSEP" class="semirequired">Número do SEP:</label>
+      <input id="numeroSEP" name="numeroSEP" class="input" type="text" disabled/>
+      <span class="error-msg" id="error-numeroSEP"></span>
+    </div>
+
+    <!-- Tipo de Desembargo, radio button -->
+    <div class="tipo">
+      <label class="label-bold required-section">Tipo de desembargo:</label>
+
+      <!-- Opções -->
+      <div class="tipo-controls">
+        <label><input type="radio" name="tipoDesembargo" value="TOTAL" disabled /> Total</label>
+        <label><input type="radio" name="tipoDesembargo" value="PARCIAL" disabled /> Parcial</label>
+        <label><input type="radio" name="tipoDesembargo" value="INDEFERIMENTO" disabled /> Indeferimento</label>
+      </div>
+
+      <span class="error-msg" id="error-tipoDesembargo"></span>
+    </div>
+
+    <!-- Número E-Docs -->
+    <div class="edocs">
+      <label for="numeroEdocs" class="semirequired">Número do processo e-Docs:</label>
+      <input id="numeroEdocs" name="numeroEdocs" class="input" type="text" disabled/>
+      <span class="error-msg" id="error-numeroEdocs"></span>
+    </div>
+
+    <!-- Data de Desembargo -->
+    <div class="data">
+      <label for="dataDesembargo" class="required">Data de desembargo:</label>
+      <input id="dataDesembargo" name="dataDesembargo" class="input" type="date" disabled/>
+      <span class="error-msg" id="error-dataDesembargo"></span>
+    </div>
+
+    <!-- Responsável pelo Desembargo -->
+    <div class="responsavel">
+      <label for="responsavelDesembargo">Responsável pelo desembargo:</label>
+      <input id="responsavelDesembargo" name="responsavelDesembargo" class="input" type="text" disabled/>
+      <span class="error-msg" id="error-responsavelDesembargo"></span>
+    </div>
+
+    <!-- Status do Desembargo -->
+    <div class="status-coord-wrapper">
+      <label for="status">Status:</label>
+
+      <!-- Opções da lista -->
+      <select id="status" name="status" class="input" disabled>
+        <option value="">-- selecione --</option>
+        <option value="EM ANÁLISE">Em Análise</option>
+        <option value="REVISÃO PENDENTE">Revisão Pendente</option>
+        <option value="APROVADO">Aprovado</option>
+      </select>
+
+      <span class="error-msg" id="error-status"></span>
+    </div>
+
+    <!-- Coordenadas UTM -->
+    <div class="coordenadas">
+      <div class="section-title">Coordenadas UTM:</div>
+
+      <div class="coordenadas-small">
+
+        <!-- Coordenada X(m) -->
+        <div class="small-wrap">
+          <label for="coordenadaX">X(m)</label>
+          <input type="text" id="coordenadaX" name="coordenadaX" class="input-left" disabled>
+          <span class="error-msg" id="error-coordenadaX"></span>
+        </div>
+
+        <!-- Coordenada Y(m) -->
+        <div class="small-wrap">
+          <label for="coordenadaY">Y(m)</label>
+          <input type="text" id="coordenadaY" name="coordenadaY" class="input-left" disabled>
+          <span class="error-msg" id="error-coordenadaY"></span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Descrição do desembargo -->
+    <div class="descricao">
+      <label for="descricao">Descrição do desembargo:</label>
+      <textarea id="descricao" name="descricao" class="textarea" disabled></textarea>
+      <span class="error-msg" id="error-descricao"></span>
+    </div>
+  </form>
+
+  <!-- Ações do usuário -->
+  <div class="sv-actions">
+
+    <div class="buttons-container">
+      <!-- Atualizar o desembargo -->
+      <button id="updateBtn" class="btn" disabled>
+        <i class="fa-solid fa-floppy-disk"></i> SALVAR ALTERAÇÕES
+      </button>
+
+      <!-- Voltar para a página anterior -->
+      <button type="button" class="btn btn-secondary" onclick="window.location.href='listaDesembargos.html'">
+        <i class="fa-solid fa-arrow-left"></i> VOLTAR
+      </button>
+    </div>
+
+  </div>
+
+  <div id="mensagem-insercao" class="mensagem"></div>
+
+</main>
+
+  <!-- Containter para mensagens toast para o usuário -->
   <div id="toast-container"></div>
 
+  <!-- Scripts para login/logout-->
   <script src="js/auth.js"></script>
   <script src="js/userHeader.js"></script>
+
+  <!-- Funcionalidade do botão de logout -->
   <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('logoutBtn');
-    if (btn) btn.addEventListener('click', () => Auth.logout(true));
-  });
-</script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('logoutBtn');
+      if (btn) btn.addEventListener('click', () => Auth.logout(true));
+    });
+  </script>
 
-<script>
-  // garante que usuário esteja logado, caso contrário vai para login
-  Auth.initAuth({ redirectIfMissing: true});
-</script>
+  <!-- Garantir que o usuário esteja logado -->
+  <script>
+    Auth.initAuth({ redirectIfMissing: true});
+  </script>
 
+  <!-- Scripts -->
   <script src="js/mainVisualizacaoDesembargo.js"></script>
 </body>
 </html>

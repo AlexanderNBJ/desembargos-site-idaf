@@ -9,60 +9,79 @@
     <link rel="stylesheet" href="css/stylesMenu.css">
 </head>
 <body>
+    <!-- Header -->
     <header class="top-bar">
         <div class="logo">
             <img src="assets/simbolo-seloverde.svg" alt="Logo Selo Verde">
         </div>
+
         <div class="title-text">
             <h1>SeloVerde ES - Área Técnica</h1>
             <h2>Formulário de Cadastro de Desembargos</h2>
             <span class="restricted-badge">Área Restrita</span>
         </div>
+
         <div class="logout-container">
             <span id="usuarioNome" class="usuario-nome"></span>
             <button id="logoutBtn" class="logout-btn" aria-label="Logout" title="Sair">Logout</button>
         </div>
+
     </header>
+
+    <!-- Menu de Acesso Rápido -->
     <div class="menu-wrapper" role="navigation" aria-label="Menu principal">
         <div class="menu-card">
             <h2 class="menu-title">Acesso Rápido</h2>
             <p class="menu-sub">Área técnica — SeloVerde ES</p>
 
+            <!-- Chama a lista de desembargos -->
             <div class="menu-grid">
-            <a href="listaDesembargos.html" class="menu-item" aria-label="Lista de Desembargos">
-                <div class="mi-left">
-                <svg class="mi-icon" width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 6h18v2H3V6zm0 5h12v2H3v-2zm0 5h18v2H3v-2z"/></svg>
-                </div>
-                <div class="mi-body">
-                <div class="mi-title">Lista de Desembargos</div>
-                <div class="mi-desc">Ver, filtrar e gerenciar termos</div>
-                </div>
-                <div class="mi-chev" aria-hidden="true">›</div>
-            </a>
 
-            <a href="cadastroDesembargos.html" class="menu-item primary" aria-label="Cadastrar Desembargo">
-                <div class="mi-left">
-                <svg class="mi-icon" width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13 11h8v2h-8v8h-2v-8H3v-2h8V3h2v8z"/></svg>
-                </div>
-                <div class="mi-body">
-                <div class="mi-title">Cadastrar Desembargo</div>
-                <div class="mi-desc">Abrir novo termo e enviar para análise</div>
-                </div>
-                <div class="mi-chev" aria-hidden="true">›</div>
-            </a>
+                <a href="listaDesembargos.html" class="menu-item" aria-label="Lista de Desembargos">
+
+                    <div class="mi-left">
+                        <svg class="mi-icon" width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 6h18v2H3V6zm0 5h12v2H3v-2zm0 5h18v2H3v-2z"/></svg>
+                    </div>
+
+                    <div class="mi-body">
+                        <div class="mi-title">Lista de Desembargos</div>
+                        <div class="mi-desc">Ver, filtrar e gerenciar termos</div>
+                    </div>
+                    
+                    <div class="mi-chev" aria-hidden="true">›</div>
+                </a>
+
+                <!-- Chama o cadastro de desembargos -->
+                <a href="cadastroDesembargos.html" class="menu-item primary" aria-label="Cadastrar Desembargo">
+                    <div class="mi-left">
+                        <svg class="mi-icon" width="36" height="36" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M13 11h8v2h-8v8h-2v-8H3v-2h8V3h2v8z"/></svg>
+                    </div>
+
+                    <div class="mi-body">
+                        <div class="mi-title">Cadastrar Desembargo</div>
+                        <div class="mi-desc">Abrir novo termo e enviar para análise</div>
+                    </div>
+
+                    <div class="mi-chev" aria-hidden="true">›</div>
+                </a>
+
             </div>
         </div>
-        </div>
+    </div>
 
+    <!-- Scripts relacionados ao login -->
     <script src="js/auth.js"></script>
     <script src="js/userHeader.js"></script>
-    <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('logoutBtn');
-    if (btn) btn.addEventListener('click', () => Auth.logout(true));
-  });
-</script>
 
+    <!-- Logout -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('logoutBtn');
+            if (btn) btn.addEventListener('click', () => Auth.logout(true));
+        });
+    </script>
+
+    <!-- Script -->
     <script src="js/mainMenuPrincipal.js"></script>
 
 </body>

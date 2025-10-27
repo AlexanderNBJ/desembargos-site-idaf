@@ -8,6 +8,8 @@
   <link rel="stylesheet" href="css/stylesHeader.css">
   <link rel="stylesheet" href="css/stylesForm.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <!-- Seção para esconder o modal de prévia do desembargo-->
   <style>
     .hidden { display: none !important; }
     .modal {
@@ -56,54 +58,78 @@
       #pdfPreview { height: 320px; }
     }
   </style>
+
 </head>
 <body>
+
+  <!-- Prévia do desembargo, modal -->
   <div id="modalPrevia" class="modal hidden" aria-hidden="true" role="dialog" aria-labelledby="modalTitle">
+
     <div class="modal-content" role="document">
+
       <div class="modal-header">
         <h2 id="modalTitle">Prévia do Desembargo</h2>
+
         <button id="fecharModalTopo" title="Fechar" class="btn back" style="padding:6px 9px;border-radius:8px;">
           <i class="fa-solid fa-xmark"></i>
         </button>
+
       </div>
 
       <iframe id="pdfPreview" title="Prévia em PDF" src="about:blank" aria-label="Prévia do desembargo"></iframe>
 
       <div class="modal-actions">
+
         <button id="confirmarEnvio" class="btn submit">
           <i class="fa-solid fa-check"></i> Confirmar Envio
         </button>
+
         <button id="cancelarEnvio" class="btn back">
           <i class="fa-solid fa-xmark"></i> Cancelar
         </button>
+
       </div>
     </div>
   </div>
 
+  <!-- Header -->
   <header class="top-bar">
     <div class="logo"><img src="assets/simbolo-seloverde.svg" alt="Logo Selo Verde"></div>
+
     <div class="title-text">
       <h1>SeloVerde ES - Área Técnica</h1>
       <h2>Formulário de Cadastro de Desembargos</h2>
       <span class="restricted-badge">Área Restrita</span>
     </div>
+
     <div class="logout-container">
       <button id="logoutBtn" class="logout-btn" aria-label="Logout" title="Sair">Logout</button>
     </div>
+
   </header>
 
   <main>
+    <!-- Formulário de Cadastro dos desembargos -->
     <form id="desembargoForm" class="sv-grid" autocomplete="off" novalidate>
+
       <p class="sv-intro">Preencha as seguintes informações:</p>
+
+      <!-- Seção do Termo de Embargo Ambiental -->
       <div class="termo">
+
         <div class="section-title">Termo de Embargo Ambiental</div>
+
         <div class="termo-small">
+
+          <!-- Seção do Número do Termo de Embargo Ambiental -->
           <div class="small-wrap">
             <label for="numero" class="required">Número:</label>
             <input id="numero" name="numero" class="input-left" type="text" placeholder="Ex: 12345" required/>
             <span class="error-msg" id="error-numero"></span>
             <span id="mensagem-numero" class="mensagem-validacao"></span>
           </div>
+
+          <!-- Seção da Série de Termo de Embargo Ambiental -->
           <div class="small-wrap">
             <label for="serie" class="required">Série:</label>
             <input id="serie" name="serie" class="input-left" type="text" placeholder="Ex: A"/>
@@ -112,16 +138,21 @@
         </div>
       </div>
 
+      <!-- Seção do Nome do Autuado -->
       <div class="nome">
         <label for="nomeAutuado" id="textoNomeAutuado">Nome do autuado:</label>
         <input id="nomeAutuado" name="nomeAutuado" class="input" type="text" placeholder="" />
         <span class="error-msg" id="error-nomeAutuado"></span>
       </div>
 
+      <!-- Seção do Processo Simlam -->
       <div class="processo">
         <label for="processoSimlam" class="required">Processo Simlam:</label>
+
         <div class="input-with-icon">
           <input id="processoSimlam" name="processoSimlam" class="input" type="text" placeholder="Ex: 12345/2025" required/>
+
+          <!-- Botão para buscar dados por meio do Processo Simlam-->
           <button type="button" id="btnBuscarProcesso" class="icon-btn" aria-label="Buscar processo no banco" title="Buscar no banco">
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
               <path fill="currentColor"
@@ -129,24 +160,30 @@
             </svg>
           </button>
         </div>
+
         <span class="error-msg" id="error-processoSimlam"></span>
         <span id="mensagem-busca" class="mensagem-validacao"></span>
       </div>
 
+      <!-- Seção da Área Desembargada -->
       <div class="area">
         <label for="area">Área desembargada (ha):</label>
         <input id="area" name="area" class="input" type="text" placeholder="Ex: 0.5" />
         <span class="error-msg" id="error-area"></span>
       </div>
 
+      <!-- Seção do Número SEP-->
       <div class="sep">
         <label for="numeroSEP" class="semirequired">Número do SEP:</label>
         <input id="numeroSEP" name="numeroSEP" class="input" type="text" placeholder="Ex: 123456789" />
         <span class="error-msg" id="error-numeroSEP"></span>
       </div>
 
+      <!-- Seção do Número SEP, radio button -->
       <div class="tipo">
         <label class="label-bold required-section">Tipo de desembargo:</label>
+
+        <!-- Dispõe as opções TOTAL, PARCIAL e INDEFERIMENTO -->
         <div class="tipo-controls">
           <label><input type="radio" name="tipoDesembargo" value="TOTAL" checked /> <span>Total</span></label>
           <label><input type="radio" name="tipoDesembargo" value="PARCIAL" /> <span>Parcial</span></label>
@@ -155,34 +192,44 @@
         </div>
       </div>
 
+      <!-- Seção para o Número E-Docs -->
       <div class="edocs">
         <label for="numeroEdocs" class="semirequired">Número do processo e-Docs:</label>
         <input id="numeroEdocs" name="numeroEdocs" class="input" type="text" placeholder="Ex: 2025-A12345" />
         <span class="error-msg" id="error-numeroEdocs"></span>
       </div>
 
+      <!-- Seção para a Data do Desembargo -->
       <div class="data">
         <label for="dataDesembargo" class="required">Data de desembargo:</label>
         <input id="dataDesembargo" name="dataDesembargo" class="input" type="date"/>
         <span class="error-msg" id="error-dataDesembargo"></span>
       </div>
 
+      <!-- Seção para as Coordenadas UTM -->
       <div class="coordenadas">
         <div class="section-title">Coordenadas UTM:</div>
+
         <div class="coordenadas-small">
+
+          <!-- Coordenada X(m) -->
           <div class="small-wrap">
             <label for="coordenadaX" class="required">X(m)</label>
             <input type="text" id="coordenadaX" name="coordenadaX" class="input-left" placeholder="Ex: -19.9167">
             <span class="error-msg" id="error-coordenadaX"></span>
           </div>
+
+          <!-- Coordenada Y(m) -->
           <div class="small-wrap">
             <label for="coordenadaY" class="required">Y(m)</label>
             <input type="text" id="coordenadaY" name="coordenadaY" class="input-left" placeholder="Ex: -43.9345">
             <span class="error-msg" id="error-coordenadaY"></span>
           </div>
         </div>
+
       </div>
 
+      <!-- Seção da Descrição do Desembargo-->
       <div class="descricao">
         <label for="descricao">Descrição do desembargo:</label>
         <textarea id="descricao" name="descricao" class="textarea"></textarea>
@@ -190,11 +237,15 @@
       </div>
     </form>
 
+    <!-- Seção das ações do usuário -->
     <div class="sv-actions">
+
+      <!-- Botão de voltar -->
       <button type="button" class="btn back" onclick="window.location.href='menuPrincipal.html'">
         <i class="fa-solid fa-arrow-left"></i> Voltar
       </button>
 
+      <!-- Botão de enviar o desembargo -->
       <div class="right-actions">
         <button type="submit" form="desembargoForm" class="btn submit" id="botaoEnviar">
           <i class="fa-solid fa-paper-plane"></i> Enviar
@@ -208,10 +259,11 @@
   <div id="toast-container" aria-live="polite"></div>
   <img id="logoPdf" src="assets/logos.png" style="display:none;">
 
-
+  <!-- scripts de autenticação e disposição do nome do usuário no header -->
   <script src="js/auth.js"></script>
   <script src="js/userHeader.js"></script>
 
+  <!-- Preenche a data do desembargo automaticamente com a data de hoje -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const btn = document.getElementById('logoutBtn');
@@ -221,6 +273,7 @@
     });
   </script>
   
+  <!-- Script de reponsividade e assets -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="js/mainCadastroDesembargos.js"></script>
 </body>
