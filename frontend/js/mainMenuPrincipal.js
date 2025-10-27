@@ -1,11 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
-  if (!Auth.initAuth({ redirectIfMissing: true })) return;
 
-  const userSpan = document.getElementById('usuarioNome');
+  // se o usuário não estiver logado, redirecionar
+  if (!Auth.initAuth({ redirectIfMissing: true })) 
+    return;
+
+  // pega os elementos
   const logoutBtn = document.getElementById('logoutBtn');
-  const token = Auth.getSessionToken();
-  const decoded = Auth.parseJwt(token);
 
+  // realiza o logout
   if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
       Auth.logout(true);

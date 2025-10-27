@@ -8,6 +8,53 @@ document.addEventListener('DOMContentLoaded', async () => {
   const summaryText = document.getElementById('summaryText');
   const currentFilterLabel = document.getElementById('current-filter');
 
+    // elementos do loader e controles que vamos desabilitar durante carregamento
+  const svLoader = document.getElementById('sv-loader');
+  const mainContainer = document.querySelector('.page-container');
+  const controlsToDisable = [ document.getElementById('search'), document.getElementById('pageSize'), paginationControls ];
+
+  function setControlsDisabled(disabled = true) {
+    // search input
+    const search = document.getElementById('search');
+    if (search) {
+      search.disabled = disabled;
+      search.setAttribute('aria-disabled', String(disabled));
+    }
+    // pageSize select
+    const ps = document.getElementById('pageSize');
+    if (ps) {
+      ps.disabled = disabled;
+      ps.setAttribute('aria-disabled', String(disabled));
+    }
+    // pagination buttons area: disable pointer events visually
+    if (paginationControls) {
+      paginationControls.style.pointerEvents = disabled ? 'none' : '';
+      paginationControls.setAttribute('aria-hidden', disabled ? 'true' : 'false');
+      // opcional: adicionar classe para opacidade se quiser
+    }
+  }
+
+  function showLoader(text) {
+    if (!svLoader) return;
+    if (text) {
+      const t = svLoader.querySelector('.sv-loader-text');
+      if (t) t.textContent = text;
+    }
+    svLoader.classList.add('active');
+    svLoader.setAttribute('aria-hidden','false');
+    if (mainContainer) mainContainer.setAttribute('aria-busy','true');
+    setControlsDisabled(true);
+  }
+
+  function hideLoader() {
+    if (!svLoader) return;
+    svLoader.classList.remove('active');
+    svLoader.setAttribute('aria-hidden','true');
+    if (mainContainer) mainContainer.setAttribute('aria-busy','false');
+    setControlsDisabled(false);
+  }
+
+
   function getStoredToken() {
     if (window.Auth && typeof Auth.getSessionToken === 'function') {
       const t = Auth.getSessionToken();
@@ -103,6 +150,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function fetchAndRender() {
+    showLoader('Carregando desembargos...');
     try {
       const url = buildListUrl();
       const token = getStoredToken();
@@ -125,8 +173,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
       console.error(err);
       tbody.innerHTML = `<tr><td colspan="9">Erro ao carregar desembargos.</td></tr>`;
+    } finally {
+      hideLoader();
     }
   }
+
 
   function renderRows(rows) {
     tbody.innerHTML = '';

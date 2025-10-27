@@ -1,15 +1,24 @@
 document.addEventListener('DOMContentLoaded', () => {
+  // pega por ID os elementos necessários
+
   const form = document.getElementById('loginForm');
   const usuario = document.getElementById('usuario');
   const senha = document.getElementById('senha');
   const msg = document.getElementById('loginMessage');
   const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
 
-  if (msg) { msg.hidden = true; msg.textContent = ''; }
+  // esconde a mensagem até que ocorra algo
+  if (msg){ 
+    msg.hidden = true; 
+    msg.textContent = '';
+  }
 
+  // função de mostrar a mensagem de toast
   window.showToast = function showToast(message, type = "success", options = {}) {
     
     let container = document.getElementById("toast-container");
+    
+    // cria o container, caso não exista
     if (!container) {
       container = document.createElement("div");
       container.id = "toast-container";
@@ -24,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.appendChild(container);
     }
 
+    // paleta de cores diferente para sucesso, erro ou informação
     const palette = {
       success: { bg: "#17903f", icon: "fa-solid fa-circle-check" },
       error:   { bg: "#c33a3a", icon: "fa-solid fa-circle-xmark" },
@@ -67,36 +77,56 @@ document.addEventListener('DOMContentLoaded', () => {
     text.textContent = message;
     text.style.cssText = "flex:1; color:#fff;";
 
+    // coloca o íncone e o texto
     toast.appendChild(icon);
     toast.appendChild(text);
     
+    // insere
     container.insertBefore(toast, container.firstChild);
 
+    // faz a animação
     requestAnimationFrame(() => {
       toast.style.transform = "translateY(0)";
       toast.style.opacity = "1";
     });
 
+    // coloca o timeout
     setTimeout(() => {
       toast.style.transform = "translateY(-12px)";
       toast.style.opacity = "0";
+
       setTimeout(() => {
-        try { toast.remove(); } catch (e) {}
-        if (container && container.children.length === 0) {
-          try { container.remove(); } catch (e) {}
+        try { 
+          toast.remove(); 
+        } 
+        catch (e){}
+
+        if (container && container.children.length === 0){
+          try { 
+            container.remove();
+          } 
+          catch (e) {}
         }
+        
       }, 220);
     }, duration);
   };
 
+  // define o que será disposto no botão de entrar
   function setSubmitting(isSubmitting) {
-    if (!submitBtn) return;
-    if (isSubmitting) {
+    if (!submitBtn) 
+      return;
+
+    // está tentando entrar, então vai mostrar um pseudocarregamento no botão
+    if (isSubmitting){
       submitBtn.disabled = true;
       submitBtn.dataset._orig = submitBtn.innerHTML;
       submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Entrando...';
       submitBtn.setAttribute('aria-busy', 'true');
-    } else {
+    }
+
+    // se não está tentando entrar, o botão fica normal
+    else {
       submitBtn.disabled = false;
       submitBtn.innerHTML = submitBtn.dataset._orig || 'Entrar';
       submitBtn.removeAttribute('aria-busy');
@@ -104,7 +134,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function hideInlineMessage() {
-    if (!msg) return;
+    if (!msg) 
+      return;
+
     msg.hidden = true;
     msg.textContent = '';
   }
@@ -113,17 +145,21 @@ document.addEventListener('DOMContentLoaded', () => {
     e && e.preventDefault();
     hideInlineMessage();
 
+    // pega os valores dos campos, sem espaços à esquerda ou direita
     const username = usuario ? usuario.value.trim() : '';
     const password = senha ? senha.value.trim() : '';
 
+    // caso não tenha preenchido, avisar o erro na mensagem toast
     if (!username || !password) {
       showToast('Preencha usuário e senha.', 'error');
       return;
     }
 
+    // está tentando fazer login
     setSubmitting(true);
 
     try {
+      // chama a API para login
       const res = await fetch('/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -131,37 +167,61 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       let json = null;
-      try { json = await res.json(); } catch (e) { json = null; }
 
+      try{ 
+        json = await res.json();
+      } 
+      catch (e){ 
+        json = null;
+      }
+      
+      // se está tudo ok, vai fazer login
       if (res.ok && json && json.code === 200 && json.value && json.value.token) {
+        
+        // chama Auth para fazer a sessão, colocar em cache
         Auth.setSession(json.value.token, json.value.user || { username });
+
         try {
+          // pega as permissões do usuário que logou
           const pRes = await Auth.fetchWithAuth('/auth/permissions');
+
           if (pRes && pRes.ok) {
             const perm = await pRes.json();
             localStorage.setItem('dashboardPerm', JSON.stringify(perm));
           }
-        } catch (err) { }
+        } 
+        catch (err) {}
+        
+        // vai pro menu principal
         window.location.href = 'menuPrincipal.html'
-
-      } else {
+      }
+      
+      // se não está ok, retorna o erro
+      else {
         const serverMsg = (json && (json.message || json.msg || json.error)) ? (json.message || json.msg || json.error) : 'Login falhou — verifique suas credenciais.';
         showToast(serverMsg, 'error', { duration: 6000 });
       }
-    } catch (err) {
+    } 
+    
+    // caso ocorra algum erro, dispõe o erro e altera o estado do botão de login
+    catch (err) {
       console.error('login error', err);
       const netMsg = 'Erro de conexão com o servidor.';
       showToast(netMsg, 'error', { duration: 6000 });
-    } finally {
+    } 
+    finally {
       setSubmitting(false);
     }
   }
 
   if (form) form.addEventListener('submit', doLogin);
+
+  // fazer o login ao apertar enter
   [usuario, senha].forEach(input => input && input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       doLogin();
     }
   }));
+
 });

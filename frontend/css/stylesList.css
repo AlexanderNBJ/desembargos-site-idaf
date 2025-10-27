@@ -333,3 +333,53 @@ table.desembargos {
 /* opcional: se preferir que o usuário saiba que existe conteúdo rolável, um pequeno efeito visual */
 .table-card::-webkit-scrollbar { height: 10px; }
 .table-card::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.06); border-radius: 8px; }
+
+
+/* Loader overlay */
+.sv-loader {
+  position: fixed;
+  inset: 0;
+  display: none;               /* hidden by default */
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: blur(3px);
+  z-index: 9999;
+}
+
+/* quando ativo, mostre */
+.sv-loader.active {
+  display: flex;
+}
+
+/* inner box */
+.sv-loader-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 24px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+}
+
+/* spinner */
+.sv-spinner {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 5px solid rgba(0,0,0,0.08);
+  border-top-color: rgba(34,139,34,0.9); /* verde SeloVerde (só exemplo) */
+  animation: sv-spin 1s linear infinite;
+}
+
+@keyframes sv-spin {
+  to { transform: rotate(360deg); }
+}
+
+.sv-loader-text {
+  font-size: 14px;
+  color: #222;
+  font-weight: 500;
+}
