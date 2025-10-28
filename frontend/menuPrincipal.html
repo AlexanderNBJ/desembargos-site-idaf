@@ -6,6 +6,7 @@
     <title>SeloVerde ES - Área Técnica</title>
     <link rel="icon" type="image/x-icon" href="assets/favicon.png">
     <link rel="stylesheet" href="css/stylesHeader.css">
+    <link rel="stylesheet" href="css/stylesUI.css">
     <link rel="stylesheet" href="css/stylesMenu.css">
 </head>
 <body>
@@ -69,19 +70,10 @@
         </div>
     </div>
 
-    <!-- Scripts relacionados ao login -->
+    <!-- Scripts -->
     <script src="js/auth.js"></script>
+    <script src="js/ui.js"></script>
     <script src="js/userHeader.js"></script>
-
-    <!-- Logout -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const btn = document.getElementById('logoutBtn');
-            if (btn) btn.addEventListener('click', () => Auth.logout(true));
-        });
-    </script>
-
-    <!-- Script -->
     <script src="js/mainMenuPrincipal.js"></script>
 
 </body>

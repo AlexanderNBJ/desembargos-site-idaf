@@ -8,7 +8,8 @@
 
   <link rel="icon" type="image/x-icon" href="assets/favicon.png">
   <link rel="stylesheet" href="css/stylesHeader.css">
-  <link rel="stylesheet" href="css/stylesDesebargo.css">
+  <link rel="stylesheet" href="css/stylesUI.css">
+  <link rel="stylesheet" href="css/stylesDesembargo.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 </head>
@@ -200,7 +201,7 @@
 
     <div class="buttons-container">
       <!-- Atualizar o desembargo -->
-      <button id="updateBtn" class="btn" disabled>
+      <button id="updateBtn" class="btn" type="submit" form="desembargoForm">
         <i class="fa-solid fa-floppy-disk"></i> SALVAR ALTERAÇÕES
       </button>
 
@@ -217,7 +218,6 @@
 </main>
 
   <!-- Containter para mensagens toast para o usuário -->
-  <div id="toast-container"></div>
 
   <!-- Scripts para login/logout-->
   <script src="js/auth.js"></script>
@@ -237,6 +237,7 @@
   </script>
 
   <!-- Scripts -->
+  <script src="js/ui.js"></script>
   <script src="js/mainVisualizacaoDesembargo.js"></script>
 </body>
 </html>

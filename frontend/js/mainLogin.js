@@ -1,227 +1,112 @@
+// frontend/js/mainLogin.js
+
 document.addEventListener('DOMContentLoaded', () => {
-  // pega por ID os elementos necessários
-
-  const form = document.getElementById('loginForm');
-  const usuario = document.getElementById('usuario');
-  const senha = document.getElementById('senha');
-  const msg = document.getElementById('loginMessage');
-  const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
-
-  // esconde a mensagem até que ocorra algo
-  if (msg){ 
-    msg.hidden = true; 
-    msg.textContent = '';
-  }
-
-  // função de mostrar a mensagem de toast
-  window.showToast = function showToast(message, type = "success", options = {}) {
-    
-    let container = document.getElementById("toast-container");
-    
-    // cria o container, caso não exista
-    if (!container) {
-      container = document.createElement("div");
-      container.id = "toast-container";
-      container.style.position = "fixed";
-      container.style.top = "16px";      
-      container.style.right = "16px";    
-      container.style.zIndex = "13000";
-      container.style.display = "flex";
-      container.style.flexDirection = "column";
-      container.style.gap = "8px";
-      container.style.pointerEvents = "none";
-      document.body.appendChild(container);
-    }
-
-    // paleta de cores diferente para sucesso, erro ou informação
-    const palette = {
-      success: { bg: "#17903f", icon: "fa-solid fa-circle-check" },
-      error:   { bg: "#c33a3a", icon: "fa-solid fa-circle-xmark" },
-      info:    { bg: "#2f6fb2", icon: "fa-solid fa-circle-info" }
-    };
-
-    const p = palette[type] || palette.info;
-    const duration = (options && options.duration) || 3500;
-
-    const toast = document.createElement("div");
-    toast.className = `toast ${type}`;
-    toast.style.pointerEvents = "auto";
-    toast.style.cssText = [
-      `background: ${p.bg}`,
-      "color: #ffffff",
-      "padding: 10px 14px",
-      "border-radius: 10px",
-      "box-shadow: 0 8px 28px rgba(0,0,0,0.18)",
-      "display: flex",
-      "gap: 10px",
-      "align-items: center",
-      "min-width: 220px",
-      "max-width: 420px",
-      "font-weight: 600",
-      "font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial",
-      "transform: translateY(-12px)",
-      "opacity: 0",
-      "transition: transform 220ms ease, opacity 220ms ease",
-      `z-index: ${options.zIndex || 13001}`
-    ].join(";");
-
-    const icon = document.createElement("i");
-    icon.className = p.iconClass;
-    icon.setAttribute('aria-hidden', 'true');
-    icon.style.minWidth = "18px";
-    icon.style.fontSize = "18px";
-    icon.style.lineHeight = "1";
-    icon.style.display = "inline-block";
-
-    const text = document.createElement("div");
-    text.textContent = message;
-    text.style.cssText = "flex:1; color:#fff;";
-
-    // coloca o íncone e o texto
-    toast.appendChild(icon);
-    toast.appendChild(text);
-    
-    // insere
-    container.insertBefore(toast, container.firstChild);
-
-    // faz a animação
-    requestAnimationFrame(() => {
-      toast.style.transform = "translateY(0)";
-      toast.style.opacity = "1";
-    });
-
-    // coloca o timeout
-    setTimeout(() => {
-      toast.style.transform = "translateY(-12px)";
-      toast.style.opacity = "0";
-
-      setTimeout(() => {
-        try { 
-          toast.remove(); 
-        } 
-        catch (e){}
-
-        if (container && container.children.length === 0){
-          try { 
-            container.remove();
-          } 
-          catch (e) {}
-        }
-        
-      }, 220);
-    }, duration);
+  // Centraliza a seleção de elementos da UI para fácil manutenção
+  const ui = {
+    form: document.getElementById('loginForm'),
+    usuarioInput: document.getElementById('usuario'),
+    senhaInput: document.getElementById('senha'),
+    submitBtn: document.querySelector('#loginForm button[type="submit"]'),
   };
 
-  // define o que será disposto no botão de entrar
-  function setSubmitting(isSubmitting) {
-    if (!submitBtn) 
-      return;
+  // Se o formulário não existir na página, não faz mais nada
+  if (!ui.form) return;
 
-    // está tentando entrar, então vai mostrar um pseudocarregamento no botão
-    if (isSubmitting){
-      submitBtn.disabled = true;
-      submitBtn.dataset._orig = submitBtn.innerHTML;
-      submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Entrando...';
-      submitBtn.setAttribute('aria-busy', 'true');
-    }
+  /**
+   * Atualiza o estado visual do botão de submit.
+   * @param {boolean} isSubmitting - True se o formulário está sendo enviado.
+   */
+  function setSubmittingState(isSubmitting) {
+    if (!ui.submitBtn) return;
 
-    // se não está tentando entrar, o botão fica normal
-    else {
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = submitBtn.dataset._orig || 'Entrar';
-      submitBtn.removeAttribute('aria-busy');
+    if (isSubmitting) {
+      ui.submitBtn.disabled = true;
+      ui.submitBtn.dataset.originalHtml = ui.submitBtn.innerHTML;
+      ui.submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Entrando...';
+    } else {
+      ui.submitBtn.disabled = false;
+      ui.submitBtn.innerHTML = ui.submitBtn.dataset.originalHtml || 'Entrar';
     }
   }
+  
+  /**
+   * Lida com a resposta de sucesso da API de login.
+   * @param {object} loginData - O objeto 'value' da resposta da API.
+   */
+  async function handleLoginSuccess(loginData) {
+    Auth.setSession(loginData.token, loginData.user);
 
-  function hideInlineMessage() {
-    if (!msg) 
-      return;
-
-    msg.hidden = true;
-    msg.textContent = '';
+    // Opcional: Tenta buscar permissões, mas não impede o login se falhar.
+    try {
+      const pRes = await Auth.fetchWithAuth('/auth/permissions');
+      if (pRes.ok) {
+        const perm = await pRes.json();
+        localStorage.setItem('dashboardPerm', JSON.stringify(perm));
+      }
+    } catch (error) {
+      console.warn('Não foi possível buscar as permissões após o login.', error);
+    }
+    
+    window.location.href = 'menuPrincipal.html';
   }
 
-  async function doLogin(e) {
-    e && e.preventDefault();
-    hideInlineMessage();
+  /**
+   * Lida com erros de login, mostrando uma mensagem para o usuário.
+   * @param {object} errorData - O JSON de erro da resposta da API.
+   */
+  function handleLoginFailure(errorData) {
+    const message = errorData?.message || 'Login falhou. Verifique suas credenciais.';
+    UI.showToast(message, 'error', { duration: 5000 });
+  }
 
-    // pega os valores dos campos, sem espaços à esquerda ou direita
-    const username = usuario ? usuario.value.trim() : '';
-    const password = senha ? senha.value.trim() : '';
+  /**
+   * Orquestra o processo de envio do formulário de login.
+   * @param {Event} event - O evento de submit do formulário.
+   */
+  async function handleSubmit(event) {
+    event.preventDefault();
 
-    // caso não tenha preenchido, avisar o erro na mensagem toast
+    const username = ui.usuarioInput.value.trim();
+    const password = ui.senhaInput.value.trim();
+
     if (!username || !password) {
-      showToast('Preencha usuário e senha.', 'error');
+      UI.showToast('Preencha usuário e senha.', 'error');
       return;
     }
 
-    // está tentando fazer login
-    setSubmitting(true);
+    setSubmittingState(true);
 
     try {
-      // chama a API para login
-      const res = await fetch('/auth/login', {
+      const response = await fetch('/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, password }),
       });
-
-      let json = null;
-
-      try{ 
-        json = await res.json();
-      } 
-      catch (e){ 
-        json = null;
-      }
       
-      // se está tudo ok, vai fazer login
-      if (res.ok && json && json.code === 200 && json.value && json.value.token) {
-        
-        // chama Auth para fazer a sessão, colocar em cache
-        Auth.setSession(json.value.token, json.value.user || { username });
+      const data = await response.json();
 
-        try {
-          // pega as permissões do usuário que logou
-          const pRes = await Auth.fetchWithAuth('/auth/permissions');
-
-          if (pRes && pRes.ok) {
-            const perm = await pRes.json();
-            localStorage.setItem('dashboardPerm', JSON.stringify(perm));
-          }
-        } 
-        catch (err) {}
-        
-        // vai pro menu principal
-        window.location.href = 'menuPrincipal.html'
+      if (response.ok) {
+        await handleLoginSuccess(data.value);
+      } else {
+        handleLoginFailure(data);
       }
-      
-      // se não está ok, retorna o erro
-      else {
-        const serverMsg = (json && (json.message || json.msg || json.error)) ? (json.message || json.msg || json.error) : 'Login falhou — verifique suas credenciais.';
-        showToast(serverMsg, 'error', { duration: 6000 });
-      }
-    } 
-    
-    // caso ocorra algum erro, dispõe o erro e altera o estado do botão de login
-    catch (err) {
-      console.error('login error', err);
-      const netMsg = 'Erro de conexão com o servidor.';
-      showToast(netMsg, 'error', { duration: 6000 });
-    } 
-    finally {
-      setSubmitting(false);
+    } catch (error) {
+      console.error('Erro de conexão durante o login:', error);
+      UI.showToast('Erro de conexão com o servidor.', 'error', { duration: 5000 });
+    } finally {
+      setSubmittingState(false);
     }
   }
 
-  if (form) form.addEventListener('submit', doLogin);
+  // --- Inicialização dos Event Listeners ---
+  ui.form.addEventListener('submit', handleSubmit);
 
-  // fazer o login ao apertar enter
-  [usuario, senha].forEach(input => input && input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      doLogin();
-    }
-  }));
-
+  // Permite login com a tecla "Enter" nos campos
+  [ui.usuarioInput, ui.senhaInput].forEach(input => {
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        handleSubmit(e);
+      }
+    });
+  });
 });

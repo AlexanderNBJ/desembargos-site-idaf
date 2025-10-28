@@ -49,7 +49,7 @@ class AuthService {
           // Seleciona as colunas da sua tabela '_desembargo.users_info'
           // A cláusula WHERE busca pelo username que veio do Mappia
           const queryResult = await db.query(
-            `SELECT id, name, username, position FROM ${SCHEMA}.${USER} WHERE username = $1`, 
+            `SELECT id, name, username, position FROM ${SCHEMA}.${USER_TABLE} WHERE username = $1`, 
             [userIdentifierFromMappia]
           );
 
