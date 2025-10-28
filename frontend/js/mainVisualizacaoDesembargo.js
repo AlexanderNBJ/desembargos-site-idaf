@@ -1,4 +1,4 @@
-// frontend/js/mainVisualizacaoDesembargo.js (FINAL COM AJUSTES FINAIS)
+// frontend/js/mainVisualizacaoDesembargo.js (FINAL, COM VALIDAÇÃO on-blur PARA SEP/EDOCS)
 
 document.addEventListener('DOMContentLoaded', () => {
   if (!Auth.initAuth()) return;
@@ -243,6 +243,14 @@ document.addEventListener('DOMContentLoaded', () => {
             window.UI.showToast("Corrija os erros no formulário antes de salvar.", "error");
             return false;
         }
+        if (!data.numeroSEP && !data.numeroEdocs) {
+            view.displayValidationErrors({ 
+                numeroSEP: 'Preencha pelo menos um dos campos: SEP ou E-Docs', 
+                numeroEdocs: 'Preencha pelo menos um dos campos: SEP ou E-Docs' 
+            });
+            window.UI.showToast("É obrigatório preencher o número SEP ou E-Docs.", "error");
+            return false;
+        }
         view.displayValidationErrors({});
         return true;
     }
@@ -340,6 +348,47 @@ document.addEventListener('DOMContentLoaded', () => {
             view.setEmbargoCheckMessage('Erro ao verificar. Tente novamente.', 'error');
         }
     },
+    // ===== MODIFICADO: Validação on-blur para SEP e E-Docs =====
+    onSepEdocsBlur: async (event) => {
+        const field = event.target;
+        const fieldName = field.name;
+        const value = field.value.trim();
+        const errorEl = document.getElementById(`error-${fieldName}`);
+
+        // Esta validação só deve rodar se o formulário estiver habilitado para edição
+        if (ui.enableEdit && !ui.enableEdit.checked) return;
+        
+        // Se o campo estiver vazio, não valida o formato, apenas a regra "um ou outro"
+        if (!value) {
+            const numeroSEP = ui.form.elements.numeroSEP.value.trim();
+            const numeroEdocs = ui.form.elements.numeroEdocs.value.trim();
+            if (!numeroSEP && !numeroEdocs) {
+                const msg = 'Preencha SEP ou E-Docs';
+                document.getElementById('error-numeroSEP').textContent = msg;
+                document.getElementById('error-numeroEdocs').textContent = msg;
+            }
+            return;
+        }
+
+        try {
+            // 1. Valida o formato do campo atual
+            const validationResult = await api.validateForm({ [fieldName]: value });
+            const errorMsg = validationResult.errors?.[fieldName];
+
+            if (errorMsg) {
+                if (errorEl) errorEl.textContent = errorMsg;
+            } else {
+                if (errorEl) errorEl.textContent = ''; // Limpa o erro do campo atual se for válido
+                
+                // 2. Se o formato for válido, limpa o erro do OUTRO campo
+                const otherField = fieldName === 'numeroSEP' ? 'numeroEdocs' : 'numeroSEP';
+                const otherErrorEl = document.getElementById(`error-${otherField}`);
+                if (otherErrorEl) otherErrorEl.textContent = '';
+            }
+        } catch (error) {
+            console.error(`Erro na validação do campo ${fieldName}:`, error);
+        }
+    },
   };
   
   // --- FUNÇÃO DE INICIALIZAÇÃO ---
@@ -353,6 +402,13 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.btnBuscar.addEventListener("click", handlers.onSearchProcessoClick);
     if (ui.form.elements.numero) {
         ui.form.elements.numero.addEventListener('blur', handlers.onNumeroEmbargoBlur);
+    }
+
+    if (ui.form.elements.numeroSEP) {
+        ui.form.elements.numeroSEP.addEventListener('blur', handlers.onSepEdocsBlur);
+    }
+    if (ui.form.elements.numeroEdocs) {
+        ui.form.elements.numeroEdocs.addEventListener('blur', handlers.onSepEdocsBlur);
     }
 
     try {

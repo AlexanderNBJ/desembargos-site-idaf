@@ -1,905 +1,376 @@
+// frontend/js/mainCadastroDesembargos.js (FINAL COM VALIDAÇÃO ON-BLUR)
+
 document.addEventListener('DOMContentLoaded', () => {
+  if (!Auth.initAuth()) return;
 
-  // Auth helpers, funções globais
-  window.getStoredToken = function getStoredToken() {
-    if (window.Auth && typeof Auth.getSessionToken === 'function') {
-      try { 
-        const t = Auth.getSessionToken(); 
-
-        if (t) 
-          return t; 
-      } 
-      catch {}
-    }
-    return localStorage.getItem('sessionToken') || localStorage.getItem('token') || null;
+  // --- MÓDULO DE ESTADO DA PÁGINA ---
+  const pageState = {
+    currentUserInfo: null, 
+    currentPreviewUrl: null,
   };
 
-  window.getAuthHeaders = function getAuthHeaders(contentType = 'application/json') {
-    const token = getStoredToken();
-    const headers = {};
-
-    if (contentType && contentType !== 'form') 
-      headers['Content-Type'] = contentType;
-
-    if (token) 
-      headers['Authorization'] = 'Bearer ' + token;
-
-    return headers;
+  // --- MÓDULO DE ELEMENTOS DA UI ---
+  const ui = {
+    form: document.getElementById('desembargoForm'),
+    btnBuscar: document.getElementById('btnBuscarProcesso'),
+    mensagemBusca: document.getElementById('mensagem-busca'),
+    modal: document.getElementById('modalPrevia'),
+    iframePreview: document.getElementById('pdfPreview'),
+    confirmarBtn: document.getElementById('confirmarEnvio'),
+    cancelarBtn: document.getElementById('cancelarEnvio'),
+    fecharTopoBtn: document.getElementById('fecharModalTopo'),
   };
-
-  window.getUsuarioLogado = async function getUsuarioLogado() {
-    try {
-      const res = await fetch('/api/usuarios/me', { method: 'GET', headers: getAuthHeaders() });
-      
-      if (!res.ok) 
-        return null;
-
-      const data = await res.json();
-      const name = data.name || (data.data && data.data.name) || null;
-      const position = data.position || (data.data && data.data.position) || null;
-
-      return {
-        name: name || '-',
-        position: position || '-'
-      };
-    } 
-    catch (err) {}
-
-    console.error('Erro ao buscar usuário logado: não foi possível obter resposta válida');
-    return { name: '-', position: '-' };
-  };
-
-  // pega os elementos por ID
-  const form = document.getElementById('desembargoForm');
-  const modal = document.getElementById('modalPrevia');
-  const iframePreview = document.getElementById('pdfPreview');
-  const confirmarBtn = document.getElementById('confirmarEnvio');
-  const cancelarBtn = document.getElementById('cancelarEnvio');
-  const fecharTopo = document.getElementById('fecharModalTopo');
-  const previewBtn = document.getElementById('previewBtn');
-  const mensagemDiv = document.getElementById('mensagem-insercao');
-
-  let currentPreviewUrl = null;
-
-  // campos do formulário
-  const campos = [
-    'numero', 'serie', 'nomeAutuado', 'area', 'processoSimlam',
-    'numeroSEP', 'numeroEdocs', 'tipoDesembargo', 'dataDesembargo',
-    'coordenadaX', 'coordenadaY', 'descricao'
-  ];
-
-  // valida os campos do formulário
-  window.validarCampo = async function validarCampo(nomeDoCampo, valor) {
-    try {
-      const res = await fetch('/api/desembargos/validate', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ [nomeDoCampo]: valor })
-      });
-
-      const data = await res.json();
-      return data.errors?.[nomeDoCampo] || '';
-    } 
-    catch (err) {
-      console.error('Erro na validação:', err);
-      return 'Erro ao validar';
-    }
-  };
-
-  // adiciona os listeners de validação para cada campo
-  campos.forEach(campo => {
-    if (campo === 'tipoDesembargo') {
-      document.querySelectorAll('input[name="tipoDesembargo"]').forEach(radio => {
-        radio.addEventListener('change', async () => {
-          const erro = await validarCampo('tipoDesembargo', radio.value.toUpperCase());
-          const el = document.getElementById('error-tipoDesembargo');
-          
-          if (el) 
-            el.textContent = erro;
-        });
-      });
-    }
-    else {
-      const input = document.getElementById(campo);
-      
-      if (!input) 
-        return;
-
-      input.addEventListener('blur', async () => {
-        const erro = await validarCampo(campo, input.value);
-        const el = document.getElementById(`error-${campo}`);
-        
-        if (el)
-          el.textContent = erro;
-      });
-    }
-  });
-
-  // função para preencher o formulário
-  window.preencherFormulario = function preencherFormulario(data) {
-    campos.forEach(campo => {
-      if (campo === 'tipoDesembargo' && data.tipoDesembargo) {
-        document.querySelectorAll('input[name="tipoDesembargo"]').forEach(radio => {
-          radio.checked = radio.value.toUpperCase() === data.tipoDesembargo.toUpperCase();
-        });
-      } 
-      else if (campo === 'dataDesembargo' && data.dataDesembargo) {
-        document.getElementById('dataDesembargo').value = new Date(data.dataDesembargo).toISOString().split("T")[0];
-      } 
-      else if (campo === 'dataDesembargo' && !data.dataDesembargo) {
-        document.getElementById('dataDesembargo').value = new Date().toISOString().split('T')[0];
-      } 
-      else {
-        const input = document.getElementById(campo);
-        if (input) input.value = data[campo] ?? '';
-      }
-    });
-  };
-
-  // função para obter os dados do formulário
-  window.obterDadosFormulario = function obterDadosFormulario() {
-    const dataInput = document.getElementById('dataDesembargo').value; // YYYY-MM-DD
-    const [ano, mes, dia] = dataInput.split('-');
-    const dataLocal = new Date(ano, mes - 1, dia); // 00:00 local
-
-    return {
-      numero: parseInt(document.getElementById('numero').value),
-      serie: document.getElementById('serie').value,
-      nomeAutuado: document.getElementById('nomeAutuado').value,
-      area: parseFloat(document.getElementById('area').value),
-      processoSimlam: document.getElementById('processoSimlam').value,
-      numeroSEP: document.getElementById('numeroSEP').value.trim() || null,
-      numeroEdocs: document.getElementById('numeroEdocs').value.trim() || null,
-      tipoDesembargo: (() => {
-        const radio = document.querySelector('input[name="tipoDesembargo"]:checked');
-        return radio ? radio.value.toUpperCase() : '';
-      })(),
-      dataDesembargo: dataLocal.toISOString(),
-      coordenadaX: parseFloat(document.getElementById('coordenadaX').value),
-      coordenadaY: parseFloat(document.getElementById('coordenadaY').value),
-      descricao: document.getElementById('descricao').value
-    };
-  };
-
-  // função que realiza a validação completa por meio do backend
-  window.validarFormularioBackend = async function validarFormularioBackend(formData) {
-    campos.forEach(campo => {
-      const el = document.getElementById(`error-${campo}`);
-      
-      if (el) 
-        el.textContent = '';
-    });
-
-    try {
-      // faz a validação
-      const res = await fetch('/api/desembargos/validate', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(formData)
-      });
-
-      const data = await res.json();
-
-      // mostra os erros
-      if (data.success === false && data.errors) {
-        Object.keys(data.errors).forEach(campo => {
-          const el = document.getElementById(`error-${campo}`);
-
-          if (el) 
-            el.textContent = data.errors[campo];
-        });
-        return false;
-      }
-
-      return true;
-    } 
-    catch (err) {
-      console.error('Erro ao validar formulário:', err);
-      return false;
-    }
-  };
-
-  // função para validar o número e a série do embargo
-  window.validarNumeroESerieEmbargo = async function validarNumeroESerieEmbargo() {
-    const numero = document.getElementById('numero').value.trim();
-    const erroNumero = document.getElementById('error-numero');
-    const mensagemSpan = document.getElementById('mensagem-numero');
-
-    if (erroNumero) 
-      erroNumero.textContent = '';
-
-    if (mensagemSpan) {
-      mensagemSpan.textContent = '';
-      mensagemSpan.classList.remove('sucesso', 'erro');
-    }
-
-    // validação por meio do backend
-    try {
-      const res = await fetch('/api/desembargos/validate', {
-        method: 'POST',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ numero })
-      });
-
-      const data = await res.json();
-
-      if (data.errors?.numero) {
-        if (erroNumero) 
-          erroNumero.textContent = data.errors.numero;
-
-        return;
-      }
-
-      const checkRes = await fetch(`/api/embargos/check/${encodeURIComponent(numero)}`, 
-                                    { headers: getAuthHeaders(), 
-                                      method: 'GET' });
-
-      const checkData = await checkRes.json();
-
-      if (mensagemSpan) {
-        mensagemSpan.textContent = checkData.message;
-        mensagemSpan.classList.add(checkData.success ? 'sucesso' : 'erro');
-      }
-    } 
-    catch (err) {
-      console.error('Erro na validação/busca:', err);
-
-      if (mensagemSpan) {
-        mensagemSpan.textContent = 'Erro ao validar ou consultar o servidor';
-        mensagemSpan.classList.add('erro');
-      }
-    }
-  };
-
-  const numeroEl = document.getElementById('numero');
-  if (numeroEl) 
-    numeroEl.addEventListener('blur', validarNumeroESerieEmbargo);
-
-  // seta a data do dia como a atual
-  const dataEl = document.getElementById('dataDesembargo');
-
-  if (dataEl) 
-    dataEl.value = new Date().toISOString().split('T')[0];
-
-  // busca por processo simlam
-  const btnBuscarProcesso = document.getElementById('btnBuscarProcesso');
-
-  if (btnBuscarProcesso) {
-
-    // helper: cria e mostra overlay de loading
-    function showLoadingOverlay(msg = "Buscando processo...") {
-      let overlay = document.getElementById('overlayLoading');
-
-      if (!overlay) {
-        // estilo base do overlay e spinner
-        const style = document.createElement('style');
-        style.id = 'overlayLoadingStyles';
-        style.innerHTML = `
-          #overlayLoading {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.45);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 13000;
-          }
-          #overlayLoading .box {
-            background: #fff;
-            padding: 14px 18px;
-            border-radius: 10px;
-            display:flex;
-            align-items:center;
-            gap:12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-            font-weight:600;
-            color:#222;
-          }
-          #overlayLoading .spinner {
-            width:28px;
-            height:28px;
-            border-radius:50%;
-            border:4px solid rgba(0,0,0,0.12);
-            border-top-color: #17903f;
-            animation: overlaySpin 800ms linear infinite;
-            box-sizing: border-box;
-          }
-          @keyframes overlaySpin { to { transform: rotate(360deg); } }
-        `;
-        document.head.appendChild(style);
-
-        overlay = document.createElement('div');
-        overlay.id = 'overlayLoading';
-        overlay.setAttribute('role', 'status');
-        overlay.setAttribute('aria-live', 'polite');
-        overlay.innerHTML = `<div class="box"><div class="spinner" aria-hidden="true"></div><div class="text">${msg}</div></div>`;
-        document.body.appendChild(overlay);
-      } 
-      else {
-        const text = overlay.querySelector('.text');
-        if (text) text.textContent = msg;
-        overlay.style.display = 'flex';
-      }
-      
-      document.body.setAttribute('aria-busy', 'true');
-    }
-
-    // esconde o overlay
-    function hideLoadingOverlay() {
-      const overlay = document.getElementById('overlayLoading');
-      if (overlay) overlay.style.display = 'none';
-      document.body.removeAttribute('aria-busy');
-    }
-
-    // helper: limpa formulário e mensagens
-    function limparFormularioEMensagens() {
-      try {
-        if (form) 
-          form.reset();
-
-        // data volta para hoje
-        const dataElLocal = document.getElementById('dataDesembargo');
-
-        if (dataElLocal) 
-          dataElLocal.value = new Date().toISOString().split('T')[0];
-
-        // limpa erros por campo
-        const els = document.querySelectorAll('[id^="error-"]');
-        els.forEach(e => { e.textContent = ''; });
-
-        // limpa mensagens de busca/insercao
-        const msgBusca = document.getElementById('mensagem-busca');
-
-        if (msgBusca){
-          msgBusca.textContent = '';
-          msgBusca.classList.remove('sucesso', 'erro');
-        }
-
-        const mensagemInsercao = document.getElementById('mensagem-insercao');
-
-        if (mensagemInsercao) 
-          mensagemInsercao.textContent = '';
-
-        // limpa iframe preview se estiver aberto
-        const iframePreviewLocal = document.getElementById('pdfPreview');
-
-        if (iframePreviewLocal) 
-          iframePreviewLocal.src = 'about:blank';
-      }
-
-      catch (e) {
-        // se algo falhar ao limpar, ignora, mas loga
-        console.error('Erro ao limpar formulário:', e);
-      }
-    }
-
-    btnBuscarProcesso.addEventListener('click', async () => {
-      const proc = document.getElementById('processoSimlam').value.trim();
-      if (!proc) 
-        return;
-
-      // desabilita botão e mostra overlay
-      btnBuscarProcesso.disabled = true;
-      showLoadingOverlay('Buscando processo...');
-
-      try {
-        // busca por processo simlam
-        const res = await fetch(`/api/embargos/processo?valor=${encodeURIComponent(proc)}`, {
-          method: 'GET',
-          headers: getAuthHeaders()
-        });
-
-        // tenta ler json; se falhar, assume sem resultado
-        let data = null;
-        try { 
-          data = await res.json();
-        } 
-        catch (e){ 
-          data = null;
-        }
-
-        if (res.ok && data && Object.keys(data).length > 0) {
-          // mensagem de sucesso na UI
-          const msgEl = document.getElementById("mensagem-busca");
-
-          if (msgEl){ 
-            msgEl.textContent = "Registro de embargo encontrado!"; 
-            msgEl.classList.remove('erro'); 
-            msgEl.classList.add("sucesso");
-          }
-
-          // mapear campos do registro de embargo para o formato esperado pelo preencherFormulario
-          const mapped = {
-            numero: data.n_iuf_emb || data.numero || '',
-            serie: data.serie || '',
-            processoSimlam: data.processo || data.processo_simlam || proc,
-            numeroSEP: null,
-            numeroEdocs: null,
-            nomeAutuado: data.nome_autuado || data.autuado || data.nome || '',
-            area: (data.area_desembargada ?? data.area) ?? '',
-            coordenadaX: (data.easting ?? data.easting_m ?? data.coordenada_x ?? data.coordenadaX ?? '') ,
-            coordenadaY: (data.northing ?? data.northing_m ?? data.coordenada_y ?? data.coordenadaY ?? ''),
-            descricao: data.descricao || data.obs || ''
-          };
-
-          let effectiveTipo = mapped.tipoDesembargo;
-          
-          if (!effectiveTipo) {
-            const sel = document.querySelector('input[name="tipoDesembargo"]:checked');
-
-            if (sel && sel.value) 
-              effectiveTipo = sel.value.toString().toUpperCase();
-          }
-
-          // Preenche a área somente se for TOTAL
-          if (effectiveTipo === 'TOTAL') {
-            mapped.area = (data.area_desembargada ?? data.area ?? '') ;
-            showToast("O valor de área é válido apenas para desembargo TOTAL", "info", { duration: 4500 });
-          } 
-          else {
-            mapped.area = '';
-          }
-
-          if (data.sep_edocs) {
-            const seped = String(data.sep_edocs);
-
-            if (seped.includes('-')) 
-              mapped.numeroEdocs = seped;
-            else 
-              mapped.numeroSEP = seped;
-          } 
-          else if (data.sep) {
-            mapped.numeroSEP = String(data.sep);
-          }
-          else if (data.numero_edocs) {
-            mapped.numeroEdocs = String(data.numero_edocs);
-          }
-
-          // preenche o formulário
-          preencherFormulario(mapped);
-
-          // usa a validação do backend
-          const formData = obterDadosFormulario();
-          await validarFormularioBackend(formData);
-
-        } 
-        else {
-          // nenhum registro encontrado: limpa formulário e dá feedback
-          limparFormularioEMensagens();
-          showToast("Nenhum registro encontrado para o processo informado.", "info", { duration: 4500 });
-        }
-
-      } 
-      catch (err) {
-        console.error("Erro na busca (embargos):", err);
-        limparFormularioEMensagens();
-
-        const msgEl = document.getElementById("mensagem-busca");
-
-        if (msgEl){ 
-          msgEl.textContent = "Erro ao consultar o servidor";
-          msgEl.classList.remove('sucesso');
-          msgEl.classList.add("erro");
-        }
-
-        showToast("Erro ao consultar o servidor. Verifique sua conexão.", "error", { duration: 6000 });
-      } 
-      finally {
-        // sempre reativa botão e remove overlay
-        btnBuscarProcesso.disabled = false;
-        hideLoadingOverlay();
-      }
-    });
-  }
-
-  // gerar prévia do desembargo
-  function gerarPreviewPDFDoc(previewObj) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: "pt", format: "a4" });
-    let y = 40;
-
-    const primaryColor = "#17903f"; // verde do site
-    const secondaryColor = "#444";   // cinza
-    const lineHeight = 18;
-    const logoEl = document.getElementById("logoPdf");
-
-    if (logoEl) {
-      doc.addImage(logoEl, "PNG", 30, 20, 540, 90);
-      y += 100;
-    }
-
-    // ================= Cabeçalho =================
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.setTextColor(primaryColor);
-    doc.text("www.idaf.es.gov.br", 40, y);
-    y += lineHeight;
-
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(secondaryColor);
-    doc.setDrawColor(200);
-    doc.setLineWidth(0.8);
-    doc.line(40, y, 555, y);
-    y += 20;
-
-    // ================= Título =================
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.setTextColor(primaryColor);
-    texto_aux_header='OFÍCIO DE INDEFERIMENTO';
-
-    if (previewObj.tipo_desembargo.toUpperCase() != 'INDEFERIMENTO'){
-      texto_aux_header= 'TERMO DE DESEMBARGO';
-    }
-    
-    doc.text(`${texto_aux_header} Nº X/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center');
-
-    y += 10;
-
-    doc.setTextColor(secondaryColor);
-    doc.setDrawColor(200);
-    doc.setLineWidth(0.8);
-    doc.line(40, y, 555, y);
-
-    y += 30;
-
-    // ================= Informações principais =================
-    const infoFields = [
-      { label: "Termo de Embargo Ambiental", value: `${previewObj.numero_embargo || '-'} ${previewObj.serie_embargo.toUpperCase() || '-'}` },
-      { label: "Processo Simlam", value: previewObj.processo_simlam || '-' },
-      { label: "Processo E-Docs", value: previewObj.numero_edocs || '-' },
-      { label: "Número do SEP", value: previewObj.numero_sep || '-' },
-      { label: "Autuado", value: previewObj.nome_autuado.toUpperCase() || '-' },
-      { label: "Área Desembargada", value: `${previewObj.area_desembargada ?? '-'} ${previewObj.area_desembargada && previewObj.area_desembargada !== '-' ? 'ha' : ''}` },
-      { label: "Tipo de Desembargo", value: (previewObj.tipo_desembargo || '-').toUpperCase() },
-      { label: "Data do Desembargo", value: previewObj.data_desembargo ? (new Date(previewObj.data_desembargo)).toLocaleDateString() : '-' },
-      { label: "Coordenadas UTM", value: `X(m): ${previewObj.coordenada_x ?? '-'}, Y(m): ${previewObj.coordenada_y ?? '-'}` },
-    ];
-
-    const labelX = 40;
-    const valueX = 250;
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-
-    infoFields.forEach(item => {
-      const label = String(item.label || "");
-      const value = String(item.value ?? "-");
-
-      doc.setFont("helvetica", "bold");
-      doc.text(label + ":", labelX, y);
-
-      doc.setFont("helvetica", "normal");
-
-      // quebra de linha se value for longo
-      const valLines = doc.splitTextToSize(value, 280);
-      doc.text(valLines, valueX, y);
-      y += valLines.length * lineHeight;
-    });
-
-    y += 10;
-
-    // ================= Descrição =================
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(primaryColor);
-    doc.text("Descrição do Desembargo:", 40, y);
-    y += lineHeight;
-
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(secondaryColor);
-    const descricaoSplit = doc.splitTextToSize(previewObj.descricao || '-', 515, { maxWidth: 500,align: 'justify'});
-    doc.text(descricaoSplit, 40, y);
-    y += descricaoSplit.length * lineHeight + 10;
-
-    // ================= Assinatura =================
-    doc.setFont("helvetica", "bold");
   
-    doc.setTextColor(secondaryColor);
-    doc.text(String(previewObj.responsavel_desembargo || "-"), doc.internal.pageSize.getWidth() / 2, y, 'center');
-    y += lineHeight;
-
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(primaryColor);
-    doc.text(String(previewObj.cargo_responsavel || "-"), doc.internal.pageSize.getWidth() / 2, y, 'center');
-    y += 2*lineHeight;
-
-    // ================= Disclaimer =================
-    doc.setFontSize(10);
-    doc.setTextColor("#666");
-    const disclaimer = "AVISO: ESTE DOCUMENTO É APENAS UMA PRÉVIA. Uma vez aprovado, o termo somente terá validade após sua inclusão e assinatura no sistema EDOC-s.";
-    const discLines = doc.splitTextToSize(disclaimer, 515);
-    doc.text(discLines, 40, y);
-    y += discLines.length * (lineHeight - 4);
-    y += 6;
-
-    return doc;
-  }
-
-  // gera o blob com a preview
-  async function gerarPreviewBlob(formData) {
-    const usuario = await getUsuarioLogado();
-    const previewObj = {
-      id: formData.numero ?? '-',
-      numero_embargo: formData.numero ?? '-',
-      serie_embargo: formData.serie ?? '-',
-      processo_simlam: formData.processoSimlam ?? '-',
-      numero_edocs: formData.numeroEdocs ?? '-',
-      numero_sep: formData.numeroSEP ?? '-',
-      nome_autuado: formData.nomeAutuado ?? '-',
-      area_desembargada: (Number.isFinite(formData.area) ? formData.area : (formData.area ?? '-')),
-      tipo_desembargo: (formData.tipoDesembargo || '-'),
-      data_desembargo: formData.dataDesembargo || null,
-      coordenada_x: Number.isFinite(formData.coordenadaX) ? formData.coordenadaX : (formData.coordenadaX ?? '-'),
-      coordenada_y: Number.isFinite(formData.coordenadaY) ? formData.coordenadaY : (formData.coordenadaY ?? '-'),
-      descricao: formData.descricao || '-',
-      responsavel_desembargo: usuario.name || '-',
-      cargo_responsavel: usuario.position || '-'
-    };
-
-    const doc = gerarPreviewPDFDoc(previewObj);
-    const blob = doc.output('blob');
-    return URL.createObjectURL(blob);
-  }
-
-  // abre o modal
-  function openModal() {
-    if (!modal) 
-      return;
-    
-    modal.classList.remove('hidden');
-    modal.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
-  }
-
-  // fecha o modal
-  function closeModal() {
-    if (!modal) 
-      return;
-
-    modal.classList.add('hidden');
-    modal.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
-
-    if (currentPreviewUrl) {
-      try {
-        URL.revokeObjectURL(currentPreviewUrl);
-      }
-      catch (e) {}
-
-      currentPreviewUrl = null;
-    }
-
-    if (iframePreview) 
-      iframePreview.src = 'about:blank';
-    
-    try { 
-      document.getElementById('numero').focus(); 
-    } 
-    catch (e) {}
-  }
-
-  // ------------------ SUBMIT DO FORMULÁRIO: mostra modal com prévia ------------------
-  if (form) {
-    form.addEventListener('submit', async e => {
-      e.preventDefault();
-
-      const formData = obterDadosFormulario();
-
-      // Validação local SEP ou eDocs obrigatórios
-      if (!formData.numeroSEP && !formData.numeroEdocs) {
-        const elSep = document.getElementById('error-numeroSEP');
-        const elEdocs = document.getElementById('error-numeroEdocs');
-
-        if (elSep) 
-          elSep.textContent = 'Preencha pelo menos SEP ou e-Docs';
-
-        if (elEdocs) 
-          elEdocs.textContent = 'Preencha pelo menos SEP ou e-Docs';
-
-        return;
-      }
-
-      const valido = await validarFormularioBackend(formData);
-
-      if (!valido) 
-        return;
-
-      // gera preview e abre modal
-      try {
-        if (currentPreviewUrl) { 
-          URL.revokeObjectURL(currentPreviewUrl); 
-          currentPreviewUrl = null;
+  // --- MÓDULO DE UTILITÁRIOS ---
+  const utils = {
+    getCurrentUserInfo: () => {
+        const u = Auth.getSessionUser();
+        return {
+            username: u?.username || u?.email || u?.name || null,
+            name: u?.name || u?.username || null,
+            position: u?.position || null,
+        };
+    },
+    normalizeEmbargoData: (row) => {
+        if (!row) return {};
+        const pick = (o, ...keys) => {
+            for (const k of keys) { if (o && k in o && o[k] !== undefined) return o[k]; }
+            return undefined;
+        };
+        const { numeroSEP, numeroEdocs } = utils.separarSepEdocs(pick(row, 'sep_edocs'));
+        return {
+            numero: pick(row, 'n_iuf_emb', 'numero_embargo', 'numero'),
+            serie: pick(row, 'serie_embargo', 'serie'),
+            processoSimlam: pick(row, 'processo', 'processo_simlam'),
+            nomeAutuado: pick(row, 'nome_autuado', 'autuado', 'nome'),
+            area: pick(row, 'area_desembargada', 'area'),
+            coordenadaX: pick(row, 'easting', 'easting_m', 'coordenada_x', 'coordenadaX'),
+            coordenadaY: pick(row, 'northing', 'northing_m', 'coordenada_y', 'coordenadaY'),
+            descricao: pick(row, 'descricao', 'obs'),
+            numeroSEP: numeroSEP,
+            numeroEdocs: numeroEdocs,
+        };
+    },
+    separarSepEdocs: (valor) => {
+        if (!valor) return { numeroSEP: null, numeroEdocs: null };
+        const seped = String(valor);
+        if (/^\d{4}-/.test(seped) || seped.includes('-')) {
+            return { numeroSEP: null, numeroEdocs: seped };
         }
-        currentPreviewUrl = await gerarPreviewBlob(formData);
-
-        if (iframePreview) 
-          iframePreview.src = currentPreviewUrl;
-
-        openModal();
-        showToast('Prévia gerada — revise e confirme antes de enviar.', 'info');
-      } 
-      catch (err) {
-        console.error('Erro ao gerar preview para modal:', err);
-        showToast('Erro ao gerar prévia', 'error');
-      }
-    });
-  }
-
-  // confirma o envio
-  if (confirmarBtn) {
-    confirmarBtn.addEventListener('click', async () => {
-
-      // previne cliques repetidos e dá feedback visual imediato
-      confirmarBtn.disabled = true;
-      const originalHTML = confirmarBtn.innerHTML;
-      confirmarBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
-
-      // limpa mensagens de erro anteriores
-      campos.forEach(campo => {
-        const el = document.getElementById(`error-${campo}`);
-        if (el) el.textContent = '';
-      });
-
-      const formData = obterDadosFormulario();
-      // envia para o backend
-      try {
-        const resInsert = await fetch('/api/desembargos/create', {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify(formData)
-        });
-
-        let dataInsert = null;
-        try {
-          dataInsert = await resInsert.json();
-        } 
-        catch (parseErr) {
-          console.error('Resposta do servidor não foi JSON:', parseErr);
-        }
-
-        // deu certo
-        if (resInsert.ok && dataInsert && dataInsert.success) {
-          showToast("Desembargo inserido com sucesso!", "success");
-          form.reset();
-
-          if (document.getElementById("dataDesembargo")) {
-            document.getElementById("dataDesembargo").value = new Date().toISOString().split('T')[0];
-          }
-
-          closeModal();
-        } 
-        else {
-          const serverMsg = dataInsert && (dataInsert.message || dataInsert.msg || dataInsert.error) ? (dataInsert.message || dataInsert.msg || dataInsert.error) : null;
-
-          // se houver erros de validação por campo, exibe nos elementos #error-<campo>
-          if (dataInsert && dataInsert.errors && typeof dataInsert.errors === 'object') {
-            Object.keys(dataInsert.errors).forEach(campo => {
-              const el = document.getElementById(`error-${campo}`);
-
-              if (el) 
-                el.textContent = dataInsert.errors[campo];
-            });
-
-            showToast("Existem erros no formulário. Verifique os campos em destaque.", "error", { duration: 6000 });
-          } 
-          else if (serverMsg) {
-            showToast(`Erro: ${serverMsg}`, "error", { duration: 6000 });
-          } 
-          else {
-            const statusText = resInsert.status ? `(${resInsert.status} ${resInsert.statusText || ''})` : '';
-            showToast(`Erro ao inserir desembargo ${statusText}`, "error", { duration: 6000 });
-          }
-        }
-      } 
-      catch (err) {
-        console.error('Erro ao processar formulário:', err);
-        showToast("Erro de rede ao comunicar com o servidor. Verifique sua conexão.", "error", { duration: 6000 });
-      } 
-      finally {
-        confirmarBtn.disabled = false;
-        confirmarBtn.innerHTML = originalHTML || '<i class="fa-solid fa-check"></i> Confirmar Envio';
-      }
-    });
-  }
-
-
-  // cancelar ou fechar
-  if (cancelarBtn) 
-    cancelarBtn.addEventListener('click', () => closeModal());
-
-  if (fecharTopo) 
-    fecharTopo.addEventListener('click', () => closeModal());
-
-  if (modal) {
-    modal.addEventListener('click', (ev) => {
-      if (ev.target === modal) closeModal();
-    });
-  }
-
-  // ESC fecha
-  document.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Escape' && modal && !modal.classList.contains('hidden')) closeModal();
-  });
-
-
-  // função para mostrar o toast
-  window.showToast = function showToast(message, type = "success", options = {}) {
-    // garante container
-    let container = document.getElementById("toast-container");
-
-    if (!container) {
-      container = document.createElement("div");
-      container.id = "toast-container";
-      container.style.position = "fixed";
-      container.style.right = "16px";
-      container.style.bottom = "16px";
-      container.style.zIndex = "12000";
-      container.style.display = "flex";
-      container.style.flexDirection = "column";
-      container.style.gap = "8px";
-      document.body.appendChild(container);
-    }
-
-    // cores por tipo
-    const palette = {
-      success: { bg: "#17903f", icon: "fa-solid fa-circle-check" },
-      error:   { bg: "#c33a3a", icon: "fa-solid fa-circle-xmark" },
-      info:    { bg: "#2f6fb2", icon: "fa-solid fa-circle-info" }
-    };
-
-    const p = palette[type] || palette.info;
-    const duration = (options && options.duration) || 3500;
-
-    const toast = document.createElement("div");
-    toast.className = `toast ${type}`;
-    
-    toast.style.cssText = [
-      `background: ${p.bg}`,
-      "color: #ffffff",
-      "padding: 10px 14px",
-      "border-radius: 10px",
-      "box-shadow: 0 8px 28px rgba(0,0,0,0.18)",
-      "display: flex",
-      "gap: 10px",
-      "align-items: center",
-      "min-width: 220px",
-      "max-width: 420px",
-      "font-weight: 600",
-      "font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial",
-      "transform: translateY(12px)",
-      "opacity: 0",
-      "transition: transform 220ms ease, opacity 220ms ease",
-      `z-index: ${options.zIndex || 12001}`
-    ].join(";");
-
-    const icon = document.createElement("i");
-    icon.className = p.icon;
-    icon.style.cssText = "color: #ffffff; min-width:18px; font-size:18px;";
-
-    const text = document.createElement("div");
-    text.textContent = message;
-    text.style.cssText = "flex:1; color:#fff;";
-
-    toast.appendChild(icon);
-    toast.appendChild(text);
-    container.appendChild(toast);
-
-    // anima entrada
-    requestAnimationFrame(() => {
-      toast.style.transform = "translateY(0)";
-      toast.style.opacity = "1";
-    });
-
-    // remove depois do tempo
-    setTimeout(() => {
-      toast.style.transform = "translateY(12px)";
-      toast.style.opacity = "0";
-      setTimeout(() => {
-        try { toast.remove(); } catch (e) {}
-        if (container && container.children.length === 0) {
-          try { container.remove(); } catch (e) {}
-        }
-      }, 220);
-    }, duration);
+        return { numeroSEP: seped, numeroEdocs: null };
+    },
   };
+
+  // --- MÓDULO DA VIEW ---
+  const view = {
+    fillForm: (data) => {
+        if (!data) return;
+        Object.keys(data).forEach(key => {
+            if (data[key] !== null && data[key] !== undefined) {
+                const el = ui.form.elements[key];
+                if (el) { el.value = data[key]; }
+            }
+        });
+    },
+    displayValidationErrors: (errors) => {
+        document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
+        for (const field in errors) {
+            const errorEl = document.getElementById(`error-${field}`);
+            if (errorEl) { errorEl.textContent = errors[field]; }
+        }
+    },
+    setSearchMessage: (message, type) => {
+        if(ui.mensagemBusca) {
+            ui.mensagemBusca.textContent = message;
+            ui.mensagemBusca.className = `mensagem-validacao ${type}`;
+        }
+    },
+    setEmbargoCheckMessage: (message, type) => {
+        const msgEl = document.getElementById('mensagem-numero');
+        if (msgEl) {
+            msgEl.textContent = message;
+            msgEl.className = `mensagem-validacao ${type}`;
+        }
+    },
+    openModal: () => {
+        if (!ui.modal) return;
+        ui.modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    },
+    closeModal: () => {
+        if (!ui.modal) return;
+        ui.modal.classList.add('hidden');
+        document.body.style.overflow = '';
+        if (pageState.currentPreviewUrl) {
+            URL.revokeObjectURL(pageState.currentPreviewUrl);
+            pageState.currentPreviewUrl = null;
+        }
+        if (ui.iframePreview) ui.iframePreview.src = 'about:blank';
+    }
+  };
+
+  // --- MÓDULO DE API ---
+  const api = {
+    fetchEmbargoByProcesso: async (proc) => {
+        const res = await Auth.fetchWithAuth(`/api/embargos/processo?valor=${encodeURIComponent(proc)}`);
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error('Falha na busca por processo');
+        const json = await res.json();
+        return json.embargo;
+    },
+    validateForm: async (formData) => {
+        const res = await fetch('/api/desembargos/validate', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData),
+        });
+        return res.json();
+    },
+    checkEmbargoExists: async (numero) => {
+        const res = await Auth.fetchWithAuth(`/api/embargos/check/${encodeURIComponent(numero)}`);
+        return res.ok;
+    },
+    createDesembargo: async (data) => {
+        const res = await Auth.fetchWithAuth('/api/desembargos/create', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+        });
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.message || "Erro ao inserir desembargo");
+        return result;
+    }
+  };
+
+  // --- MÓDULO DE LÓGICA DE NEGÓCIO ---
+  const businessLogic = {
+    prepareDataForSubmit: () => {
+        const data = Object.fromEntries(new FormData(ui.form).entries());
+        const radio = ui.form.querySelector('input[name="tipoDesembargo"]:checked');
+        if (radio) data.tipoDesembargo = radio.value;
+        if (ui.form.dataDesembargo?.value) {
+            const [ano, mes, dia] = ui.form.dataDesembargo.value.split('-');
+            const dt = new Date(ano, Number(mes) - 1, Number(dia));
+            data.dataDesembargo = dt.toISOString();
+        } else {
+            data.dataDesembargo = null;
+        }
+        Object.keys(data).forEach(k => { if (data[k] === "") data[k] = null; });
+        return data;
+    },
+    async validateFullForm(data) {
+        const validationResult = await api.validateForm(data);
+        if (validationResult.errors && Object.keys(validationResult.errors).length > 0) {
+            view.displayValidationErrors(validationResult.errors);
+            window.UI.showToast("Corrija os erros no formulário antes de salvar.", "error");
+            return false;
+        }
+        if (!data.numeroSEP && !data.numeroEdocs) {
+            view.displayValidationErrors({ numeroSEP: 'Preencha SEP ou E-Docs', numeroEdocs: 'Preencha SEP ou E-Docs' });
+            return false;
+        }
+        view.displayValidationErrors({});
+        return true;
+    },
+    gerarPreviewPDF: (formData) => {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: "pt", format: "a4" });
+        let y = 40;
+        const primaryColor = "#17903f"; const secondaryColor = "#444"; const lineHeight = 18;
+        const logoEl = document.getElementById("logoPdf");
+        if (logoEl) { doc.addImage(logoEl, "PNG", 30, 20, 540, 90); y += 100; }
+        doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(primaryColor);
+        doc.text("www.idaf.es.gov.br", 40, y); y += lineHeight;
+        doc.setFont("helvetica", "normal"); doc.setTextColor(secondaryColor);
+        doc.setDrawColor(200); doc.setLineWidth(0.8); doc.line(40, y, 555, y); y += 20;
+        doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.setTextColor(primaryColor);
+        let texto_aux_header='OFÍCIO DE INDEFERIMENTO';
+        if (formData.tipoDesembargo?.toUpperCase() != 'INDEFERIMENTO'){ texto_aux_header= 'TERMO DE DESEMBARGO'; }
+        doc.text(`${texto_aux_header} Nº X/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center'); y += 10;
+        doc.setTextColor(secondaryColor); doc.setDrawColor(200); doc.setLineWidth(0.8); doc.line(40, y, 555, y); y += 30;
+        const infoFields = [
+          { label: "Termo de Embargo Ambiental", value: `${formData.numero || '-'} ${formData.serie?.toUpperCase() || '-'}` },
+          { label: "Processo Simlam", value: formData.processoSimlam || '-' },
+          { label: "Processo E-Docs", value: formData.numeroEdocs || '-' },
+          { label: "Número do SEP", value: formData.numeroSEP || '-' },
+          { label: "Autuado", value: formData.nomeAutuado?.toUpperCase() || '-' },
+          { label: "Área Desembargada", value: `${formData.area ?? '-'} ${formData.area && formData.area !== '-' ? 'ha' : ''}` },
+          { label: "Tipo de Desembargo", value: (formData.tipoDesembargo || '-').toUpperCase() },
+          { label: "Data do Desembargo", value: formData.dataDesembargo ? (new Date(formData.dataDesembargo)).toLocaleDateString() : '-' },
+          { label: "Coordenadas UTM", value: `X(m): ${formData.coordenadaX ?? '-'}, Y(m): ${formData.coordenadaY ?? '-'}` },
+        ];
+        const labelX = 40; const valueX = 250;
+        doc.setFont("helvetica", "bold"); doc.setFontSize(12);
+        infoFields.forEach(item => {
+          const label = String(item.label || ""); const value = String(item.value ?? "-");
+          doc.setFont("helvetica", "bold"); doc.text(label + ":", labelX, y);
+          doc.setFont("helvetica", "normal");
+          const valLines = doc.splitTextToSize(value, 280);
+          doc.text(valLines, valueX, y); y += valLines.length * lineHeight;
+        });
+        y += 10;
+        doc.setFont("helvetica", "bold"); doc.setTextColor(primaryColor);
+        doc.text("Descrição do Desembargo:", 40, y); y += lineHeight;
+        doc.setFont("helvetica", "normal"); doc.setTextColor(secondaryColor);
+        const descricaoSplit = doc.splitTextToSize(formData.descricao || '-', 515, { maxWidth: 500,align: 'justify'});
+        doc.text(descricaoSplit, 40, y); y += descricaoSplit.length * lineHeight + 10;
+        doc.setFont("helvetica", "bold"); doc.setTextColor(secondaryColor);
+        doc.text(String(pageState.currentUserInfo.name || "-"), doc.internal.pageSize.getWidth() / 2, y, 'center'); y += lineHeight;
+        doc.setFont("helvetica", "normal"); doc.setTextColor(primaryColor);
+        doc.text(String(pageState.currentUserInfo.position || "-"), doc.internal.pageSize.getWidth() / 2, y, 'center'); y += 2*lineHeight;
+        doc.setFontSize(10); doc.setTextColor("#666");
+        const disclaimer = "AVISO: ESTE DOCUMENTO É APENAS UMA PRÉVIA. Uma vez aprovado, o termo somente terá validade após sua inclusão e assinatura no sistema EDOC-s.";
+        const discLines = doc.splitTextToSize(disclaimer, 515);
+        doc.text(discLines, 40, y);
+        const blob = doc.output('blob');
+        return URL.createObjectURL(blob);
+    }
+  };
+
+  // --- MÓDULO DE EVENT HANDLERS ---
+  const handlers = {
+    onFormSubmit: async (e) => {
+        e.preventDefault();
+        const data = businessLogic.prepareDataForSubmit();
+        const isFormValid = await businessLogic.validateFullForm(data);
+        if (!isFormValid) return;
+        try {
+            if (pageState.currentPreviewUrl) URL.revokeObjectURL(pageState.currentPreviewUrl);
+            pageState.currentPreviewUrl = businessLogic.gerarPreviewPDF(data);
+            if (ui.iframePreview) ui.iframePreview.src = pageState.currentPreviewUrl;
+            view.openModal();
+            window.UI.showToast('Prévia gerada. Revise e confirme o envio.', 'info');
+        } catch (error) {
+            console.error("Erro ao gerar prévia:", error);
+            window.UI.showToast("Erro ao gerar a prévia do documento.", "error");
+        }
+    },
+    onConfirmarEnvio: async () => {
+        ui.confirmarBtn.disabled = true;
+        const originalHTML = ui.confirmarBtn.innerHTML;
+        ui.confirmarBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+        const data = businessLogic.prepareDataForSubmit();
+        try {
+            await api.createDesembargo(data);
+            window.UI.showToast("Desembargo inserido com sucesso!", "success");
+            ui.form.reset();
+            const dataEl = document.getElementById('dataDesembargo');
+            if (dataEl) dataEl.value = new Date().toISOString().split('T')[0];
+            view.closeModal();
+        } catch (error) {
+            window.UI.showToast(error.message, "error");
+        } finally {
+            ui.confirmarBtn.disabled = false;
+            ui.confirmarBtn.innerHTML = originalHTML;
+        }
+    },
+    onSearchProcessoClick: async () => {
+        const processo = ui.form.elements.processoSimlam.value.trim();
+        if (!processo) {
+            window.UI.showToast("Informe o número do processo Simlam para buscar.", "info");
+            return;
+        }
+        view.setSearchMessage('', '');
+        ui.btnBuscar.disabled = true;
+        try {
+            const embargoData = await api.fetchEmbargoByProcesso(processo);
+            if (embargoData) {
+                const dataToFill = utils.normalizeEmbargoData(embargoData);
+                const tipoRadio = ui.form.querySelector('input[name="tipoDesembargo"]:checked');
+                if (tipoRadio && tipoRadio.value === 'TOTAL') {
+                    if (!ui.form.elements.area.value) {
+                       dataToFill.area = dataToFill.area;
+                    }
+                    window.UI.showToast("A área do embargo foi preenchida (válido para desembargo TOTAL).", "info", { duration: 5000 });
+                } else {
+                    delete dataToFill.area;
+                }
+                view.fillForm(dataToFill);
+                view.setSearchMessage('Dados do embargo preenchidos.', 'sucesso');
+            } else {
+                view.setSearchMessage('Nenhum embargo encontrado para este processo.', 'erro');
+            }
+        } catch (error) {
+            view.setSearchMessage('Erro ao realizar a busca.', 'erro');
+            console.error("Erro na busca por processo:", error);
+        } finally {
+            ui.btnBuscar.disabled = false;
+        }
+    },
+    onNumeroEmbargoBlur: async (event) => {
+        const numero = event.target.value.trim();
+        if (!numero) { view.setEmbargoCheckMessage('', 'none'); return; }
+        try {
+            const validationResult = await api.validateForm({ numero });
+            const errorMsg = validationResult.errors?.numero;
+            if (errorMsg) {
+                view.setEmbargoCheckMessage(errorMsg, 'error'); return;
+            }
+            const found = await api.checkEmbargoExists(numero);
+            if (found) {
+                view.setEmbargoCheckMessage('✓ Embargo encontrado', 'success');
+            } else {
+                view.setEmbargoCheckMessage('Embargo não encontrado no banco de dados.', 'error');
+            }
+        } catch (error) {
+            console.error('Erro ao checar número do embargo:', error);
+            view.setEmbargoCheckMessage('Erro ao verificar.', 'error');
+        }
+    },
+    // ===== ADICIONADO =====
+    // Handler genérico para validação de campo no 'blur'
+    onFieldBlur: async (event) => {
+        const field = event.target;
+        const fieldName = field.name;
+        // O campo 'numero' tem sua própria lógica, então o pulamos aqui.
+        if (!fieldName || fieldName === 'numero') return; 
+
+        try {
+            const result = await api.validateForm({ [fieldName]: field.value });
+            const errorEl = document.getElementById(`error-${fieldName}`);
+            if (errorEl) {
+                errorEl.textContent = result.errors?.[fieldName] ?? '';
+            }
+        } catch (error) {
+            console.error(`Erro na validação do campo ${fieldName}:`, error);
+        }
+    },
+  };
+  
+  // --- FUNÇÃO DE INICIALIZAÇÃO ---
+  function init() {
+    pageState.currentUserInfo = utils.getCurrentUserInfo();
+    
+    // Anexa todos os eventos
+    ui.form.addEventListener("submit", handlers.onFormSubmit);
+    ui.btnBuscar.addEventListener("click", handlers.onSearchProcessoClick);
+    
+    // Evento especial para o campo 'numero'
+    if (ui.form.elements.numero) {
+        ui.form.elements.numero.addEventListener('blur', handlers.onNumeroEmbargoBlur);
+    }
+    
+    // ===== ADICIONADO =====
+    // Anexa a validação on-blur para os outros campos
+    const fieldsToValidate = [
+        'serie', 'nomeAutuado', 'area', 'processoSimlam',
+        'numeroSEP', 'numeroEdocs', 'dataDesembargo',
+        'coordenadaX', 'coordenadaY', 'descricao'
+    ];
+    fieldsToValidate.forEach(fieldName => {
+        const el = ui.form.elements[fieldName];
+        if (el) {
+            el.addEventListener('blur', handlers.onFieldBlur);
+        }
+    });
+
+    // Eventos do Modal
+    if(ui.confirmarBtn) ui.confirmarBtn.addEventListener('click', handlers.onConfirmarEnvio);
+    if(ui.cancelarBtn) ui.cancelarBtn.addEventListener('click', view.closeModal);
+    if(ui.fecharTopoBtn) ui.fecharTopoBtn.addEventListener('click', view.closeModal);
+    if(ui.modal) ui.modal.addEventListener('click', (e) => { if(e.target === ui.modal) view.closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && ui.modal && !ui.modal.classList.contains('hidden')) view.closeModal(); });
+
+    // Define a data atual
+    const dataEl = document.getElementById('dataDesembargo');
+    if (dataEl) dataEl.value = new Date().toISOString().split('T')[0];
+  }
+
+  init();
 });
