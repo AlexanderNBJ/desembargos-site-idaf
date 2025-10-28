@@ -1,398 +1,358 @@
-document.addEventListener('DOMContentLoaded', async () => {
-  const tbody = document.getElementById('desembargos-list');
-  const template = document.getElementById('row-template').content;
-  const searchInput = document.getElementById('search');
-  const tabsContainer = document.getElementById('tabs');
-  const pageSizeSelect = document.getElementById('pageSize');
-  const paginationControls = document.getElementById('paginationControls');
-  const summaryText = document.getElementById('summaryText');
-  const currentFilterLabel = document.getElementById('current-filter');
+// frontend/js/mainListaDesembargos.js (REFATORADO E COMPLETO)
 
-    // elementos do loader e controles que vamos desabilitar durante carregamento
-  const svLoader = document.getElementById('sv-loader');
-  const mainContainer = document.querySelector('.page-container');
-  const controlsToDisable = [ document.getElementById('search'), document.getElementById('pageSize'), paginationControls ];
+document.addEventListener('DOMContentLoaded', () => {
+  // Garante que o usuário esteja logado. Se não, para a execução.
+  if (!Auth.initAuth()) return;
 
-  function setControlsDisabled(disabled = true) {
-    // search input
-    const search = document.getElementById('search');
-    if (search) {
-      search.disabled = disabled;
-      search.setAttribute('aria-disabled', String(disabled));
-    }
-    // pageSize select
-    const ps = document.getElementById('pageSize');
-    if (ps) {
-      ps.disabled = disabled;
-      ps.setAttribute('aria-disabled', String(disabled));
-    }
-    // pagination buttons area: disable pointer events visually
-    if (paginationControls) {
-      paginationControls.style.pointerEvents = disabled ? 'none' : '';
-      paginationControls.setAttribute('aria-hidden', disabled ? 'true' : 'false');
-      // opcional: adicionar classe para opacidade se quiser
-    }
-  }
+  // --- MÓDULO DE ESTADO DA PÁGINA ---
+  const pageState = {
+    currentUser: null,
+    activeTab: 'mine',
+    page: 1,
+    pageSize: 10,
+    sortKey: null,
+    sortDir: 'asc',
+    searchTerm: '',
+    tabsConfig: [],
+  };
 
-  function showLoader(text) {
-    if (!svLoader) return;
-    if (text) {
-      const t = svLoader.querySelector('.sv-loader-text');
-      if (t) t.textContent = text;
-    }
-    svLoader.classList.add('active');
-    svLoader.setAttribute('aria-hidden','false');
-    if (mainContainer) mainContainer.setAttribute('aria-busy','true');
-    setControlsDisabled(true);
-  }
+  // --- MÓDULO DE ELEMENTOS DA UI ---
+  const ui = {
+    tbody: document.getElementById('desembargos-list'),
+    template: document.getElementById('row-template').content,
+    searchInput: document.getElementById('search'),
+    tabsContainer: document.getElementById('tabs'),
+    pageSizeSelect: document.getElementById('pageSize'),
+    paginationControls: document.getElementById('paginationControls'),
+    summaryText: document.getElementById('summaryText'),
+    currentFilterLabel: document.getElementById('current-filter'),
+    loader: document.getElementById('sv-loader'),
+    mainContainer: document.querySelector('.page-container'),
+    sortableHeaders: document.querySelectorAll('th.sortable'),
+  };
 
-  function hideLoader() {
-    if (!svLoader) return;
-    svLoader.classList.remove('active');
-    svLoader.setAttribute('aria-hidden','true');
-    if (mainContainer) mainContainer.setAttribute('aria-busy','false');
-    setControlsDisabled(false);
-  }
+  // --- MÓDULO DE UTILITÁRIOS ---
+  const utils = {
+    getCurrentUser: () => {
+        const u = Auth.getSessionUser();
+        // A função do Auth.js já nos dá o usuário completo.
+        // Apenas normalizamos a role para garantir consistência.
+        return {
+            username: u?.username || u?.email || u?.name,
+            role: (u?.role || 'COMUM').toString().toUpperCase(),
+        };
+    },
+    debounce: (fn, delay = 350) => {
+        let timeoutId;
+        return (...args) => {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => fn(...args), delay);
+        };
+    },
+  };
 
+  // --- MÓDULO DA VIEW (Renderização e Manipulação do DOM) ---
+  const view = {
+    toggleLoading: (isLoading, text = 'Carregando...') => {
+        if (!ui.loader) return;
+        const controls = [ui.searchInput, ui.pageSizeSelect, ui.paginationControls];
+        
+        if (isLoading) {
+            const loaderTextEl = ui.loader.querySelector('.sv-loader-text');
+            if (loaderTextEl) loaderTextEl.textContent = text;
+            ui.loader.classList.add('active');
+            ui.mainContainer?.setAttribute('aria-busy', 'true');
+        } else {
+            ui.loader.classList.remove('active');
+            ui.mainContainer?.removeAttribute('aria-busy');
+        }
+        
+        controls.forEach(control => {
+            if (control) {
+                if(control.hasAttribute('disabled')) control.disabled = isLoading;
+                control.style.pointerEvents = isLoading ? 'none' : '';
+                control.style.opacity = isLoading ? '0.5' : '1';
+            }
+        });
+    },
+    renderTabs: () => {
+        ui.tabsContainer.innerHTML = '';
+        pageState.tabsConfig.forEach(tabInfo => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'tab';
+            btn.textContent = tabInfo.label;
+            btn.dataset.tab = tabInfo.id;
+            if (tabInfo.id === pageState.activeTab) btn.classList.add('active');
+            btn.addEventListener('click', () => handlers.onTabClick(tabInfo.id));
+            ui.tabsContainer.appendChild(btn);
+        });
+        view.updateCurrentFilterLabel();
+    },
+    renderRows: (rows) => {
+        ui.tbody.innerHTML = '';
+        if (!rows || rows.length === 0) {
+            ui.tbody.innerHTML = '<tr><td colspan="9">Nenhum desembargo encontrado.</td></tr>';
+            return;
+        }
+        rows.forEach(d => {
+            const clone = document.importNode(ui.template, true);
+            const tr = clone.querySelector('tr');
+            tr.dataset.id = d.id;
 
-  function getStoredToken() {
-    if (window.Auth && typeof Auth.getSessionToken === 'function') {
-      const t = Auth.getSessionToken();
-      if (t) return t;
-    }
-    return localStorage.getItem('sessionToken') || localStorage.getItem('token') || null;
-  }
+            clone.querySelector('.col-termo').textContent = d.termo || `${d.numero || ''} ${d.serie || ''}`.trim();
+            clone.querySelector('.col-processo').textContent = d.processo || '';
+            clone.querySelector('.col-sep').textContent = d.sep || '';
+            clone.querySelector('.col-edocs').textContent = d.edocs || '';
+            clone.querySelector('.col-autuado').textContent = d.autuado || '';
+            clone.querySelector('.col-tipo').textContent = d.tipo || '';
+            clone.querySelector('.col-status').textContent = d.status || '';
+            clone.querySelector('.col-data').textContent = (d.data) ? new Date(d.data).toLocaleDateString('pt-BR') : '';
 
-  function decodeJwtPayload(token) {
-    try {
-      if (!token) return null;
-      const parts = token.split('.');
-      if (parts.length < 2) return null;
-      const payload = parts[1];
-      const b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
-      const json = decodeURIComponent(atob(b64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-      return JSON.parse(json);
-    } catch (err) {
-      return null;
-    }
-  }
+            // Botões de ação
+            const viewBtn = clone.querySelector('button[data-action="view"]');
+            const pdfBtn = clone.querySelector('button[data-action="pdf"]');
+            
+            if (viewBtn) viewBtn.addEventListener('click', () => window.location.href = `visualizacaoDesembargo.html?id=${d.id}`);
+            if (pdfBtn) {
+                const isAprovado = String(d.status ?? '').trim().toUpperCase() === 'APROVADO';
+                pdfBtn.disabled = !isAprovado;
+                pdfBtn.title = isAprovado ? 'Gerar PDF' : 'PDF disponível apenas para status "APROVADO"';
+                if(isAprovado) pdfBtn.addEventListener('click', () => handlers.onPdfClick(d.id));
+            }
+            
+            ui.tbody.appendChild(clone);
+        });
+        view.decorateStatusBadges();
+    },
+       renderPagination: (meta) => {
+        ui.paginationControls.innerHTML = '';
+        const { total = 0, page: current = 1, pageSize: ps = pageState.pageSize, totalPages = 1 } = meta;
 
-  function getCurrentUser() {
-    try {
-      if (window.Auth && typeof Auth.getCurrentUser === 'function') {
-        const u = Auth.getCurrentUser();
-        return { username: u.username || u.name || u.email, role: (u.role||'COMUM').toString().toUpperCase() };
-      }
-    } catch (e) {}
-    const token = getStoredToken();
-    const payload = decodeJwtPayload(token);
-    if (payload) {
-      return {
-        username: payload.username || payload.preferred_username || payload.sub || payload.name || null,
-        role: (payload.role || payload.roles || '').toString().toUpperCase()
-      };
-    }
-    return { username: null, role: 'COMUM' };
-  }
+        if (total === 0) return; // Não renderiza nada se não houver resultados
 
-  const currentUser = getCurrentUser();
-  const isGerente = String(currentUser.role || '').toUpperCase() === 'GERENTE';
-  const tabsConfig = [
-    { id: 'mine', label: 'Meus Desembargos', ownerParam: 'mine' },
-    { id: 'approved', label: 'Desembargos Aprovados', status: 'APROVADO' }
-  ];
-  if (isGerente) tabsConfig.push({ id: 'analysis', label: 'Desembargos em Análise', status: 'EM ANÁLISE,REVISÃO PENDENTE' });
+        const createButton = (text, newPage, isDisabled = false, isCurrent = false) => {
+            const btn = document.createElement('button');
+            btn.className = 'page-btn';
+            btn.textContent = text;
+            if (isDisabled) btn.classList.add('disabled');
+            if (isCurrent) btn.classList.add('active'); // Classe para a página atual
+            if (!isDisabled && !isCurrent && newPage) {
+                btn.addEventListener('click', () => handlers.onPageChange(newPage));
+            }
+            return btn;
+        };
+        
+        const createEllipsis = () => {
+            const span = document.createElement('span');
+            span.className = 'page-ellipsis';
+            span.textContent = '...';
+            return span;
+        };
 
-  let activeTab = 'mine';
-  let page = 1;
-  let pageSize = parseInt(pageSizeSelect.value, 10) || 10;
-  let sortKey = null;
-  let sortDir = null;
+        ui.paginationControls.appendChild(createButton('Anterior', current - 1, current <= 1));
 
-  function renderTabs() {
-    tabsContainer.innerHTML = '';
-    tabsConfig.forEach(t => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'tab';
-      btn.textContent = t.label;
-      btn.dataset.tab = t.id;
-      if (t.id === activeTab) btn.classList.add('active');
-      btn.addEventListener('click', () => {
-        activeTab = t.id;
-        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-        btn.classList.add('active');
-        page = 1;
-        fetchAndRender();
-      });
-      tabsContainer.appendChild(btn);
-    });
-    updateCurrentFilterLabel();
-  }
+        // Lógica de paginação inteligente
+        const pageLinks = [];
+        const pagesToShow = 5; // Total de números a mostrar (ex: 1, ..., 5, 6, 7, ..., 63)
+        
+        if (totalPages <= pagesToShow + 2) {
+            // Se houver poucas páginas, mostra todas
+            for (let i = 1; i <= totalPages; i++) {
+                pageLinks.push(createButton(i, i, false, i === current));
+            }
+        } else {
+            // Lógica para muitas páginas
+            pageLinks.push(createButton(1, 1, false, 1 === current)); // Sempre mostra a primeira página
+            
+            let start = Math.max(2, current - 1);
+            let end = Math.min(totalPages - 1, current + 1);
 
-  function updateCurrentFilterLabel() {
-    const active = tabsConfig.find(t => t.id === activeTab);
-    currentFilterLabel.textContent = active ? `${active.label}` : '';
-  }
+            if (current > 3) {
+                pageLinks.push(createEllipsis());
+            }
 
-  function buildListUrl() {
-    const active = tabsConfig.find(t => t.id === activeTab);
-    const params = new URLSearchParams();
-    params.set('page', page);
-    params.set('pageSize', pageSize);
-    const q = (searchInput.value || '').trim();
-    if (q) params.set('search', q);
-    if (active && active.status) params.set('status', active.status);
-    if (active && active.ownerParam) params.set('owner', active.ownerParam);
-    if (sortKey) params.set('sortKey', sortKey);
-    if (sortDir) params.set('sortDir', sortDir);
-    return `/api/desembargos/list?${params.toString()}`;
-  }
+            if(current === totalPages) start = Math.max(2, totalPages - 3)
+            if(current === 1) end = Math.min(totalPages - 1, 3)
 
-  async function fetchAndRender() {
-    showLoader('Carregando desembargos...');
-    try {
-      const url = buildListUrl();
-      const token = getStoredToken();
-      const res = await fetch(url, { headers: token ? { 'Authorization': `Bearer ${token}` } : {} });
-      if (!res.ok) {
-        const txt = await res.text().catch(()=>null);
-        console.error('Erro fetch list:', res.status, txt);
-        throw new Error('Erro ao buscar desembargos');
-      }
-      const payload = await res.json();
-      if (!payload.success) throw new Error(payload.message || 'Erro desconhecido');
-      const rows = payload.data || [];
-      const meta = payload.meta || { total: 0, page: 1, pageSize };
+            for (let i = start; i <= end; i++) {
+                pageLinks.push(createButton(i, i, false, i === current));
+            }
 
-      renderRows(rows);
-      renderPagination(meta);
-      summaryText.textContent = `Resultados: ${meta.total || 0}`;
-      updateCurrentFilterLabel();
-      highlightSortHeader();
-    } catch (err) {
-      console.error(err);
-      tbody.innerHTML = `<tr><td colspan="9">Erro ao carregar desembargos.</td></tr>`;
-    } finally {
-      hideLoader();
-    }
-  }
+            if (current < totalPages - 2) {
+                pageLinks.push(createEllipsis());
+            }
 
+            pageLinks.push(createButton(totalPages, totalPages, false, totalPages === current)); // Sempre mostra a última
+        }
+        
+        pageLinks.forEach(link => ui.paginationControls.appendChild(link));
 
-  function renderRows(rows) {
-    tbody.innerHTML = '';
-    if (!rows || rows.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="9">Nenhum desembargo encontrado.</td></tr>';
-      return;
-    }
-    rows.forEach(d => {
-      const clone = document.importNode(template, true);
-      const tr = clone.querySelector('tr');
-      tr.dataset.id = d.id;
+        ui.paginationControls.appendChild(createButton('Próximo', current + 1, current >= totalPages));
+        
+        const info = document.createElement('div');
+        info.className = 'small-muted';
+        info.style.marginLeft = '12px';
+        const startIndex = total > 0 ? (current - 1) * ps + 1 : 0;
+        const endIndex = Math.min(total, current * ps);
+        info.textContent = `Mostrando ${startIndex}-${endIndex} de ${total}`;
+        ui.paginationControls.appendChild(info);
+    },
+    updateSortIndicators: () => {
+        ui.sortableHeaders.forEach(th => {
+            th.classList.remove('asc', 'desc');
+            th.setAttribute('aria-sort', 'none');
+            const key = th.dataset.key;
+            if (key === pageState.sortKey) {
+                th.classList.add(pageState.sortDir);
+                th.setAttribute('aria-sort', pageState.sortDir === 'asc' ? 'ascending' : 'descending');
+            }
+        });
+    },
+    updateCurrentFilterLabel: () => {
+        const active = pageState.tabsConfig.find(t => t.id === pageState.activeTab);
+        ui.currentFilterLabel.textContent = active ? active.label : '';
+    },
+    decorateStatusBadges: () => { /* Sua função decorateStatusBadges idêntica */
+        const normalize = s => String(s||'').toUpperCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').trim();
+        const map = {
+          'APROVADO': 'status-aprovado', 'EM ANALISE': 'status-em-analise', 'REVISAO PENDENTE': 'status-revisao-pendente',
+          'REJEITADO': 'status-rejeitado'
+        };
+        document.querySelectorAll('#desembargos-list .col-status').forEach(td => {
+            if (td.querySelector('.status-badge')) return;
+            const raw = (td.textContent || '').trim();
+            if (!raw) return;
+            const key = normalize(raw.replace(/\s+/g,' '));
+            const cls = map[key] || '';
+            const span = document.createElement('span');
+            span.className = `status-badge ${cls}`;
+            span.textContent = raw; span.title = raw;
+            td.innerHTML = ''; td.appendChild(span);
+        });
+    },
+  };
 
-      clone.querySelector('.col-termo').textContent = d.termo || `${d.numero || ''} ${d.serie || ''}`.trim();
-      clone.querySelector('.col-processo').textContent = d.processo || '';
-      clone.querySelector('.col-sep').textContent = d.sep || '';
-      clone.querySelector('.col-edocs').textContent = d.edocs || '';
-      clone.querySelector('.col-autuado').textContent = d.autuado || '';
-      clone.querySelector('.col-tipo').textContent = d.tipo || '';
-      // ensure status cell is plain text first (we'll decorate after DOM insertion)
-      clone.querySelector('.col-status').textContent = d.status || '';
-      clone.querySelector('.col-data').textContent = (d.data) ? new Date(d.data).toLocaleDateString('pt-BR') : '';
+  // --- MÓDULO DE API ---
+  const api = {
+    fetchDesembargos: async () => {
+        const active = pageState.tabsConfig.find(t => t.id === pageState.activeTab);
+        const params = new URLSearchParams({
+            page: pageState.page,
+            pageSize: pageState.pageSize,
+        });
+        if (pageState.searchTerm) params.set('search', pageState.searchTerm);
+        if (active?.status) params.set('status', active.status);
+        if (active?.ownerParam) params.set('owner', active.ownerParam);
+        if (pageState.sortKey) params.set('sortKey', pageState.sortKey);
+        if (pageState.sortDir) params.set('sortDir', pageState.sortDir);
 
-      const viewBtn = clone.querySelector('button[data-action="view"]');
-      const pdfBtn = clone.querySelector('button[data-action="pdf"]');
-      const editBtn = clone.querySelector('button[data-action="edit"]');
+        const res = await Auth.fetchWithAuth(`/api/desembargos/list?${params.toString()}`);
+        if (!res.ok) throw new Error('Erro ao buscar a lista de desembargos');
+        return res.json();
+    },
+    fetchPdf: async (id) => {
+        const res = await Auth.fetchWithAuth(`/api/desembargos/${id}/pdf`);
+        if (!res.ok) throw new Error('Erro ao gerar o PDF');
+        return res.blob();
+    },
+  };
 
-      if (viewBtn) viewBtn.addEventListener('click', () => window.location.href = `visualizacaoDesembargo.html?id=${d.id}`);
-      if (pdfBtn) {
-        const isAprovado = String(d.status ?? '').trim().toUpperCase() === 'APROVADO';
-        pdfBtn.disabled = !isAprovado;
-        pdfBtn.setAttribute('aria-disabled', (!isAprovado).toString());
-        pdfBtn.title = isAprovado ? 'Gerar PDF' : 'PDF disponível somente para desembargos com status "APROVADO"';
-        pdfBtn.addEventListener('click', async () => {
-          if (!isAprovado) return;
-          try {
-            const token = getStoredToken();
-            const resp = await fetch(`/api/desembargos/${d.id}/pdf`, { headers: token ? { 'Authorization': `Bearer ${token}` } : {}});
-            if (!resp.ok) throw new Error('Erro ao gerar PDF');
-            const blob = await resp.blob();
+  // --- MÓDULO DE EVENT HANDLERS ---
+  const handlers = {
+    fetchAndRender: async () => {
+        view.toggleLoading(true, 'Carregando desembargos...');
+        try {
+            const payload = await api.fetchDesembargos();
+            if (!payload.success) throw new Error(payload.message || 'Erro desconhecido');
+            view.renderRows(payload.data || []);
+            view.renderPagination(payload.meta || {});
+            ui.summaryText.textContent = `Resultados: ${payload.meta?.total || 0}`;
+        } catch (error) {
+            console.error(error);
+            ui.tbody.innerHTML = `<tr><td colspan="9">Erro ao carregar desembargos. Tente novamente.</td></tr>`;
+        } finally {
+            view.toggleLoading(false);
+        }
+    },
+    onTabClick: (tabId) => {
+        pageState.activeTab = tabId;
+        pageState.page = 1;
+        document.querySelectorAll('.tab').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabId);
+        });
+        view.updateCurrentFilterLabel();
+        handlers.fetchAndRender();
+    },
+    onPageChange: (newPage) => {
+        pageState.page = newPage;
+        handlers.fetchAndRender();
+    },
+    onPageSizeChange: (event) => {
+        pageState.pageSize = parseInt(event.target.value, 10) || 10;
+        pageState.page = 1;
+        handlers.fetchAndRender();
+    },
+    onSearchInput: utils.debounce((event) => {
+        pageState.searchTerm = event.target.value.trim();
+        pageState.page = 1;
+        handlers.fetchAndRender();
+    }),
+    onSortClick: (key) => {
+        if (!key) return;
+        if (pageState.sortKey === key) {
+            pageState.sortDir = pageState.sortDir === 'asc' ? 'desc' : 'asc';
+        } else {
+            pageState.sortKey = key;
+            pageState.sortDir = 'asc';
+        }
+        pageState.page = 1;
+        view.updateSortIndicators();
+        handlers.fetchAndRender();
+    },
+    onPdfClick: async (id) => {
+        try {
+            const blob = await api.fetchPdf(id);
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `termo_desembargo_${d.id}.pdf`;
+            a.download = `termo_desembargo_${id}.pdf`;
             document.body.appendChild(a);
             a.click();
             a.remove();
             window.URL.revokeObjectURL(url);
-          } catch (err) {
+        } catch (err) {
             console.error(err);
             alert('Não foi possível gerar o PDF.');
-          }
-        });
-      }
-      if (editBtn) {
-        const isOwner = currentUser.username && String(d.responsavel || '').toLowerCase() === String(currentUser.username).toLowerCase();
-        if (isGerente || isOwner) {
-          editBtn.style.display = '';
-          editBtn.addEventListener('click', () => window.location.href = `cadastroDesembargos.html?id=${d.id}`);
-        } else {
-          editBtn.style.display = 'none';
         }
-      }
-
-      tbody.appendChild(clone);
-    });
-
-    decorateStatusBadges();
-  }
-
-  function renderPagination(meta) {
-    paginationControls.innerHTML = '';
-    const { total = 0, page: current = 1, pageSize: ps = pageSize, totalPages = 1 } = meta;
-
-    const prev = document.createElement('button');
-    prev.className = 'page-btn';
-    prev.textContent = 'Anterior';
-    if (current <= 1) prev.classList.add('disabled');
-    prev.addEventListener('click', () => {
-      if (current > 1) { page = current - 1; fetchAndRender(); }
-    });
-    paginationControls.appendChild(prev);
-
-    const maxLinks = 7;
-    let startPage = Math.max(1, current - Math.floor(maxLinks / 2));
-    let endPage = Math.min(totalPages, startPage + maxLinks - 1);
-    if (endPage - startPage + 1 < maxLinks) {
-      startPage = Math.max(1, endPage - maxLinks + 1);
+    },
+  };
+  
+  // --- FUNÇÃO DE INICIALIZAÇÃO ---
+  function init() {
+    pageState.currentUser = utils.getCurrentUser();
+    
+    // Configura as abas com base no perfil do usuário
+    const isGerente = pageState.currentUser.role === 'GERENTE';
+    pageState.tabsConfig = [
+        { id: 'mine', label: 'Meus Desembargos', ownerParam: 'mine' },
+        { id: 'approved', label: 'Desembargos Aprovados', status: 'APROVADO' }
+    ];
+    if (isGerente) {
+        pageState.tabsConfig.push({ id: 'analysis', label: 'Desembargos em Análise', status: 'EM ANÁLISE,REVISÃO PENDENTE' });
     }
 
-    for (let p = startPage; p <= endPage; p++) {
-      const btn = document.createElement('button');
-      btn.className = 'page-btn';
-      if (p === current) btn.style.fontWeight = '700';
-      btn.textContent = p;
-      btn.addEventListener('click', () => { page = p; fetchAndRender(); });
-      paginationControls.appendChild(btn);
-    }
-
-    const next = document.createElement('button');
-    next.className = 'page-btn';
-    next.textContent = 'Próximo';
-    if (current >= totalPages) next.classList.add('disabled');
-    next.addEventListener('click', () => {
-      if (current < totalPages) { page = current + 1; fetchAndRender(); }
+    // Anexa todos os eventos
+    ui.pageSizeSelect.addEventListener('change', handlers.onPageSizeChange);
+    ui.searchInput.addEventListener('input', handlers.onSearchInput);
+    ui.sortableHeaders.forEach(th => {
+        th.addEventListener('click', () => handlers.onSortClick(th.dataset.key));
     });
-    paginationControls.appendChild(next);
 
-    const info = document.createElement('div');
-    info.className = 'small-muted';
-    info.style.marginLeft = '12px';
-    const startIndex = (current - 1) * ps + 1;
-    const endIndex = Math.min(total, current * ps);
-    info.textContent = `Mostrando ${startIndex}-${endIndex} de ${total}`;
-    paginationControls.appendChild(info);
+    // Renderização inicial
+    view.renderTabs();
+    handlers.fetchAndRender();
   }
 
-  function highlightSortHeader() {
-    document.querySelectorAll('th.sortable').forEach(th => {
-      th.classList.remove('asc','desc');
-      const key = th.dataset.key;
-      if (key && key === sortKey) {
-        th.classList.add(sortDir === 'asc' ? 'asc' : 'desc');
-      }
-    });
-  }
-
-  function updateSortIndicators() {
-    document.querySelectorAll('th.sortable').forEach(th => {
-      th.classList.remove('asc','desc','active-sort');
-      th.setAttribute('aria-sort','none');
-      const key = th.dataset.key;
-      if (key && key === sortKey) {
-        th.classList.add(sortDir === 'asc' ? 'asc' : 'desc');
-        th.classList.add('active-sort');
-        th.setAttribute('aria-sort', sortDir === 'asc' ? 'ascending' : 'descending');
-        th.title = `Ordenado: ${sortDir === 'asc' ? 'crescente' : 'decrescente'} — clique para inverter`;
-      } else {
-        th.title = 'Clique para ordenar';
-      }
-    });
-  }
-
-  function toggleSort(key) {
-    if (!key) return;
-    if (sortKey === key) {
-      sortDir = (sortDir === 'asc') ? 'desc' : 'asc';
-    } else {
-      sortKey = key;
-      sortDir = 'asc';
-    }
-    page = 1;
-    fetchAndRender();
-  }
-
-  document.querySelectorAll('th.sortable').forEach(th => {
-    th.setAttribute('role','button');
-    th.setAttribute('tabindex','0');
-    th.addEventListener('click', () => toggleSort(th.dataset.key));
-    th.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        toggleSort(th.dataset.key);
-      }
-    });
-  });
-
-  updateSortIndicators();
-
-  function debounce(fn, delay = 300) {
-    let t;
-    return (...args) => {
-      clearTimeout(t);
-      t = setTimeout(() => fn(...args), delay);
-    };
-  }
-
-  searchInput.addEventListener('input', debounce(() => { page = 1; fetchAndRender(); }, 300));
-  pageSizeSelect.addEventListener('change', () => {
-    pageSize = parseInt(pageSizeSelect.value, 10) || 10;
-    page = 1;
-    fetchAndRender();
-  });
-
-  renderTabs();
-  fetchAndRender();
-
-  function decorateStatusBadges(){
-    const normalize = s => String(s||'').toUpperCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').trim();
-    const map = {
-      'APROVADO': 'status-aprovado',
-      'APROVADOS': 'status-aprovado',
-      'EM ANALISE': 'status-em-analise',
-      'EM ANALISES': 'status-em-analise',
-      'REVISAO PENDENTE': 'status-revisao-pendente',
-      'REVISAO PENDENTES': 'status-revisao-pendente',
-      'REVISAO PENDENTE': 'status-revisao-pendente',
-      'REVISÃO PENDENTE': 'status-revisao-pendente',
-      'REJEITADO': 'status-rejeitado',
-      'REJEITADOS': 'status-rejeitado'
-    };
-
-    document.querySelectorAll('#desembargos-list .col-status').forEach(td => {
-      const raw = (td.textContent || '').trim();
-      if (!raw) return;
-      if (td.querySelector('.status-badge')) return;
-      const key = normalize(raw.replace(/\s+/g,' '));
-      const cls = map[key] || null;
-      const span = document.createElement('span');
-      span.className = 'status-badge' + (cls ? ` ${cls}` : '');
-      span.textContent = raw;
-      span.title = raw;
-      span.setAttribute('aria-label', raw);
-      td.innerHTML = '';
-      td.appendChild(span);
-
-    });
-  }
+  init();
 });
