@@ -1,0 +1,44 @@
+/* frontend/css/stylesLogin.css (ou um CSS global) */
+
+#toast-container {
+  position: fixed;
+  top: 16px;      
+  right: 16px;    
+  z-index: 13000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.toast {
+  color: #ffffff;
+  padding: 10px 14px;
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: 220px;
+  max-width: 420px;
+  font-weight: 600;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateY(-12px);
+  transition: transform 220ms ease, opacity 220ms ease;
+}
+
+.toast--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast__icon {
+  min-width: 18px;
+  font-size: 18px;
+}
+
+.toast__text {
+  flex: 1;
+}
