@@ -2,12 +2,58 @@ const audit = require('../utils/auditLogger');
 const { formSchema } = require("../validators/formValidator");
 const desembargoService = require("../services/desembargoService");
 
+exports.validarFormulario = async (req, res) => {
+  try {
+    const options = { abortEarly: false, allowUnknown: true };
+    const { error } = formSchema.validate(req.body, options);
+
+    if (error) {
+      const erros = {};
+      error.details.forEach((d) => {
+        erros[d.path[0]] = d.message;
+      });
+      return res.status(200).json({ success: false, errors: erros });
+    }
+    res.status(200).json({ success: true, errors: null });
+  } catch (err) {
+    console.error('Erro na validação:', err);
+    res.status(500).json({ success: false, errors: { geral: 'Erro no servidor' } });
+  }
+};
+
+
 exports.inserir = async (req, res) => {
   try {
-    const { error, value } = formSchema.validate(req.body, { allowUnknown: true });
-    if (error) return res.status(400).json({ error: error.details[0].message });
+    // Validação completa dos dados (lógica do formController)
+    const { error, value } = formSchema.validate(req.body, { abortEarly: false });
+    if (error) {
+      const errors = {};
+      error.details.forEach((err) => {
+        errors[err.path[0]] = err.message;
+      });
+      return res.status(400).json({ errors });
+    }
 
-    const novoDesembargo = await desembargoService.inserirDesembargo(value);
+    // Limpeza e formatação dos dados (a parte mais importante do formController)
+    const responsavel = req.user?.username || req.user?.name || "DESCONHECIDO";
+    const dadosFormatados = {
+      numero: value.numero,
+      serie: value.serie?.toUpperCase().trim() || null,
+      nomeAutuado: value.nomeAutuado?.trim().toUpperCase() || null,
+      area: value.area ?? null,
+      processoSimlam: value.processoSimlam?.trim() || null,
+      numeroSEP: value.numeroSEP ?? null,
+      numeroEdocs: value.numeroEdocs?.trim().toUpperCase() || null,
+      tipoDesembargo: value.tipoDesembargo?.toUpperCase() || null,
+      dataDesembargo: value.dataDesembargo || null,
+      coordenadaX: value.coordenadaX ?? null,
+      coordenadaY: value.coordenadaY ?? null,
+      descricao: value.descricao?.trim() || null,
+      responsavelDesembargo: responsavel
+    };
+
+    // Insere no banco os dados já limpos e formatados
+    const novoDesembargo = await desembargoService.inserirDesembargo(dadosFormatados);
 
     await audit.logAction({
       req,
@@ -16,7 +62,6 @@ exports.inserir = async (req, res) => {
         id: novoDesembargo.id
       }
     });
-
 
     res.status(201).json({ success: true, data: novoDesembargo });
   } catch (err) {
