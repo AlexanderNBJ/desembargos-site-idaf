@@ -5,6 +5,7 @@ const embargoRoutes = require('./src/routes/embargoRoutes');
 const desembargoRoutes = require("./src/routes/desembargoRoutes");
 const authRoutes = require('./src/routes/authRoutes');
 const usuarioRoutes = require('./src/routes/usuarioRoutes');
+const errorHandler = require('./src/middleware/errorHandler');
 
 dotenv.config();
 
@@ -16,6 +17,8 @@ app.set('trust proxy', true);
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(errorHandler);
+
 
 // serve frontend
 app.use(express.static('../frontend'));
