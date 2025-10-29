@@ -3,12 +3,41 @@ const db = require("../config/db");
 const fs = require("fs");
 const path = require("path");
 const { jsPDF } = require("jspdf");
+const AppError = require('../utils/AppError'); 
 
 const desembargoTable = process.env.DESEMBARGO_TABLE;
 const usersTable = process.env.USER_TABLE;
 const schema = process.env.SCHEMA;
 
-// Funções Auxiliares para a Geração de PDF
+/**
+ * Mapeia uma linha do banco de dados para o formato esperado pelo frontend.
+ * Esta função agora centraliza a formatação dos dados.
+ * @param {object} dbRow - A linha de dados vinda do banco.
+ * @returns {object|null} - O objeto formatado ou null.
+ */
+function mapDesembargo(dbRow) {
+  if (!dbRow) return null;
+  return {
+    id: dbRow.id,
+    numero: dbRow.numero_embargo,
+    serie: dbRow.serie_embargo,
+    processoSimlam: dbRow.processo_simlam,
+    numeroSEP: dbRow.numero_sep,
+    numeroEdocs: dbRow.numero_edocs,
+    coordenadaX: dbRow.coordenada_x,
+    coordenadaY: dbRow.coordenada_y,
+    nomeAutuado: dbRow.nome_autuado,
+    area: dbRow.area_desembargada,
+    dataDesembargo: dbRow.data_desembargo ? new Date(dbRow.data_desembargo).toISOString().split("T")[0] : null,
+    tipoDesembargo: dbRow.tipo_desembargo,
+    descricao: dbRow.descricao,
+    status: dbRow.status,
+    responsavelDesembargo: dbRow.responsavel_desembargo
+  };
+}
+
+
+// --- Funções Auxiliares para a Geração de PDF ---
 
 function _drawPdfHeader(doc) {
   const imgPath = path.join(__dirname, "../../../frontend/assets/logos.png");
@@ -86,7 +115,7 @@ function _drawPdfInfoBlock(doc, y, desembargo) {
   return y;
 }
 
-// Funções do Service
+// --- Funções do Service (Exportadas) ---
 
 exports.inserirDesembargo = async (dados) => {
   const { numero, serie, nomeAutuado, area, processoSimlam,
@@ -156,7 +185,6 @@ exports.listarDesembargos = async (params = {}) => {
   }
 
   const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
-
   const sortableColumns = { termo: "NUMERO_EMBARGO", processo: "PROCESSO_SIMLAM", autuado: "NOME_AUTUADO", status: "STATUS", data: "DATA_DESEMBARGO" };
   let orderClause = 'ORDER BY DATA_DESEMBARGO DESC';
   if (sortKey && sortableColumns[sortKey]) {
@@ -196,11 +224,30 @@ exports.getDesembargoById = async (id) => {
 
 exports.getDesembargoByProcesso = async (processo) => {
   const result = await db.query(`SELECT * FROM ${schema}.${desembargoTable} WHERE processo_simlam = $1`, [processo]);
-  return result.rows[0];
+  return mapDesembargo(result.rows[0]);
 };
 
-exports.updateDesembargo = async (id, dados) => {
+exports.updateDesembargo = async (id, dados, user) => {
+  const antesResult = await db.query(`SELECT * FROM ${schema}.${desembargoTable} WHERE id = $1`, [id]);
+  if (antesResult.rows.length === 0) {
+    throw new AppError("Desembargo não encontrado para atualização", 404);
+  }
+  const antes = antesResult.rows[0];
+  
+  if (dados.status && String(dados.status).trim().toUpperCase() === 'APROVADO') {
+    if (!user || user.role !== 'GERENTE') {
+      throw new AppError("Apenas usuários com papel GERENTE podem aprovar desembargos", 403);
+    }
+    dados.aprovado_por = user.username;
+  }
+  if (!dados.responsavelDesembargo || dados.responsavelDesembargo === '') {
+    if (user) {
+      dados.responsavelDesembargo = user.username || user.name || user.id || null;
+    }
+  }
+
   const { numero, serie, processoSimlam, numeroSEP, numeroEdocs, coordenadaX, coordenadaY, nomeAutuado, area, tipoDesembargo, dataDesembargo, descricao, status, responsavelDesembargo, aprovado_por } = dados;
+  
   const result = await db.query(
     `UPDATE ${schema}.${desembargoTable}
      SET numero_embargo = $1, serie_embargo = $2, processo_simlam = $3, numero_sep = $4,
@@ -210,7 +257,12 @@ exports.updateDesembargo = async (id, dados) => {
      WHERE id = $16 RETURNING *`,
     [numero, serie, processoSimlam, numeroSEP, numeroEdocs, coordenadaX, coordenadaY, nomeAutuado, area, tipoDesembargo, dataDesembargo, descricao, status, responsavelDesembargo, aprovado_por, id]
   );
-  return result.rows[0];
+
+  if (result.rows.length === 0) {
+    throw new AppError("Desembargo não encontrado para atualização", 404);
+  }
+
+  return { updated: result.rows[0], antes: antes };
 };
 
 exports.gerarPdfDesembargo = async (desembargo) => {
