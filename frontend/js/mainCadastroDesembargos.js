@@ -1,15 +1,13 @@
-// frontend/js/mainCadastroDesembargos.js (FINAL COM VALIDAÇÃO ON-BLUR)
-
 document.addEventListener('DOMContentLoaded', () => {
   if (!Auth.initAuth()) return;
 
-  // --- MÓDULO DE ESTADO DA PÁGINA ---
+  // Módulo do estado da página
   const pageState = {
     currentUserInfo: null, 
     currentPreviewUrl: null,
   };
 
-  // --- MÓDULO DE ELEMENTOS DA UI ---
+  // Módulo de elementos de UI
   const ui = {
     form: document.getElementById('desembargoForm'),
     btnBuscar: document.getElementById('btnBuscarProcesso'),
@@ -21,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     fecharTopoBtn: document.getElementById('fecharModalTopo'),
   };
   
-  // --- MÓDULO DE UTILITÁRIOS ---
+  // Módulo de utilitários
   const utils = {
     getCurrentUserInfo: () => {
         const u = Auth.getSessionUser();
@@ -61,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   };
 
-  // --- MÓDULO DA VIEW ---
+  // Módulo da view
   const view = {
     fillForm: (data) => {
         if (!data) return;
@@ -109,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // --- MÓDULO DE API ---
+  // Módulo de API
   const api = {
     fetchEmbargoByProcesso: async (proc) => {
         const res = await Auth.fetchWithAuth(`/api/embargos/processo?valor=${encodeURIComponent(proc)}`);
@@ -138,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // --- MÓDULO DE LÓGICA DE NEGÓCIO ---
+  // Módulo de lógica de negócio
   const businessLogic = {
     prepareDataForSubmit: () => {
         const data = Object.fromEntries(new FormData(ui.form).entries());
@@ -223,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // --- MÓDULO DE EVENT HANDLERS ---
+  // Módulo de event handlers
   const handlers = {
     onFormSubmit: async (e) => {
         e.preventDefault();
@@ -313,12 +311,10 @@ document.addEventListener('DOMContentLoaded', () => {
             view.setEmbargoCheckMessage('Erro ao verificar.', 'error');
         }
     },
-    // ===== ADICIONADO =====
-    // Handler genérico para validação de campo no 'blur'
     onFieldBlur: async (event) => {
         const field = event.target;
         const fieldName = field.name;
-        // O campo 'numero' tem sua própria lógica, então o pulamos aqui.
+        
         if (!fieldName || fieldName === 'numero') return; 
 
         try {
@@ -333,7 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   };
   
-  // --- FUNÇÃO DE INICIALIZAÇÃO ---
+  // Inicialização
   function init() {
     pageState.currentUserInfo = utils.getCurrentUserInfo();
     
@@ -346,8 +342,6 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.form.elements.numero.addEventListener('blur', handlers.onNumeroEmbargoBlur);
     }
     
-    // ===== ADICIONADO =====
-    // Anexa a validação on-blur para os outros campos
     const fieldsToValidate = [
         'serie', 'nomeAutuado', 'area', 'processoSimlam',
         'numeroSEP', 'numeroEdocs', 'dataDesembargo',

@@ -7,7 +7,6 @@ window.UI = (function () {
     if (!container) {
       container = document.createElement("div");
       container.id = "toast-container";
-      // Estilos do container foram movidos para o CSS para melhor organização
       document.body.appendChild(container);
     }
 

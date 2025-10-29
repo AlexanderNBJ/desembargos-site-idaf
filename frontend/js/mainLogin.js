@@ -1,7 +1,5 @@
-// frontend/js/mainLogin.js
-
 document.addEventListener('DOMContentLoaded', () => {
-  // Centraliza a seleção de elementos da UI para fácil manutenção
+  // Elementos de UI
   const ui = {
     form: document.getElementById('loginForm'),
     usuarioInput: document.getElementById('usuario'),
@@ -36,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
   async function handleLoginSuccess(loginData) {
     Auth.setSession(loginData.token, loginData.user);
 
-    // Opcional: Tenta buscar permissões, mas não impede o login se falhar.
     try {
       const pRes = await Auth.fetchWithAuth('/auth/permissions');
       if (pRes.ok) {
@@ -101,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Inicialização dos Event Listeners ---
   ui.form.addEventListener('submit', handleSubmit);
 
-  // Permite login com a tecla "Enter" nos campos
+  // Permite login com a tecla "Enter"
   [ui.usuarioInput, ui.senhaInput].forEach(input => {
     input.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {

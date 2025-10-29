@@ -1,5 +1,7 @@
-/* frontend/css/stylesLogin.css (ou um CSS global) */
-
+/*
+  Estilização do Toast:
+  A mensagem em card que aparece em certas ações
+*/
 #toast-container {
   position: fixed;
   top: 16px;      

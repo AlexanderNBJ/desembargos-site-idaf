@@ -1,10 +1,8 @@
-// frontend/js/mainListaDesembargos.js (REFATORADO E COMPLETO)
-
 document.addEventListener('DOMContentLoaded', () => {
   // Garante que o usuário esteja logado. Se não, para a execução.
   if (!Auth.initAuth()) return;
 
-  // --- MÓDULO DE ESTADO DA PÁGINA ---
+  // Módulo de estado da página
   const pageState = {
     currentUser: null,
     activeTab: 'mine',
@@ -16,7 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tabsConfig: [],
   };
 
-  // --- MÓDULO DE ELEMENTOS DA UI ---
+  // Módulo de elementos de UI
   const ui = {
     tbody: document.getElementById('desembargos-list'),
     template: document.getElementById('row-template').content,
@@ -31,12 +29,11 @@ document.addEventListener('DOMContentLoaded', () => {
     sortableHeaders: document.querySelectorAll('th.sortable'),
   };
 
-  // --- MÓDULO DE UTILITÁRIOS ---
+  // Módulo de utilitários
   const utils = {
     getCurrentUser: () => {
         const u = Auth.getSessionUser();
-        // A função do Auth.js já nos dá o usuário completo.
-        // Apenas normalizamos a role para garantir consistência.
+
         return {
             username: u?.username || u?.email || u?.name,
             role: (u?.role || 'COMUM').toString().toUpperCase(),
@@ -51,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   };
 
-  // --- MÓDULO DA VIEW (Renderização e Manipulação do DOM) ---
+  // Módulo da view
   const view = {
     toggleLoading: (isLoading, text = 'Carregando...') => {
         if (!ui.loader) return;
@@ -136,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.className = 'page-btn';
             btn.textContent = text;
             if (isDisabled) btn.classList.add('disabled');
-            if (isCurrent) btn.classList.add('active'); // Classe para a página atual
+            if (isCurrent) btn.classList.add('active');
             if (!isDisabled && !isCurrent && newPage) {
                 btn.addEventListener('click', () => handlers.onPageChange(newPage));
             }
@@ -213,11 +210,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const active = pageState.tabsConfig.find(t => t.id === pageState.activeTab);
         ui.currentFilterLabel.textContent = active ? active.label : '';
     },
-    decorateStatusBadges: () => { /* Sua função decorateStatusBadges idêntica */
+    decorateStatusBadges: () => {
         const normalize = s => String(s||'').toUpperCase().normalize('NFD').replace(/\p{Diacritic}/gu,'').trim();
         const map = {
-          'APROVADO': 'status-aprovado', 'EM ANALISE': 'status-em-analise', 'REVISAO PENDENTE': 'status-revisao-pendente',
-          'REJEITADO': 'status-rejeitado'
+          'APROVADO': 'status-aprovado', 'EM ANALISE': 'status-em-analise', 'REVISAO PENDENTE': 'status-revisao-pendente'
         };
         document.querySelectorAll('#desembargos-list .col-status').forEach(td => {
             if (td.querySelector('.status-badge')) return;
@@ -233,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   };
 
-  // --- MÓDULO DE API ---
+  // Módulo de API
   const api = {
     fetchDesembargos: async () => {
         const active = pageState.tabsConfig.find(t => t.id === pageState.activeTab);
@@ -258,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   };
 
-  // --- MÓDULO DE EVENT HANDLERS ---
+  // Módulo de event handlers
   const handlers = {
     fetchAndRender: async () => {
         view.toggleLoading(true, 'Carregando desembargos...');
@@ -328,7 +324,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   };
   
-  // --- FUNÇÃO DE INICIALIZAÇÃO ---
+  // Inicialização
   function init() {
     pageState.currentUser = utils.getCurrentUser();
     

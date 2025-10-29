@@ -1,16 +1,14 @@
-// frontend/js/mainVisualizacaoDesembargo.js (FINAL, COM VALIDAÇÃO on-blur PARA SEP/EDOCS)
-
 document.addEventListener('DOMContentLoaded', () => {
   if (!Auth.initAuth()) return;
 
-  // --- MÓDULO DE ESTADO DA PÁGINA ---
+  // Módulo de estado da página
   const pageState = {
     desembargoId: new URLSearchParams(window.location.search).get('id'),
     currentUserInfo: null, 
     currentRecord: null,
   };
 
-  // --- MÓDULO DE ELEMENTOS DA UI ---
+  // Módulo de elementos de UI
   const ui = {
     form: document.getElementById('desembargoForm'),
     enableEdit: document.getElementById('enableEdit'),
@@ -19,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mensagemBusca: document.getElementById('mensagem-busca'),
   };
   
-  // --- MÓDULO DE UTILITÁRIOS ---
+  // Módulo de utilitários
   const utils = {
     getCurrentUserInfo: () => {
         const u = Auth.getSessionUser();
@@ -76,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   };
 
-  // --- MÓDULO DA VIEW ---
+  // Módulo da view
   const view = {
     fillForm: (data) => {
         if (!data) return;
@@ -127,14 +125,19 @@ document.addEventListener('DOMContentLoaded', () => {
         el.parentNode.replaceChild(select, el);
         utils.setSelectValue(select, currentResponsavel);
     },
+    // Checar permissões de ediao do usuário
     updateUIAfterPermissions: (canEdit) => {
         const editToggleContainer = document.querySelector('.edit-toggle');
         if (canEdit) {
             editToggleContainer.style.display = 'flex';
         } else {
             editToggleContainer.style.display = 'none';
-            if (pageState.currentRecord?.status?.toUpperCase() !== 'APROVADO') {
-                window.UI.showToast('Edição não permitida para este registro.', 'info');
+            // Se o motivo de não poder editar é o status 'APROVADO', mostra um toast específico
+            if (pageState.currentRecord?.status?.toUpperCase() === 'APROVADO') {
+                window.UI.showToast('Este desembargo já foi aprovado e não pode mais ser editado.', 'info', { duration: 5000 });
+            } else {
+                // Para outros casos (ex: usuário comum tentando editar registro de outro), mostra aviso genérico
+                window.UI.showToast('Você não tem permissão para editar este registro.', 'info');
             }
         }
     },
@@ -162,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   };
 
-  // --- MÓDULO DE API ---
+  // Módulo de API
   const api = {
     fetchDesembargoById: async (id) => {
         const res = await Auth.fetchWithAuth(`/api/desembargos/${id}`);
@@ -203,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   };
 
-  // --- MÓDULO DE LÓGICA DE NEGÓCIO ---
+  // Módulo de lógica de negócio
   const businessLogic = {
     canUserEdit: (userInfo, record) => {
         if (!userInfo || !record) return false;
@@ -256,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  // --- MÓDULO DE EVENT HANDLERS ---
+  // Módulo de event handlers
   const handlers = {
     onUpdateClick: async (e) => {
         e.preventDefault();
@@ -305,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!ui.form.elements.area.value) {
                        dataToFill.area = dataToFill.area;
                     }
-                    window.UI.showToast("A área do embargo foi preenchida (válido para desembargo TOTAL).", "info", { duration: 5000 });
+                    window.UI.showToast("A área do embargo foi preenchida (válida para desembargo TOTAL).", "info", { duration: 5000 });
                 } else {
                     delete dataToFill.area;
                 }
@@ -348,17 +351,14 @@ document.addEventListener('DOMContentLoaded', () => {
             view.setEmbargoCheckMessage('Erro ao verificar. Tente novamente.', 'error');
         }
     },
-    // ===== MODIFICADO: Validação on-blur para SEP e E-Docs =====
     onSepEdocsBlur: async (event) => {
         const field = event.target;
         const fieldName = field.name;
         const value = field.value.trim();
         const errorEl = document.getElementById(`error-${fieldName}`);
 
-        // Esta validação só deve rodar se o formulário estiver habilitado para edição
         if (ui.enableEdit && !ui.enableEdit.checked) return;
         
-        // Se o campo estiver vazio, não valida o formato, apenas a regra "um ou outro"
         if (!value) {
             const numeroSEP = ui.form.elements.numeroSEP.value.trim();
             const numeroEdocs = ui.form.elements.numeroEdocs.value.trim();
@@ -371,16 +371,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            // 1. Valida o formato do campo atual
             const validationResult = await api.validateForm({ [fieldName]: value });
             const errorMsg = validationResult.errors?.[fieldName];
 
             if (errorMsg) {
                 if (errorEl) errorEl.textContent = errorMsg;
             } else {
-                if (errorEl) errorEl.textContent = ''; // Limpa o erro do campo atual se for válido
+                if (errorEl) errorEl.textContent = '';
                 
-                // 2. Se o formato for válido, limpa o erro do OUTRO campo
                 const otherField = fieldName === 'numeroSEP' ? 'numeroEdocs' : 'numeroSEP';
                 const otherErrorEl = document.getElementById(`error-${otherField}`);
                 if (otherErrorEl) otherErrorEl.textContent = '';
@@ -391,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
   };
   
-  // --- FUNÇÃO DE INICIALIZAÇÃO ---
+  // Inicialização
   async function init() {
     if (!pageState.desembargoId) {
         alert("Nenhum desembargo selecionado."); window.location.href = "listaDesembargos.html"; return;
