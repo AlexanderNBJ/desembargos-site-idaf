@@ -24,7 +24,7 @@ exports.validarFormulario = async (req, res) => {
 
 exports.inserir = async (req, res) => {
   try {
-    // Validação completa dos dados (lógica do formController)
+    // Validação completa dos dados
     const { error, value } = formSchema.validate(req.body, { abortEarly: false });
     if (error) {
       const errors = {};
@@ -34,8 +34,9 @@ exports.inserir = async (req, res) => {
       return res.status(400).json({ errors });
     }
 
-    // Limpeza e formatação dos dados (a parte mais importante do formController)
+    // Limpeza e formatação dos dados
     const responsavel = req.user?.username || req.user?.name || "DESCONHECIDO";
+	
     const dadosFormatados = {
       numero: value.numero,
       serie: value.serie?.toUpperCase().trim() || null,
@@ -52,7 +53,7 @@ exports.inserir = async (req, res) => {
       responsavelDesembargo: responsavel
     };
 
-    // Insere no banco os dados já limpos e formatados
+    // Insere no banco
     const novoDesembargo = await desembargoService.inserirDesembargo(dadosFormatados);
 
     await audit.logAction({
@@ -70,7 +71,7 @@ exports.inserir = async (req, res) => {
   }
 };
 
-// listar com paginação/filtros/ordem server-side (melhorado para extrair username do token caso req.user não exista)
+// listar com paginação/filtros/ordem server-side
 exports.listarDesembargos = async (req, res) => {
   try {
     // params esperados: page, pageSize, search, status, owner, sortKey, sortDir
@@ -83,11 +84,9 @@ exports.listarDesembargos = async (req, res) => {
       sortKey = '',
       sortDir = ''
     } = req.query;
-
-    // trying to get requesting user from req.user (set by auth middleware)
+	
     let requestingUser = req.user || null;
-
-    // if owner=mine and req.user is missing, try to decode username from Authorization header (best-effort, no verification)
+	
     if (!requestingUser && String(owner || '').toLowerCase() === 'mine') {
       const authHeader = req.headers && (req.headers.authorization || req.headers.Authorization);
       if (authHeader && typeof authHeader === 'string') {
@@ -95,7 +94,6 @@ exports.listarDesembargos = async (req, res) => {
         if (parts.length === 2 && /^Bearer$/i.test(parts[0])) {
           const token = parts[1];
           try {
-            // decode payload (base64url) without verification
             const payloadB64 = token.split('.')[1] || '';
             const b64 = payloadB64.replace(/-/g, '+').replace(/_/g, '/');
             const json = Buffer.from(b64, 'base64').toString('utf8');
@@ -105,14 +103,12 @@ exports.listarDesembargos = async (req, res) => {
               role: (parsed.role || parsed.roles || '').toString().toUpperCase()
             };
           } catch (e) {
-            // ignore decode errors - we'll treat as unauthenticated
             requestingUser = null;
           }
         }
       }
     }
-
-    // transforma page/pageSize em inteiros defensivos
+	
     const p = Math.max(1, parseInt(page, 10) || 1);
     const ps = Math.max(1, Math.min(200, parseInt(pageSize, 10) || 10));
 
@@ -128,7 +124,6 @@ exports.listarDesembargos = async (req, res) => {
     };
 
     const result = await desembargoService.listarDesembargos(params);
-    // result: { rows, total }
     const totalPages = Math.max(1, Math.ceil((result.total || 0) / ps));
 
     res.json({
@@ -147,7 +142,6 @@ exports.listarDesembargos = async (req, res) => {
   }
 };
 
-// pegar por ID
 exports.getDesembargoById = async (req, res) => {
   try {
     const desembargo = await desembargoService.getDesembargoById(req.params.id);
@@ -159,7 +153,6 @@ exports.getDesembargoById = async (req, res) => {
   }
 };
 
-// atualizar
 exports.updateDesembargo = async (req, res) => {
   try {
     const id = parseInt(req.params.id);
