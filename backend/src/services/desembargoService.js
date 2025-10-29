@@ -219,19 +219,23 @@ exports.getDesembargoById = async (id) => {
     WHERE d.id = $1 LIMIT 1
   `;
   const result = await db.query(query, [id]);
+
   return result.rows[0];
 };
 
 exports.getDesembargoByProcesso = async (processo) => {
   const result = await db.query(`SELECT * FROM ${schema}.${desembargoTable} WHERE processo_simlam = $1`, [processo]);
+
   return mapDesembargo(result.rows[0]);
 };
 
 exports.updateDesembargo = async (id, dados, user) => {
   const antesResult = await db.query(`SELECT * FROM ${schema}.${desembargoTable} WHERE id = $1`, [id]);
+
   if (antesResult.rows.length === 0) {
     throw new AppError("Desembargo não encontrado para atualização", 404);
   }
+
   const antes = antesResult.rows[0];
   
   if (dados.status && String(dados.status).trim().toUpperCase() === 'APROVADO') {
@@ -240,6 +244,7 @@ exports.updateDesembargo = async (id, dados, user) => {
     }
     dados.aprovado_por = user.username;
   }
+  
   if (!dados.responsavelDesembargo || dados.responsavelDesembargo === '') {
     if (user) {
       dados.responsavelDesembargo = user.username || user.name || user.id || null;

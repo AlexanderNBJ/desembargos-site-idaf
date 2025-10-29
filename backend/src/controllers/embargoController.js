@@ -12,7 +12,8 @@ exports.checkEmbargo = asyncHandler(async (req, res, next) => {
     
     if (embargo) {
         res.json({ found: true, embargo });
-    } else {
+    } 
+    else {
         res.status(404).json({ found: false });
     }
 });

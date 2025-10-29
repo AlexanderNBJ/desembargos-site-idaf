@@ -13,6 +13,7 @@ const MAPPIA_DB_URL = process.env.MAPPIA_DB_URL;
  * Realiza o login, autenticando contra o serviço Mappia e buscando dados locais.
  */
 exports.login = async (username, password) => {
+
   if (MAPPIA_DB_URL) {
     try {
       const body = new URLSearchParams();
@@ -35,7 +36,8 @@ exports.login = async (username, password) => {
         try {
           const perms = await fetchPermissions(mappiaToken);
           role = perms[1] ? 'GERENTE' : (perms[0] ? 'COMUM' : 'NONE');
-        } catch (err) {
+        } 
+        catch (err) {
           console.error('Erro ao buscar permissões após login Mappia:', err);
         }
 
@@ -73,7 +75,8 @@ exports.login = async (username, password) => {
 
         return { token: localJwt, user };
       }
-    } catch (err) {
+    } 
+    catch (err) {
       console.error('Erro no processo de login:', err);
       throw err;
     }

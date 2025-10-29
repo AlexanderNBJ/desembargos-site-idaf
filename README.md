@@ -1,8 +1,8 @@
 # Portal de Cadastro de Desembargos - IDAF
 
 ## Requisitos
-- Node 	(versão recomendada: 18.x)
-- npm 	(vem com o Node, versão recomendada: 9.2.0)
+- Node 	(versão recomendada: >= 18.x)
+- npm 	(vem com o Node, versão recomendada: >= 9.2.0)
 - PostgreSQL (versão recomendada: 15.x)
 - Extensão PostGIS instalada no PostgreSQL (versão recomendada: 3.3)
 

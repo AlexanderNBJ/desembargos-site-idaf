@@ -12,8 +12,9 @@ exports.listarUsuarios = async (req, res) => {
 
 exports.me = async (req, res) => {
   try {
-    // req.user deve ser preenchido pelo requireAuth (decodificando o JWT local)
+    // req.user deve ser preenchido pelo requireAuth
     const logged = req.user || {};
+    
     // tenta por id primeiro (caso nosso JWT tenha id e exista no BD)
     if (logged.id) {
       const usuario = await usuarioService.buscarUsuarioPorId(logged.id);

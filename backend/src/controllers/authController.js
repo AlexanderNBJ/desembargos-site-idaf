@@ -7,7 +7,7 @@ exports.login = asyncHandler(async (req, res, next) => {
 
   // Para erros esperados (validação de entrada), nós chamamos 'next' com um erro customizado.
   if (!username || !password) {
-    return next(new AppError('Preencha usuário e senha', 400)); // 400: Bad Request
+    return next(new AppError('Preencha usuário e senha', 400));
   }
 
   const data = await authService.login(username, password);
@@ -21,7 +21,7 @@ exports.getPermissions = asyncHandler(async (req, res, next) => {
 
   // Validação mais robusta do token
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return next(new AppError('Token de autorização ausente ou mal formatado', 401)); // 401: Unauthorized
+    return next(new AppError('Token de autorização ausente ou mal formatado', 401)); 
   }
   
   const token = authHeader.split(' ')[1];

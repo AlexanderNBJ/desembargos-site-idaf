@@ -21,6 +21,7 @@ exports.validarFormulario = asyncHandler(async (req, res, next) => {
 
 exports.inserir = asyncHandler(async (req, res, next) => {
   const { error, value } = formSchema.validate(req.body, { abortEarly: false });
+
   if (error) {
     const errors = {};
     error.details.forEach((err) => { errors[err.path[0]] = err.message; });
@@ -59,23 +60,28 @@ exports.listarDesembargos = asyncHandler(async (req, res, next) => {
   const { page, pageSize, search, status, owner, sortKey, sortDir } = req.query;
   let requestingUser = req.user || null;
 
-  // Lógica de fallback para autenticação
   if (!requestingUser && String(owner || '').toLowerCase() === 'mine') {
     const authHeader = req.headers && (req.headers.authorization || req.headers.Authorization);
+
     if (authHeader && typeof authHeader === 'string') {
       const parts = authHeader.split(' ');
+
       if (parts.length === 2 && /^Bearer$/i.test(parts[0])) {
+
         try {
           const token = parts[1];
           const payloadB64 = token.split('.')[1] || '';
           const b64 = payloadB64.replace(/-/g, '+').replace(/_/g, '/');
           const json = Buffer.from(b64, 'base64').toString('utf8');
           const parsed = JSON.parse(json);
+
           requestingUser = {
             username: parsed.username || parsed.preferred_username || parsed.sub || parsed.name || null,
             role: (parsed.role || parsed.roles || '').toString().toUpperCase()
           };
-        } catch (e) { /* ignore */ }
+
+        } 
+        catch (e) {}
       }
     }
   }
@@ -100,6 +106,7 @@ exports.listarDesembargos = asyncHandler(async (req, res, next) => {
 
 exports.getDesembargoById = asyncHandler(async (req, res, next) => {
   const desembargo = await desembargoService.getDesembargoById(req.params.id);
+
   if (!desembargo) {
     return next(new AppError("Desembargo não encontrado", 404));
   }
@@ -108,17 +115,23 @@ exports.getDesembargoById = asyncHandler(async (req, res, next) => {
 
 exports.updateDesembargo = asyncHandler(async (req, res, next) => {
   const id = parseInt(req.params.id);
-  if (isNaN(id)) return next(new AppError("ID inválido", 400));
+
+  if (isNaN(id)) 
+    return next(new AppError("ID inválido", 400));
 
   const { error, value } = formSchema.validate(req.body, { allowUnknown: true });
-  if (error) return next(new AppError(error.details[0].message, 400));
+
+  if (error) 
+    return next(new AppError(error.details[0].message, 400));
 
   // O service retorna tanto o estado 'antes' quanto o 'depois'
   const { updated, antes } = await desembargoService.updateDesembargo(id, value, req.user);
   
   const changed = {};
+
   for (const campo of Object.keys(value)) {
     if (antes.hasOwnProperty(campo) && antes[campo] !== updated[campo]) {
+
       changed[campo] = { antes: antes[campo], depois: updated[campo] };
     }
   }

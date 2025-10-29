@@ -26,7 +26,8 @@ function setCachedPermissions(token, permissions) {
 
 // tenta extrair um "valor" booleano/número da resposta do Mappia
 function extractValue(respJson) {
-  if (respJson == null) return -1;
+  if (respJson == null) 
+    return -1;
 
   // caso seja array: pega o primeiro elemento
   if (Array.isArray(respJson) && respJson.length > 0) {
@@ -51,7 +52,6 @@ function extractValue(respJson) {
     }
   }
 
-  // nada encontrado
   return -1;
 }
 
