@@ -20,8 +20,6 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
-
 // Rotas da API
 app.use("/api/desembargos", desembargoRoutes);
 app.use('/api/embargos', embargoRoutes);
