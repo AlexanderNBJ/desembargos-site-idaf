@@ -13,8 +13,7 @@ exports.validarFormulario = asyncHandler(async (req, res, next) => {
     error.details.forEach((d) => {
       erros[d.path[0]] = d.message;
     });
-    // Aqui mantemos 200 porque é uma validação de formulário em tempo real, 
-    // não um erro de requisição.
+
     return res.status(200).json({ success: false, errors: erros });
   }
   res.status(200).json({ success: true, errors: null });
@@ -26,8 +25,6 @@ exports.inserir = asyncHandler(async (req, res, next) => {
     const errors = {};
     error.details.forEach((err) => { errors[err.path[0]] = err.message; });
     return next(new AppError('Erro de validação', 400, { errors })); 
-    // Nota: Se quiser manter exatamente o formato antigo de resposta de erro 400,
-    // pode usar: return res.status(400).json({ errors });
   }
 
   const responsavel = req.user?.username || req.user?.name || "DESCONHECIDO";
@@ -62,8 +59,7 @@ exports.listarDesembargos = asyncHandler(async (req, res, next) => {
   const { page, pageSize, search, status, owner, sortKey, sortDir } = req.query;
   let requestingUser = req.user || null;
 
-  // Lógica de fallback para autenticação (idealmente isso iria para um middleware, 
-  // mas vamos manter aqui por segurança por enquanto)
+  // Lógica de fallback para autenticação
   if (!requestingUser && String(owner || '').toLowerCase() === 'mine') {
     const authHeader = req.headers && (req.headers.authorization || req.headers.Authorization);
     if (authHeader && typeof authHeader === 'string') {

@@ -37,7 +37,7 @@ function mapDesembargo(dbRow) {
 }
 
 
-// --- Funções Auxiliares para a Geração de PDF ---
+// Funções Auxiliares para a Geração de PDF
 
 function _drawPdfHeader(doc) {
   const imgPath = path.join(__dirname, "../../../frontend/assets/logos.png");
@@ -115,7 +115,7 @@ function _drawPdfInfoBlock(doc, y, desembargo) {
   return y;
 }
 
-// --- Funções do Service (Exportadas) ---
+// Funções do service
 
 exports.inserirDesembargo = async (dados) => {
   const { numero, serie, nomeAutuado, area, processoSimlam,

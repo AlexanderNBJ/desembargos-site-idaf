@@ -9,7 +9,7 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
-  // Para erros inesperados (erros de programação, etc.)
+  // Para erros inesperados
   console.error('ERRO INESPERADO :', err);
   return res.status(500).json({
     success: false,

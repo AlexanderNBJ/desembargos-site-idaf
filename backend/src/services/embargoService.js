@@ -41,6 +41,5 @@ exports.findByProcesso = async (processo) => {
     [processo]
   );
   
-  // Agora o service retorna os dados já formatados!
   return _formatEmbargoForFrontend(result.rows[0]);
 };
