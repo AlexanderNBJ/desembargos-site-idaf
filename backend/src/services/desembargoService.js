@@ -185,7 +185,7 @@ exports.listarDesembargos = async (params = {}) => {
   }
 
   const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
-  const sortableColumns = { termo: "NUMERO_EMBARGO", processo: "PROCESSO_SIMLAM", autuado: "NOME_AUTUADO", status: "STATUS", data: "DATA_DESEMBARGO" };
+  const sortableColumns = { termo: "NUMERO_EMBARGO", processo: "PROCESSO_SIMLAM", autuado: "NOME_AUTUADO", status: "STATUS", data: "DATA_DESEMBARGO", sep: "NUMERO_SEP", edocs: "NUMERO_EDOCS", tipo: "TIPO_DESEMBARGO" };
   let orderClause = 'ORDER BY DATA_DESEMBARGO DESC';
   if (sortKey && sortableColumns[sortKey]) {
     const dir = (String(sortDir || '').toUpperCase() === 'ASC') ? 'ASC' : 'DESC';
