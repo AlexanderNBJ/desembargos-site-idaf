@@ -16,6 +16,7 @@ function _formatEmbargoForFrontend(embargoDb) {
     
   return {
     numero_embargo: embargoDb.n_iuf_emb,
+    serie: embargoDb.serie,
     coordenada_x: embargoDb.easting,
     coordenada_y: embargoDb.northing,
     processo_simlam: embargoDb.processo,
@@ -35,8 +36,7 @@ exports.findByNumero = async (numero) => {
 
 exports.findByProcesso = async (processo) => {
   const result = await pool.query(
-    `SELECT n_iuf_emb, northing, easting, sep_edocs, processo, 
-      (public.ST_area(geom)/1000.00) AS area    
+    `SELECT n_iuf_emb, serie, northing, easting, sep_edocs, processo, area  
       FROM ${schema}.${embargosTable} WHERE processo = $1 LIMIT 1`,
     [processo]
   );

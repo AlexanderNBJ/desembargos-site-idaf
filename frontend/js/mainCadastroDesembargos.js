@@ -45,8 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
             coordenadaX: pick(row, 'easting', 'easting_m', 'coordenada_x', 'coordenadaX'),
             coordenadaY: pick(row, 'northing', 'northing_m', 'coordenada_y', 'coordenadaY'),
             descricao: pick(row, 'descricao', 'obs'),
-            numeroSEP: numeroSEP,
-            numeroEdocs: numeroEdocs,
+            numeroSEP: pick(row, 'numeroSEP'),
+            numeroEdocs: pick(row, 'numeroEdocs'),
         };
     },
     separarSepEdocs: (valor) => {
