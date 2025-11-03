@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!ui.form.elements.area.value) {
                        dataToFill.area = dataToFill.area;
                     }
-                    window.UI.showToast("A área do embargo foi preenchida (válido para desembargo TOTAL).", "info", { duration: 5000 });
+                    window.UI.showToast("A área do embargo foi preenchida, sendo válida para APENAS para desembargo TOTAL.", "info", { duration: 5000 });
                 } else {
                     delete dataToFill.area;
                 }
