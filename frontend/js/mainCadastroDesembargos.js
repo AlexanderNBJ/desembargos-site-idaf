@@ -72,6 +72,38 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     },
+    clearForm: (preserveField = null) => {
+        if (!ui.form) return;
+
+        const fieldsToClear = [
+            'numero', 'serie', 'nomeAutuado', 'processoSimlam',
+            'area', 'numeroSEP', 'numeroEdocs', 'coordenadaX',
+            'coordenadaY', 'descricao'
+        ];
+
+        fieldsToClear.forEach(fieldName => {
+            const el = ui.form.elements[fieldName];
+            if (fieldName !== preserveField) { 
+                if (el) {
+                    el.value = '';
+                }
+            }
+        });
+
+        const dataEl = ui.form.elements.dataDesembargo;
+        if (dataEl) {
+            dataEl.value = new Date().toISOString().split('T')[0];
+        }
+
+        const tipoTotalRadio = ui.form.querySelector('input[name="tipoDesembargo"][value="TOTAL"]');
+        if (tipoTotalRadio) {
+            tipoTotalRadio.checked = true;
+        }
+
+        document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
+        if (ui.mensagemBusca) ui.mensagemBusca.textContent = '';
+        
+    },
     displayValidationErrors: (errors) => {
         document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
         for (const field in errors) {
@@ -287,12 +319,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     },
     onSearchProcessoClick: async () => {
-        const processo = ui.form.elements.processoSimlam.value.trim();
+        const processo = ui.form.elements.processoSimlam.value.trim().replace(/^0+/, '');
+        
         if (!processo) {
             window.UI.showToast("Informe o número do processo Simlam para buscar.", "info");
             return;
         }
         view.setSearchMessage('', '');
+        view.clearForm('processoSimlam');
         ui.btnBuscar.disabled = true;
         try {
             const embargoData = await api.fetchEmbargoByProcesso(processo);
@@ -326,6 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         view.setSearchMessage('', ''); // Mude para setSearchMessage para consistência
+        view.clearForm('numeroSEP');
         ui.btnBuscarSEP.disabled = true;
 
         try {
