@@ -48,6 +48,7 @@
     
     </div>
 
+    <!-- Seção da chave seletora de tipo de busca no banco de dados -->
     <div class="busca-tipo">
       <label class="label-bold">Tipo de Busca no Banco de Dados: </label>
       <div class="tipo-controls">
@@ -59,29 +60,6 @@
           <input type="radio" name="tipoBusca" value="apos2012" /> 
           <span>Embargos após 2012 (via Simlam)</span>
         </label>
-      </div>
-    </div>
-
-    <!-- Termo de Embargo Ambiental -->
-    <div class="termo">
-      <div class="section-title">Termo de Embargo Ambiental</div>
-
-      <div class="termo-small">
-
-          <!-- Número de Embargo Ambiental -->
-          <div class="small-wrap">
-            <label for="numero" class="required">Número:</label>
-            <input id="numero" name="numero" class="input-left" type="text" placeholder="Ex: 12345" required disabled/>
-            <span class="error-msg" id="error-numero"></span>
-          </div>
-
-          <!-- Série de Embargo Ambiental -->
-          <div class="small-wrap">
-            <label for="serie" class="required">Série:</label>
-            <input id="serie" name="serie" class="input-left" type="text" placeholder="Ex: A" disabled/>
-            <span class="error-msg" id="error-serie"></span>
-          </div>
-
       </div>
     </div>
 
@@ -136,9 +114,32 @@
       <span class="error-msg" id="error-numeroSEP"></span>
     </div>
 
+    <!-- Termo de Embargo Ambiental -->
+    <div class="termo">
+      <div class="section-title">Termo de Embargo Ambiental</div>
+
+      <div class="termo-small">
+
+          <!-- Número de Embargo Ambiental -->
+          <div class="small-wrap">
+            <label for="numero" class="required">Número:</label>
+            <input id="numero" name="numero" class="input-left" type="text" placeholder="Ex: 12345" required disabled/>
+            <span class="error-msg" id="error-numero"></span>
+          </div>
+
+          <!-- Série de Embargo Ambiental -->
+          <div class="small-wrap">
+            <label for="serie" class="required">Série:</label>
+            <input id="serie" name="serie" class="input-left" type="text" placeholder="Ex: A" disabled/>
+            <span class="error-msg" id="error-serie"></span>
+          </div>
+
+      </div>
+    </div>
+
     <!-- Tipo de Desembargo, radio button -->
     <div class="tipo">
-      <label class="label-bold required-section">Tipo de desembargo:</label>
+      <label class="label-bold required-section" id="textoTipoDesembargo">Tipo de desembargo:</label>
 
       <!-- Opções -->
       <div class="tipo-controls">

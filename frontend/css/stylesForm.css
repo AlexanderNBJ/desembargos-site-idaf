@@ -26,9 +26,9 @@
   grid-template-areas:
     "intro intro intro"
     "busca busca busca"
-    "termo termo nome"
-    "processo processo area"
-    "sep sep tipo"
+    "processo processo nome"  
+    "sep sep area"
+    "termo termo tipo"        
     "edocs edocs data"
     "coordenadas coordenadas coordenadas"
     "descricao descricao descricao";
@@ -207,6 +207,6 @@ input[type="radio"], input[type="checkbox"] {
   .btn.submit { width: 100%; }
 }
 
-#textoNomeAutuado{
+#textoTipoDesembargo{
   margin-top: 20px;
 }

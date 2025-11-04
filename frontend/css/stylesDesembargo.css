@@ -12,9 +12,6 @@
   --disabled-gray: #a0aec0;
 }
 
-/* ============================================= */
-/* ESTRUTURA PRINCIPAL E GRID                    */
-/* ============================================= */
 .sv-grid {
   width: var(--container-w);
   margin: 22px auto;
@@ -31,9 +28,9 @@
   grid-template-areas:
     "intro intro intro"
     "busca busca busca"
-    "termo termo nome"
-    "processo process area"
-    "sep sep tipo"
+    "processo processo nome"
+    "sep sep area"
+    "termo termo tipo"
     "edocs edocs data"
     "responsavel responsavel responsavel"
     "coordenadas coordenadas status"
@@ -259,7 +256,7 @@ input[type="radio"], input[type="checkbox"] {
   }
 }
 
-#textoNomeAutuado{
+#textoTipoDesembargo{
   margin-top: 20px;
 }
 

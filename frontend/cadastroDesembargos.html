@@ -129,30 +129,6 @@
         </div>
       </div>
 
-      <!-- Seção do Termo de Embargo Ambiental -->
-      <div class="termo">
-
-        <div class="section-title">Termo de Embargo Ambiental</div>
-
-        <div class="termo-small">
-
-          <!-- Seção do Número do Termo de Embargo Ambiental -->
-          <div class="small-wrap">
-            <label for="numero" class="required">Número:</label>
-            <input id="numero" name="numero" class="input-left" type="text" placeholder="Ex: 12345" required/>
-            <span class="error-msg" id="error-numero"></span>
-            <span id="mensagem-numero" class="mensagem-validacao"></span>
-          </div>
-
-          <!-- Seção da Série de Termo de Embargo Ambiental -->
-          <div class="small-wrap">
-            <label for="serie" class="required">Série:</label>
-            <input id="serie" name="serie" class="input-left" type="text" placeholder="Ex: A"/>
-            <span class="error-msg" id="error-serie"></span>
-          </div>
-        </div>
-      </div>
-
       <!-- Seção do Nome do Autuado -->
       <div class="nome">
         <label for="nomeAutuado" id="textoNomeAutuado">Nome do autuado:</label>
@@ -203,9 +179,33 @@
         <span class="error-msg" id="error-numeroSEP"></span>
       </div>
 
+      <!-- Seção do Termo de Embargo Ambiental -->
+      <div class="termo">
+
+        <div class="section-title">Termo de Embargo Ambiental</div>
+
+        <div class="termo-small">
+
+          <!-- Seção do Número do Termo de Embargo Ambiental -->
+          <div class="small-wrap">
+            <label for="numero" class="required">Número:</label>
+            <input id="numero" name="numero" class="input-left" type="text" placeholder="Ex: 12345" required/>
+            <span class="error-msg" id="error-numero"></span>
+            <span id="mensagem-numero" class="mensagem-validacao"></span>
+          </div>
+
+          <!-- Seção da Série de Termo de Embargo Ambiental -->
+          <div class="small-wrap">
+            <label for="serie" class="required">Série:</label>
+            <input id="serie" name="serie" class="input-left" type="text" placeholder="Ex: A"/>
+            <span class="error-msg" id="error-serie"></span>
+          </div>
+        </div>
+      </div>
+
       <!-- Seção do Número SEP, radio button -->
       <div class="tipo">
-        <label class="label-bold required-section">Tipo de desembargo:</label>
+        <label class="label-bold required-section" id="textoTipoDesembargo">Tipo de desembargo:</label>
 
         <!-- Dispõe as opções TOTAL, PARCIAL e INDEFERIMENTO -->
         <div class="tipo-controls">
