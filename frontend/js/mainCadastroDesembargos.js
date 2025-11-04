@@ -19,6 +19,9 @@ document.addEventListener('DOMContentLoaded', () => {
     confirmarBtn: document.getElementById('confirmarEnvio'),
     cancelarBtn: document.getElementById('cancelarEnvio'),
     fecharTopoBtn: document.getElementById('fecharModalTopo'),
+    tipoBuscaRadios: document.querySelectorAll('input[name="tipoBusca"]'),
+    processoContainer: document.querySelector('.processo'),
+    sepContainer: document.querySelector('.sep'),
   };
   
   // Módulo de utilitários
@@ -138,7 +141,16 @@ document.addEventListener('DOMContentLoaded', () => {
             pageState.currentPreviewUrl = null;
         }
         if (ui.iframePreview) ui.iframePreview.src = 'about:blank';
-    }
+    },
+    updateBuscaVisibility: (tipo) => {
+        if (tipo === 'ate2012') {
+            if (ui.btnBuscarSEP) ui.btnBuscarSEP.style.display = 'flex';
+            if (ui.btnBuscar) ui.btnBuscar.style.display = 'none';
+        } else {
+            if (ui.btnBuscar) ui.btnBuscar.style.display = 'flex';
+            if (ui.btnBuscarSEP) ui.btnBuscarSEP.style.display = 'none';
+        }
+    },
   };
 
   // Módulo de API
@@ -383,6 +395,10 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.btnBuscarSEP.disabled = false;
         }
     },
+    onTipoBuscaChange: (event) => {
+        const selectedValue = event.target.value;
+        view.updateBuscaVisibility(selectedValue);
+    },
     onNumeroEmbargoBlur: async (event) => {
         const numero = event.target.value.trim();
         if (!numero) { view.setEmbargoCheckMessage('', 'none'); return; }
@@ -434,6 +450,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (ui.form.elements.numero) {
         ui.form.elements.numero.addEventListener('blur', handlers.onNumeroEmbargoBlur);
     }
+
+    ui.tipoBuscaRadios.forEach(radio => {
+        radio.addEventListener('change', handlers.onTipoBuscaChange);
+    });
     
     const fieldsToValidate = [
         'serie', 'nomeAutuado', 'area', 'processoSimlam',
@@ -457,6 +477,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Define a data atual
     const dataEl = document.getElementById('dataDesembargo');
     if (dataEl) dataEl.value = new Date().toISOString().split('T')[0];
+
+    view.updateBuscaVisibility('apos2012');
   }
 
   init();

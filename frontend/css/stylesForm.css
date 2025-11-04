@@ -8,7 +8,9 @@
   --base-font: "Sora", "Hanken Grotesk", Arial, sans-serif;
 }
 
-/* Estrutura Principal e Grid */
+/* ============================================= */
+/* ESTRUTURA PRINCIPAL E GRID                    */
+/* ============================================= */
 .sv-grid {
   width: var(--container-w);
   margin: 22px auto;
@@ -22,50 +24,52 @@
 
   display: grid;
   grid-template-columns: 260px 220px 1fr;
+  gap: 12px 18px;
+  
   grid-template-areas:
     "intro intro intro"
+    "busca busca busca"
     "termo termo nome"
     "processo processo area"
     "sep sep tipo"
     "edocs edocs data"
-    "checkbox checkbox checkbox"
-    "responsavel responsavel responsavel"
     "coordenadas coordenadas coordenadas"
     "descricao descricao descricao";
-  gap: 12px 18px;
 }
 
-/* Mapeamento e layout dos containers de campo */
-.termo, .nome, .processo, .area, .sep, .tipo, .edocs, .data, .responsavel,
-.coordenadas, .descricao {
+/* Mapeamento das áreas do Grid */
+.sv-intro    { grid-area: intro; }
+.busca-tipo  { grid-area: busca; }
+.termo       { grid-area: termo; }
+.nome        { grid-area: nome; }
+.processo    { grid-area: processo; }
+.area        { grid-area: area; }
+.sep         { grid-area: sep; }
+.tipo        { grid-area: tipo; }
+.edocs       { grid-area: edocs; }
+.data        { grid-area: data; }
+.coordenadas { grid-area: coordenadas; }
+.descricao   { grid-area: descricao; }
+
+/* Regra para containers que ocupam 2 colunas */
+.termo, .processo, .sep, .edocs {
+  grid-column: 1 / 3;
+}
+
+/* ============================================= */
+/* COMPONENTES GERAIS DO FORMULÁRIO              */
+/* ============================================= */
+
+/* Containers de campo genéricos */
+.termo, .nome, .processo, .area, .sep, .tipo, .edocs, .data, .coordenadas, .descricao {
   display: flex;
   flex-direction: column;
 }
 
-.termo { grid-area: termo; grid-column: 1 / 3; }
-.nome { grid-area: nome; }
-.processo { grid-area: processo; grid-column: 1 / 3; }
-.area { grid-area: area; }
-.sep { grid-area: sep; grid-column: 1 / 3; }
-.tipo { grid-area: tipo; }
-.edocs { grid-area: edocs; grid-column: 1 / 3; }
-.data { grid-area: data; }
-.checkbox-row { grid-area: checkbox; display: flex; align-items: center; }
-.responsavel { grid-area: responsavel; grid-column: 1 / 3; margin-top: 4px; }
-.coordenadas { grid-area: coordenadas; }
-.descricao { grid-area: descricao; }
-
-.sv-intro-row { grid-area: intro;}
-.sv-intro {
-  margin: 0 0 6px;
-  color: var(--brand-green);
-  font-weight: 700;
-}
-
-/* Componentes do Formulário */
-
 /* Rótulos (Labels) e Títulos */
-.section-title, label {
+.section-title, 
+.label-bold,
+label {
   font-weight: 700;
   font-size: 13px;
   color: #333;
@@ -73,8 +77,9 @@
   display: block;
 }
 
-label.required::before { content: "* "; color: red; font-weight: bold; }
-label.semirequired::before { content: "* "; color: orange; font-weight: bold; }
+label.required::before { content: "* "; color: red; }
+label.semirequired::before { content: "* "; color: orange; }
+label.required::before, label.semirequired::before { font-weight: bold; }
 
 /* Inputs, Textarea, Select */
 .input, .input-left, .textarea {
@@ -86,8 +91,31 @@ label.semirequired::before { content: "* "; color: orange; font-weight: bold; }
   box-sizing: border-box;
   width: 100%;
 }
+
 .input, .input-left { height: var(--input-h); }
 .textarea { min-height: 120px; resize: vertical; padding: 10px; }
+
+/* ============================================= */
+/* SEÇÕES E COMPONENTES ESPECÍFICOS              */
+/* ============================================= */
+
+.sv-intro {
+  margin: 0 0 6px;
+  color: var(--brand-green);
+}
+
+/* Seção de Tipo de Busca */
+.busca-tipo {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 1rem;
+  margin-bottom: 0.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+.busca-tipo .label-bold {
+  margin-bottom: 0;
+}
 
 /* Grupos de campos menores (Termo e Coordenadas) */
 .termo-small, .coordenadas-small {
@@ -99,27 +127,43 @@ label.semirequired::before { content: "* "; color: orange; font-weight: bold; }
   flex-direction: column;
   width: calc((100% - var(--small-gap)) / 2);
 }
-.small-wrap label { font-size: 12px; color: #6b6b6b; margin-bottom: 6px; }
+.small-wrap label { 
+  font-size: 12px; 
+  color: #6b6b6b; 
+  margin-bottom: 6px; 
+}
 
-/* Radio buttons e Checkboxes */
-.tipo-controls { display: flex; gap: 16px; align-items: center; margin-top: 6px; }
-.tipo-controls label { font-weight: 400; color: #444; }
-input[type="radio"], input[type="checkbox"] { width: 14px; height: 14px; accent-color: #2f9e4a; }
-
-/* Margem específica de alinhamento */
-#textoNomeAutuado { margin-top: 20px; }
-
-/* Componentes de UI */
+/* Controles de Radio/Checkbox */
+.tipo-controls { 
+  display: flex; 
+  gap: 16px; 
+  align-items: center; 
+  margin-top: 6px; 
+}
+.tipo-controls label { 
+  font-weight: 400; 
+  color: #444; 
+}
+input[type="radio"], input[type="checkbox"] { 
+  width: 14px; 
+  height: 14px; 
+  accent-color: #2f9e4a; 
+}
 
 /* Campo de busca com ícone */
-.input-with-icon { position: relative; display: flex; align-items: center; }
+.input-with-icon { 
+  position: relative; 
+  display: flex; 
+  align-items: center; 
+}
 .input-with-icon > .input { padding-right: 40px; }
 .icon-btn {
   position: absolute; right: 6px;
   height: calc(var(--input-h) - 6px);
   width: calc(var(--input-h) - 6px);
   border-radius: 6px; border: 1px solid #e6e6e6;
-  background: #fff; display: inline-flex;
+  background: #fff;
+  display: inline-flex;
   align-items: center; justify-content: center;
   color: var(--action-green); cursor: pointer;
 }
@@ -128,13 +172,20 @@ input[type="radio"], input[type="checkbox"] { width: 14px; height: 14px; accent-
 .icon-btn.loading svg { animation: sv-spin 1s linear infinite; }
 @keyframes sv-spin { 100% { transform: rotate(360deg); } }
 
+/* Oculta os botões de lupa por padrão */
+#btnBuscarProcesso, #btnBuscarSEP {
+  display: none;
+}
+
 /* Mensagens de erro e validação */
 .error-msg { font-size: 12px; color: red; }
 .mensagem-validacao { display: block; font-size: 12px; margin-top: 4px; }
 .mensagem-validacao.sucesso { color: green; }
 .mensagem-validacao.erro { color: orange; }
 
-/* Ações e Botões */
+/* ============================================= */
+/* AÇÕES E BOTÕES                                */
+/* ============================================= */
 .sv-actions {
   width: var(--container-w);
   margin: 16px auto 40px;
@@ -160,32 +211,30 @@ input[type="radio"], input[type="checkbox"] { width: 14px; height: 14px; accent-
 .btn.back { background: #f4f4f4; color: var(--action-green); border: 1px solid #cfd9d5; }
 .btn.back:hover { background: #e8f6ee; border-color: var(--action-green); }
 
-#confirmarEnvio { width: 180px; }
-
-/* Estilos específicos */
-input[type="date"]::-webkit-datetime-edit { color:#888; font-size:14px; }
-input[type="date"]::-webkit-datetime-edit-text { padding:0 4px; }
-input[type="date"]::-webkit-datetime-edit-month-field,
-input[type-="date"]::-webkit-datetime-edit-day-field,
-input[type="date"]::-webkit-datetime-edit-year-field { color: #888; }
-input[type="date"]:focus::-webkit-datetime-edit-month-field,
-input[type="date"]:focus::-webkit-datetime-edit-day-field,
-input[type="date"]:focus::-webkit-datetime-edit-year-field { color: black; }
-
-/* Responsividade */
+/* ============================================= */
+/* RESPONSIVIDADE                                */
+/* ============================================= */
 @media (max-width: 980px) {
   .sv-grid, .sv-actions { width: 94%; }
+  
   .sv-grid {
     display: flex;
     flex-direction: column;
-    grid-template-areas: none;
+    grid-template-areas: none; /* Desativa o grid layout complexo */
   }
-  .termo, .processo, .sep, .edocs, .responsavel {
+
+  /* Reseta a ocupação de colunas no mobile */
+  .termo, .processo, .sep, .edocs {
     grid-column: auto;
   }
+  
   .sv-actions {
     flex-direction: column;
     gap: 10px;
   }
   .btn.submit { width: 100%; }
+}
+
+#textoNomeAutuado{
+  margin-top: 20px;
 }
