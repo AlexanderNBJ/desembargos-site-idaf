@@ -32,3 +32,18 @@ exports.getByNumero = asyncHandler(async (req, res, next) => {
 
   res.json({ success: true, embargo: embargoFormatado });
 });
+
+exports.getBySEP = asyncHandler(async (req, res, next) => {
+  const { valor } = req.query;
+  if (!valor) {
+    return next(new AppError('Parâmetro valor é obrigatório.', 400));
+  }
+  
+  const embargoFormatado = await embargoService.findBySEP(valor);
+
+  if (!embargoFormatado) {
+    return next(new AppError('Embargo não encontrado para este processo.', 404));
+  }
+
+  res.json({ success: true, embargo: embargoFormatado });
+});

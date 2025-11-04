@@ -15,6 +15,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateBtn: document.getElementById('updateBtn'),
     btnBuscar: document.getElementById('btnBuscarProcesso'),
     mensagemBusca: document.getElementById('mensagem-busca'),
+    btnBuscarSEP: document.getElementById('btnBuscarSEP'),
+    numeroSEPInput: document.getElementById('numeroSEP'),
   };
   
   // Módulo de utilitários
@@ -152,6 +154,13 @@ document.addEventListener('DOMContentLoaded', () => {
             msgEl.className = type === 'success' ? 'mensagem-validacao sucesso' : 'error-msg';
         }
     },
+    setEmbargoSEPMessage: (message, type) => {
+        const msgEl = document.getElementById('error-numeroSEP');
+        if (msgEl) {
+            msgEl.textContent = message;
+            msgEl.className = type === 'success' ? 'mensagem-validacao sucesso' : 'error-msg';
+        }
+    },
     displayValidationErrors: (errors) => {
         document.querySelectorAll('.error-msg').forEach(el => {
             if(el.id !== 'error-numero') el.textContent = '';
@@ -177,6 +186,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const res = await Auth.fetchWithAuth(`/api/embargos/processo?valor=${encodeURIComponent(proc)}`);
         if (res.status === 404) return null;
         if (!res.ok) throw new Error('Falha na busca por processo');
+        const json = await res.json();
+        return json.embargo;
+    },
+        fetchEmbargoBySEP: async (sep) => {
+        const res = await Auth.fetchWithAuth(`/api/embargos/sep?valor=${encodeURIComponent(sep)}`);
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error('Falha na busca por SEP');
         const json = await res.json();
         return json.embargo;
     },
@@ -278,6 +294,26 @@ document.addEventListener('DOMContentLoaded', () => {
             window.UI.showToast(err.message, "error");
         }
     },
+    fillFormWithEmbargoData: (embargoData, searchType) => {
+        if (embargoData) {
+            const dataToFill = utils.normalizeRow(embargoData);
+            const tipoRadio = ui.form.querySelector('input[name="tipoDesembargo"]:checked');
+
+            // Lógica para preencher (ou não) o campo de área
+            if (tipoRadio && tipoRadio.value === 'TOTAL') {
+                if (!ui.form.elements.area.value) {
+                    dataToFill.area = dataToFill.area;
+                }
+            } else {
+                delete dataToFill.area; // Não preenche a área se não for desembargo TOTAL
+            }
+
+            view.fillForm(dataToFill);
+            //view.setSearchMessage(`Dados do embargo preenchidos via ${searchType.toUpperCase()}.`, 'sucesso');
+        } else {
+            //view.setSearchMessage(`Nenhum embargo encontrado para este ${searchType}.`, 'erro');
+        }
+    },
     onEditToggle: () => {
         const canEdit = businessLogic.canUserEdit(pageState.currentUserInfo, pageState.currentRecord);
         if (!canEdit) {
@@ -287,14 +323,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         view.toggleFormLock(ui.enableEdit.checked);
     },
+    onSearchSEPClick: async () => {
+        const sep = ui.numeroSEPInput.value.trim(); // Usando o input de SEP
+        if (!sep) {
+            window.UI.showToast("Informe o número do SEP para buscar.", "info");
+            return;
+        }
+        view.setEmbargoCheckMessage('', ''); // Limpa mensagem do SEP/NÚMERO
+        ui.btnBuscarSEP.disabled = true; // Desabilita botão de busca de SEP
+        try {
+            const embargoData = await api.fetchEmbargoBySEP(sep);
+            await handlers.fillFormWithEmbargoData(embargoData, 'sep'); // Chama o handler unificado
+
+            if(embargoData){
+                window.UI.showToast("Dados LEGADO preenchidos por meio do número SEP", "info");
+            }
+            else{
+                window.UI.showToast("Nenhum dado LEGADO encontrado para esse número SEP", "error");
+            }
+        } catch (error) {
+            view.setEmbargoSEPMessage('Erro ao realizar a busca.', 'erro');
+            console.error("Erro na busca por SEP:", error);
+        } finally {
+            ui.btnBuscarSEP.disabled = false; // Reabilita botão
+        }
+    },
     onSearchProcessoClick: async () => {
         if (!ui.enableEdit.checked) {
             view.setSearchMessage('Habilite a edição para buscar.', 'erro'); return;
         }
         let processo = ui.form.elements.processoSimlam.value.trim();
         if (!processo) {
-            processo = prompt("Informe o número do Processo Simlam (ex: 12345/2025):");
-            if(!processo) return;
+            window.UI.showToast("Informe o número do Processo Simlam para realizar a busca.", 'info');
+            return;
         }
         view.setSearchMessage('', '');
         ui.btnBuscar.classList.add('loading');
@@ -313,12 +374,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     delete dataToFill.area;
                 }
                 view.fillForm(dataToFill);
-                view.setSearchMessage('Dados do embargo preenchidos.', 'sucesso');
+                window.UI.showToast('Dados do embargo preenchidos.', 'success');
             } else {
-                view.setSearchMessage('Nenhum embargo encontrado para este processo.', 'erro');
+                window.UI.showToast('Nenhum embargo encontrado para este processo.', 'error');
             }
         } catch (error) {
-            view.setSearchMessage('Erro ao realizar a busca.', 'erro');
+            window.UI.showToast('Erro ao realizar a busca.', 'error');
             console.error("Erro na busca por processo:", error);
         } finally {
             ui.btnBuscar.classList.remove('loading');
@@ -398,6 +459,8 @@ document.addEventListener('DOMContentLoaded', () => {
     ui.updateBtn.addEventListener("click", handlers.onUpdateClick);
     ui.enableEdit.addEventListener("change", handlers.onEditToggle);
     ui.btnBuscar.addEventListener("click", handlers.onSearchProcessoClick);
+    ui.btnBuscarSEP.addEventListener("click", handlers.onSearchSEPClick);
+
     if (ui.form.elements.numero) {
         ui.form.elements.numero.addEventListener('blur', handlers.onNumeroEmbargoBlur);
     }

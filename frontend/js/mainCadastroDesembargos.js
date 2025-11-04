@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const ui = {
     form: document.getElementById('desembargoForm'),
     btnBuscar: document.getElementById('btnBuscarProcesso'),
+    btnBuscarSEP: document.getElementById('btnBuscarSEP'),
+    numeroSEPInput: document.getElementById('numeroSEP'),
     mensagemBusca: document.getElementById('mensagem-busca'),
     modal: document.getElementById('modalPrevia'),
     iframePreview: document.getElementById('pdfPreview'),
@@ -113,6 +115,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const res = await Auth.fetchWithAuth(`/api/embargos/processo?valor=${encodeURIComponent(proc)}`);
         if (res.status === 404) return null;
         if (!res.ok) throw new Error('Falha na busca por processo');
+        const json = await res.json();
+        return json.embargo;
+    },
+    fetchEmbargoBySEP: async (sep) => {
+        const res = await Auth.fetchWithAuth(`/api/embargos/sep?valor=${encodeURIComponent(sep)}`);
+        if (res.status === 404) return null;
+        if (!res.ok) throw new Error('Falha na busca por SEP');
         const json = await res.json();
         return json.embargo;
     },
@@ -239,6 +248,25 @@ document.addEventListener('DOMContentLoaded', () => {
             window.UI.showToast("Erro ao gerar a prévia do documento.", "error");
         }
     },
+    fillFormWithEmbargoData: (embargoData, searchType) => {
+        if (embargoData) {
+            const dataToFill = utils.normalizeEmbargoData(embargoData);
+            const tipoRadio = ui.form.querySelector('input[name="tipoDesembargo"]:checked');
+
+            // Lógica para preencher (ou não) o campo de área
+            if (tipoRadio && tipoRadio.value === 'TOTAL') {
+                if (!ui.form.elements.area.value) {
+                    dataToFill.area = dataToFill.area;
+                }
+            } else {
+                delete dataToFill.area; // Não preenche a área se não for desembargo TOTAL
+            }
+
+            view.fillForm(dataToFill);
+        } else {
+            window.UI.showToast(`Nenhum embargo encontrado para este ${searchType}.`, 'error');
+        }
+    },
     onConfirmarEnvio: async () => {
         ui.confirmarBtn.disabled = true;
         const originalHTML = ui.confirmarBtn.innerHTML;
@@ -280,15 +308,44 @@ document.addEventListener('DOMContentLoaded', () => {
                     delete dataToFill.area;
                 }
                 view.fillForm(dataToFill);
-                view.setSearchMessage('Dados do embargo preenchidos.', 'sucesso');
+                window.UI.showToast('Dados do embargo preenchidos.', 'success');
             } else {
-                view.setSearchMessage('Nenhum embargo encontrado para este processo.', 'erro');
+               window.UI.showToast('Nenhum embargo encontrado para este processo.', 'error');
             }
         } catch (error) {
-            view.setSearchMessage('Erro ao realizar a busca.', 'erro');
+            window.UI.showToast('Erro ao realizar a busca.', 'error');
             console.error("Erro na busca por processo:", error);
         } finally {
             ui.btnBuscar.disabled = false;
+        }
+    },
+    onSearchSEPClick: async () => {
+        const sep = ui.numeroSEPInput.value.trim();
+        if (!sep) {
+            window.UI.showToast("Informe o número do SEP para buscar.", "info");
+            return;
+        }
+        view.setSearchMessage('', ''); // Mude para setSearchMessage para consistência
+        ui.btnBuscarSEP.disabled = true;
+
+        try {
+            // Agora, 'embargoData' será o objeto ou null
+            const embargoData = await api.fetchEmbargoBySEP(sep);
+
+            // Usamos um if/else para tratar os dois casos esperados
+            if (embargoData) {
+                handlers.fillFormWithEmbargoData(embargoData, 'sep');
+                window.UI.showToast('Dados do embargo preenchidos via SEP.', 'success');
+            } else {
+                // Este é o caso de 404 (não encontrado)
+                window.UI.showToast('Nenhum embargo encontrado para este SEP.', 'error');
+            }
+        } catch (error) {
+            // O catch agora só pega erros inesperados (falha de rede, erro 500 no servidor, etc.)
+            window.UI.showToast('Erro ao realizar a busca.', 'error');
+            console.error("Erro na busca por SEP:", error);
+        } finally {
+            ui.btnBuscarSEP.disabled = false;
         }
     },
     onNumeroEmbargoBlur: async (event) => {
@@ -336,6 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Anexa todos os eventos
     ui.form.addEventListener("submit", handlers.onFormSubmit);
     ui.btnBuscar.addEventListener("click", handlers.onSearchProcessoClick);
+    ui.btnBuscarSEP.addEventListener("click", handlers.onSearchSEPClick);
     
     // Evento especial para o campo 'numero'
     if (ui.form.elements.numero) {
