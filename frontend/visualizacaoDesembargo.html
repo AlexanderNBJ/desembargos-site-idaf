@@ -48,6 +48,19 @@
     
     </div>
 
+    <div class="busca-tipo">
+      <label class="label-bold">Tipo de Busca no Banco de Dados: </label>
+      <div class="tipo-controls">
+        <label>
+          <input type="radio" name="tipoBusca" value="apos2012" checked /> 
+          <span>Embargos após 2012 (via Simlam)</span>
+        </label>
+        <label>
+          <input type="radio" name="tipoBusca" value="ate2012" /> 
+          <span>Embargos até 2012 (via SEP Legado)</span>
+        </label>
+      </div>
+    </div>
 
     <!-- Termo de Embargo Ambiental -->
     <div class="termo">
@@ -58,14 +71,14 @@
           <!-- Número de Embargo Ambiental -->
           <div class="small-wrap">
             <label for="numero" class="required">Número:</label>
-            <input id="numero" name="numero" class="input-left" type="text" required disabled/>
+            <input id="numero" name="numero" class="input-left" type="text" placeholder="Ex: 12345" required disabled/>
             <span class="error-msg" id="error-numero"></span>
           </div>
 
           <!-- Série de Embargo Ambiental -->
           <div class="small-wrap">
             <label for="serie" class="required">Série:</label>
-            <input id="serie" name="serie" class="input-left" type="text" disabled/>
+            <input id="serie" name="serie" class="input-left" type="text" placeholder="Ex: A" disabled/>
             <span class="error-msg" id="error-serie"></span>
           </div>
 
@@ -104,7 +117,7 @@
     <!-- Área Desembargada -->
     <div class="area">
       <label for="area">Área desembargada (ha):</label>
-      <input id="area" name="area" class="input" type="text" disabled/>
+      <input id="area" name="area" class="input" type="text" placeholder="Ex: 0.5" disabled/>
       <span class="error-msg" id="error-area"></span>
     </div>
 
@@ -140,7 +153,7 @@
     <!-- Número E-Docs -->
     <div class="edocs">
       <label for="numeroEdocs" class="semirequired">Número do processo e-Docs:</label>
-      <input id="numeroEdocs" name="numeroEdocs" class="input" type="text" disabled/>
+      <input id="numeroEdocs" name="numeroEdocs" class="input" type="text" placeholder="Ex: 2025-A12345" disabled/>
       <span class="error-msg" id="error-numeroEdocs"></span>
     </div>
 
@@ -160,7 +173,7 @@
 
     <!-- Status do Desembargo -->
     <div class="status-coord-wrapper">
-      <label for="status">Status:</label>
+      <label for="status" id="textoStatus">Status:</label>
 
       <!-- Opções da lista -->
       <select id="status" name="status" class="input" disabled>
@@ -182,14 +195,14 @@
         <!-- Coordenada X(m) -->
         <div class="small-wrap">
           <label for="coordenadaX" class="required">X(m)</label>
-          <input type="text" id="coordenadaX" name="coordenadaX" class="input-left" disabled>
+          <input type="text" id="coordenadaX" name="coordenadaX" class="input-left" placeholder="Ex: -19.9167" disabled>
           <span class="error-msg" id="error-coordenadaX"></span>
         </div>
 
         <!-- Coordenada Y(m) -->
         <div class="small-wrap">
           <label for="coordenadaY" class="required">Y(m)</label>
-          <input type="text" id="coordenadaY" name="coordenadaY" class="input-left" disabled>
+          <input type="text" id="coordenadaY" name="coordenadaY" class="input-left" placeholder="Ex: -43.9345" disabled>
           <span class="error-msg" id="error-coordenadaY"></span>
         </div>
 

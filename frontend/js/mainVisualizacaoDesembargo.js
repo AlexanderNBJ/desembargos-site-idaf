@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
     mensagemBusca: document.getElementById('mensagem-busca'),
     btnBuscarSEP: document.getElementById('btnBuscarSEP'),
     numeroSEPInput: document.getElementById('numeroSEP'),
+    tipoBuscaRadios: document.querySelectorAll('input[name="tipoBusca"]'),
   };
   
   // Módulo de utilitários
@@ -204,6 +205,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     },
+    updateBuscaVisibility: () => {
+    const isEditing = ui.enableEdit.checked;
+
+    // Se a edição não estiver habilitada, esconde ambos os botões e sai da função.
+    if (!isEditing) {
+      if (ui.btnBuscar) ui.btnBuscar.style.display = 'none';
+      if (ui.btnBuscarSEP) ui.btnBuscarSEP.style.display = 'none';
+      return;
+    }
+
+    // Se a edição está habilitada, verifica qual rádio está selecionado.
+    const selectedType = document.querySelector('input[name="tipoBusca"]:checked').value;
+
+    if (selectedType === 'ate2012') {
+      if (ui.btnBuscarSEP) ui.btnBuscarSEP.style.display = 'flex';
+      if (ui.btnBuscar) ui.btnBuscar.style.display = 'none';
+    } else { // 'apos2012'
+      if (ui.btnBuscar) ui.btnBuscar.style.display = 'flex';
+      if (ui.btnBuscarSEP) ui.btnBuscarSEP.style.display = 'none';
+    }
+  },
   };
 
   // Módulo de API
@@ -341,19 +363,38 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             view.fillForm(dataToFill);
-            //view.setSearchMessage(`Dados do embargo preenchidos via ${searchType.toUpperCase()}.`, 'sucesso');
-        } else {
-            //view.setSearchMessage(`Nenhum embargo encontrado para este ${searchType}.`, 'erro');
+        }
+    },
+    onFieldBlur: async (event) => {
+        if (!ui.enableEdit.checked) return;
+
+        const field = event.target;
+        const fieldName = field.name;
+        
+        //if (!fieldName || fieldName === 'numero' || fieldName === 'numeroSEP' || fieldName === 'numeroEdocs') return; 
+
+        try {
+            const result = await api.validateForm({ [fieldName]: field.value });
+            const errorEl = document.getElementById(`error-${fieldName}`);
+            if (errorEl) {
+                errorEl.textContent = result.errors?.[fieldName] ?? '';
+            }
+        } catch (error) {
+            console.error(`Erro na validação do campo ${fieldName}:`, error);
         }
     },
     onEditToggle: () => {
         const canEdit = businessLogic.canUserEdit(pageState.currentUserInfo, pageState.currentRecord);
         if (!canEdit) {
-            ui.enableEdit.checked = false;
-            window.UI.showToast("Você não tem permissão para editar.", "error");
-            return;
+        ui.enableEdit.checked = false;
+        window.UI.showToast("Você não tem permissão para editar.", "error");
+        return;
         }
         view.toggleFormLock(ui.enableEdit.checked);
+        view.updateBuscaVisibility();
+    },
+    onTipoBuscaChange: () => {
+        view.updateBuscaVisibility();
     },
     onSearchSEPClick: async () => {
         const sep = ui.numeroSEPInput.value.trim(); // Usando o input de SEP
@@ -506,6 +547,22 @@ document.addEventListener('DOMContentLoaded', () => {
         ui.form.elements.numeroEdocs.addEventListener('blur', handlers.onSepEdocsBlur);
     }
 
+    const fieldsToValidateOnBlur = [
+        'serie', 'nomeAutuado', 'area', 'processoSimlam',
+        'dataDesembargo', 'coordenadaX', 'coordenadaY', 'descricao'
+    ];
+
+    fieldsToValidateOnBlur.forEach(fieldName => {
+        const el = ui.form.elements[fieldName];
+        if (el) {
+        el.addEventListener('blur', handlers.onFieldBlur);
+        }
+    });
+
+    ui.tipoBuscaRadios.forEach(radio => {
+        radio.addEventListener('change', handlers.onTipoBuscaChange);
+    });
+
     try {
         pageState.currentUserInfo = utils.getCurrentUserInfo();
         view.toggleFormLock(false);
@@ -515,6 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const canEdit = businessLogic.canUserEdit(pageState.currentUserInfo, pageState.currentRecord);
         view.updateUIAfterPermissions(canEdit);
         view.toggleFormLock(false);
+        view.updateBuscaVisibility();
     } catch (err) {
         console.error("Erro ao carregar a página:", err);
         alert("Erro ao carregar desembargo. Veja o console para detalhes.");
