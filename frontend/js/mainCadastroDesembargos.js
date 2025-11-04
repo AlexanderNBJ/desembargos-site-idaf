@@ -320,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
     },
     onSearchProcessoClick: async () => {
         const processo = ui.form.elements.processoSimlam.value.trim().replace(/^0+/, '');
-        
+
         if (!processo) {
             window.UI.showToast("Informe o número do processo Simlam para buscar.", "info");
             return;
@@ -370,7 +370,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Usamos um if/else para tratar os dois casos esperados
             if (embargoData) {
                 handlers.fillFormWithEmbargoData(embargoData, 'sep');
-                window.UI.showToast('Dados do embargo preenchidos via SEP.', 'success');
+                window.UI.showToast('Dados LEGADO preenchidos via SEP.', 'success');
             } else {
                 // Este é o caso de 404 (não encontrado)
                 window.UI.showToast('Nenhum embargo encontrado para este SEP.', 'error');
