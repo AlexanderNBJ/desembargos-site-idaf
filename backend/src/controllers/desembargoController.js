@@ -20,11 +20,18 @@ exports.validarFormulario = asyncHandler(async (req, res, next) => {
 });
 
 exports.inserir = asyncHandler(async (req, res, next) => {
-  const { error, value } = formSchema.validate(req.body, { abortEarly: false });
+
+  const validationOptions = { 
+    abortEarly: false, 
+    stripUnknown: true
+  };
+
+  const { error, value } = formSchema.validate(req.body, validationOptions);
 
   if (error) {
     const errors = {};
     error.details.forEach((err) => { errors[err.path[0]] = err.message; });
+    
     return next(new AppError('Erro de validação', 400, { errors })); 
   }
 
