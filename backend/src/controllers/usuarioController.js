@@ -14,14 +14,6 @@ exports.me = async (req, res) => {
   try {
     // req.user deve ser preenchido pelo requireAuth
     const logged = req.user || {};
-    
-    // tenta por id primeiro (caso nosso JWT tenha id e exista no BD)
-    if (logged.id) {
-      const usuario = await usuarioService.buscarUsuarioPorId(logged.id);
-      if (usuario) {
-        return res.json({ success: true, data: usuario });
-      }
-    }
 
     // tenta por username (email)
     if (logged.username) {

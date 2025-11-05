@@ -46,7 +46,7 @@ exports.login = async (username, password) => {
         }
 
         const queryResult = await db.query(
-          `SELECT id, name, username, position FROM ${SCHEMA}.${USER_TABLE} WHERE username = $1`,
+          `SELECT name, username, position FROM ${SCHEMA}.${USER_TABLE} WHERE username = $1`,
           [userIdentifierFromMappia]
         );
 
