@@ -148,9 +148,16 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         setEmbargoCheckMessage: (message, type) => {
             const msgEl = document.getElementById('mensagem-numero');
-            if (msgEl) {
-                msgEl.textContent = message;
+            if (!msgEl) return;
+
+            msgEl.textContent = '';
+            msgEl.classList.remove('sucesso', 'erro');
+
+            if (message) {
+            msgEl.textContent = message;
+            if (type === 'success' || type === 'error') {
                 msgEl.className = `mensagem-validacao ${type}`;
+            }
             }
         },
         openModal: () => {
@@ -269,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (validationResult.errors && Object.keys(validationResult.errors).length > 0) {
                 view.displayValidationErrors(validationResult.errors);
-                window.UI.showToast("Corrija os erros no formulário antes de salvar.", "error");
+                window.UI.showToast("Corrija os erros no formulário antes de enviar.", "error");
                 return false;
             }
 
@@ -587,7 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fieldsToValidate = [
             'serie', 'nomeAutuado', 'area', 'processoSimlam',
             'numeroSEP', 'numeroEdocs', 'dataDesembargo',
-            'coordenadaX', 'coordenadaY', 'descricao'
+            'coordenadaX', 'coordenadaY', 'descricao', 'numero'
         ];
         fieldsToValidate.forEach(fieldName => {
             const el = ui.form.elements[fieldName];

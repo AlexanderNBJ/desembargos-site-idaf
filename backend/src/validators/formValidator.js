@@ -1,6 +1,7 @@
 const Joi = require('joi');
 
 const validationConstants = {
+  NUMERO_REGEX: /^\d+(\/\d+)?$/,
   NOME_REGEX: /^[\p{L}\s'.-]+$/u,
   SERIE_REGEX: /^[A-Za-z]$/,
   PROCESSO_REGEX: /^\d+\/\d+$/,
@@ -31,14 +32,13 @@ const commonMessages = {
 };
 
 const formSchema = Joi.object({
-  numero: Joi.number()
-    .integer()
-    .positive()
+  numero: Joi.string()
+    .pattern(validationConstants.NUMERO_REGEX)
     .required()
     .messages({
-      'number.base': commonMessages.number.base,
-      'number.integer': commonMessages.number.integer,
-      'number.positive': commonMessages.number.positive,
+      'string.base': 'O campo Número é obrigatório',
+      'string.empty': commonMessages.string.empty,
+      'string.pattern.base': 'O número deve seguir o padrão NÚMERO ou NÚMERO/NÚMERO',
       'any.required': commonMessages.required.any,
     }),
 
@@ -89,6 +89,7 @@ const formSchema = Joi.object({
     .integer()
     .positive()
     .allow(null)
+    .allow(0)
     .messages({
       'number.base': 'O número SEP deve conter apenas números.',
       'number.integer': commonMessages.number.integer,

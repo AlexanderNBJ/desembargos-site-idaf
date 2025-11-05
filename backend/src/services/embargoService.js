@@ -28,6 +28,18 @@ function _formatEmbargoForFrontend(embargoDb) {
 }
 
 exports.findByNumero = async (numero) => {
+
+  let isNumero = !isNaN(Number(numero));
+
+  if(!isNumero){
+    const resultEmbargoLegacy = await pool.query(
+      `SELECT n_iuf_emb FROM ${schema}.${embargosLegacyTable} WHERE n_iuf_emb = $1`,
+      [numero]
+    );
+    
+    return resultEmbargoLegacy.rows[0] || null;
+  }
+
   const result = await pool.query(
     `SELECT n_iuf_emb FROM ${schema}.${embargosTable} WHERE n_iuf_emb = $1`,
     [numero]

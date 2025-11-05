@@ -210,3 +210,23 @@ input[type="radio"], input[type="checkbox"] {
 #textoTipoDesembargo{
   margin-top: 20px;
 }
+
+.mensagem-validacao {
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.mensagem-validacao.success {
+  color: #1a7431;
+}
+
+.mensagem-validacao.error {
+  color: #c92a2a;
+}
+
+.error-msg {
+  font-size: 12px;
+  color: #c92a2a;
+}
