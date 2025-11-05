@@ -9,8 +9,7 @@
 ## Preparativos
 
 1. Instalar as dependências do Node rodando o seguinte comando, estando na pasta `./backend`:
-
-												`npm install`
+`npm install`
   
 
 2. Adicionar o arquivo `.env` na pasta `./backend`, preenchendo-o com as informações relativas ao banco de dados, ao ambiente de execução do site, e à API de login. Siga conforme o exemplo a seguir e o arquivo em `./backend/.env.example`
@@ -195,7 +194,6 @@ ON CONFLICT (ano) DO UPDATE
 ## Execução
 
 Para executar o backend, basta estar na pasta `./backend` e executar o seguinte comando:
-
-												`npm start`
+`npm start`
 
 Note que o servidor será executado na porta definida no arquivo `.env`, e o acesso ao endereço `localhost:PORTA`, substituindo PORTA pelo valor definido no `.env`, redirecionará ao site.
