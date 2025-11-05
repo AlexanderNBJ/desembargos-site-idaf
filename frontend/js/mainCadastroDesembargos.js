@@ -1,11 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
-  if (!Auth.initAuth()) return;
+    if (!Auth.initAuth()){ 
+        return;
+    }
 
-  // Módulo do estado da página
-  const pageState = {
-    currentUserInfo: null, 
-    currentPreviewUrl: null,
-  };
+    // Módulo do estado da página
+    const pageState = {
+        currentUserInfo: null, 
+        currentPreviewUrl: null,
+    };
 
   // Módulo de elementos de UI
   const ui = {
@@ -297,17 +299,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const dataToFill = utils.normalizeEmbargoData(embargoData);
             const tipoRadio = ui.form.querySelector('input[name="tipoDesembargo"]:checked');
 
-            // Lógica para preencher (ou não) o campo de área
+            // Lógica para o preenchimento do campo de área
             if (tipoRadio && tipoRadio.value === 'TOTAL') {
                 if (!ui.form.elements.area.value) {
                     dataToFill.area = dataToFill.area;
                 }
-            } else {
-                delete dataToFill.area; // Não preenche a área se não for desembargo TOTAL
+            } 
+            
+            // Não preenche a área se não for desembargo TOTAL
+            else {
+                delete dataToFill.area;
             }
 
             view.fillForm(dataToFill);
-        } else {
+        } 
+        else {
             window.UI.showToast(`Nenhum embargo encontrado para este ${searchType}.`, 'error');
         }
     },
@@ -371,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.UI.showToast("Informe o número do SEP para buscar.", "info");
             return;
         }
-        view.setSearchMessage('', ''); // Mude para setSearchMessage para consistência
+        view.setSearchMessage('', '');
         view.clearForm('numeroSEP');
         ui.btnBuscarSEP.disabled = true;
 
@@ -478,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const dataEl = document.getElementById('dataDesembargo');
     if (dataEl) dataEl.value = new Date().toISOString().split('T')[0];
 
-    view.updateBuscaVisibility('apos2012');
+    view.updateBuscaVisibility('ate2012');
   }
 
   init();
