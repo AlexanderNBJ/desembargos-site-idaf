@@ -8,7 +8,7 @@
 
 ## Preparativos
 
-1. Instalar as dependências do Node rodando o seguinte comando na pasta `./backend`:
+1. Instalar as dependências do Node rodando o seguinte comando, estando na pasta `./backend`:
 
 												`npm install`
   
@@ -27,6 +27,7 @@ SCHEMA=schemaNoBancoDeDados
 USER_TABLE=tabelaDeUsuariosNoBancoDeDados
 DESEMBARGO_TABLE=tabelaDeDesembargosNoBancoDeDados
 EMBARGO_TABLE=tabelaDeEmbargosNoBancoDeDados
+EMBARGO_LEGACY_TABLE=tabelaDeEmbargosLegado
 USER_LOG_TABLE=tabelaDeLogDeUsuarios
 
 # Dados para utilização da API MappiaDB
@@ -46,7 +47,6 @@ SECRET=senhaSecretDaAplicacao
 
 ```
 CREATE TABLE SCHEMA.USERS_TEST(
-	ID BIGINT GENERATED ALWAYS AS IDENTITY,
 	USERNAME TEXT PRIMARY KEY,
 	NAME TEXT,
 	POSITION TEXT,
@@ -91,22 +91,35 @@ CREATE TABLE SCHEMA.LOG_TESTE(
 );
 ```
 
-- Tabela de Embargos:
+- Tabela de Embargos do IDAF:
 
 ```
 CREATE TABLE SCHEMA.EMBARGOS_TESTE(
-	N_UIF_EMB INTEGER,
-	NORTHING DOUBLE PRECISION,
-	EASTING DOUBLE PRECISION,
-	PROCESSO TEXT,
+  PROCESSO TEXT,
+	N_UIF_EMB TEXT,
+  SERIE TEXT,
+	NORTHING NUMERIC,
+	EASTING NUMERIC,  
 	SEP_EDOCS TEXT,
-	GEOM GEOMETRY
+  AREA NUMERIC
+);
+```
+
+- Tabela de Embargos do GeoIDAF:
+
+```
+CREATE TABLE SCHEMA.EMBARGOS_LEGACY_TESTE(
+	N_UIF_EMB TEXT,
+  NUMERO_SEP BIGINT,
+  SERIE TEXT,
+  NORTHING NUMERIC,
+  EASTING NUMERIC,
 );
 ```
 
 - Tabela de Registro Sequencial separado por Ano:
 ```
-CREATE TABLE IF NOT EXISTS SCHEMA.desembargo_year_seq (
+CREATE TABLE IF NOT EXISTS SCHEMA.DESEMBARGO_ANO_SEQ (
   ano INTEGER PRIMARY KEY,
   last_seq INTEGER NOT NULL DEFAULT 0
 );
@@ -133,16 +146,16 @@ BEGIN
 
   -- bloqueia a linha do ano (ou detecta que não existe)
   SELECT last_seq INTO v_last
-  FROM SCHEMA.desembargo_year_seq
+  FROM SCHEMA.DESEMBARGO_ANO_SEQ
   WHERE ano = v_year
   FOR UPDATE;
 
   IF NOT FOUND THEN
     v_newseq := 1;
-    INSERT INTO SCHEMA.desembargo_year_seq(ano, last_seq) VALUES (v_year, v_newseq);
+    INSERT INTO SCHEMA.DESEMBARGO_ANO_SEQ(ano, last_seq) VALUES (v_year, v_newseq);
   ELSE
     v_newseq := v_last + 1;
-    UPDATE SCHEMA.desembargo_year_seq SET last_seq = v_newseq WHERE ano = v_year;
+    UPDATE SCHEMA.DESEMBARGO_ANO_SEQ SET last_seq = v_newseq WHERE ano = v_year;
   END IF;
 
   -- atribui "N-YYYY" — N sem zero-padding. Troque aqui para lpad(v_newseq::text,3,'0') se quiser padding.
@@ -160,7 +173,8 @@ FOR EACH ROW
 EXECUTE FUNCTION SCHEMA.gen_numero_ano_if_null();
 ```
 
-### Script para popular a tabela `SCHEMA.desembargo_year_seq`:
+### Script para popular a tabela `SCHEMA.DESEMBARGO_ANO_SEQ`:
+#### Isso deve ser executado apenas uma vez para obter a sequência com os dados obtidos
 
 ```
 WITH extracted AS (
@@ -172,10 +186,10 @@ WITH extracted AS (
   WHERE numero_ano ~ '^\d+-\d{4}$'
   GROUP BY (split_part(numero_ano, '-', 2))::int
 )
-INSERT INTO SCHEMA.desembargo_year_seq (ano, last_seq)
+INSERT INTO SCHEMA.DESEMBARGO_ANO_SEQ (ano, last_seq)
 SELECT ano, max_n FROM extracted
 ON CONFLICT (ano) DO UPDATE
-  SET last_seq = GREATEST(SCHEMA.desembargo_year_seq.last_seq, EXCLUDED.last_seq);
+  SET last_seq = GREATEST(SCHEMA.DESEMBARGO_ANO_SEQ.last_seq, EXCLUDED.last_seq);
 ```
 
 ## Execução
