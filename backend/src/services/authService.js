@@ -2,6 +2,7 @@ require('dotenv').config();
 const db = require('../config/db');
 const jwt = require('jsonwebtoken');
 const { fetchPermissions } = require('../utils/fetchPermissions');
+const AppError = require('../utils/AppError');
 
 const JWT_SECRET = process.env.SECRET;
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '24h';
@@ -25,6 +26,10 @@ exports.login = async (username, password) => {
         body,
       });
 
+      if (!resp.ok) {
+        throw new AppError('Usuário ou senha inválidos', 401);
+      }
+
       const json = await resp.json();
       const mappiaToken = json?.value?.token || json?.token || json?.data?.token || json?.access_token;
       let userFromMappia = json?.value || json?.user || json?.data || null;
@@ -42,7 +47,8 @@ exports.login = async (username, password) => {
         }
 
         if (!['COMUM', 'GERENTE'].includes(role)) {
-          throw new Error('User does not have COMUM permission');
+          // Lançar um erro de autorização se o usuário não tiver a permissão necessária
+          throw new AppError('Usuário não possui permissão para acessar o sistema.', 403);
         }
 
         const queryResult = await db.query(
@@ -53,7 +59,7 @@ exports.login = async (username, password) => {
         const localUser = queryResult.rows[0];
 
         if (!localUser) {
-          throw new Error('Usuário autenticado, mas não encontrado no banco de dados do sistema.');
+          throw new AppError('Usuário autenticado, mas não encontrado no banco de dados do sistema.', 404);
         }
 
         const payload = {
@@ -74,16 +80,27 @@ exports.login = async (username, password) => {
         };
 
         return { token: localJwt, user };
+      } 
+      else {
+        throw new AppError('Usuário ou senha inválidos', 401);
       }
     } 
     catch (err) {
       console.error('Erro no processo de login:', err);
-      throw err;
+
+      // Se o erro já for um AppError, apenas o relance. Caso contrário, encapsule-o.
+      if (err instanceof AppError) {
+        throw err;
+      }
+
+      throw new AppError('Ocorreu um erro durante a autenticação.', 500);
     }
   }
 
-  throw new Error('Invalid credentials');
+  // Fallback, caso MAPPIA_DB_URL não esteja configurado
+  throw new AppError('Serviço de autenticação não configurado.', 500);
 };
+
 
 /**
  * Verifica a validade de um token JWT local.
