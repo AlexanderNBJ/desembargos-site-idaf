@@ -24,7 +24,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/desembargos", desembargoRoutes);
 app.use('/api/embargos', embargoRoutes);
 app.use('/api/usuarios', usuarioRoutes);
-app.use('/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 
 // Servir o frontend
 app.use(express.static(path.join(__dirname, '..', 'frontend')));

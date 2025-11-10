@@ -42,5 +42,18 @@
     }
   }
 
-  document.addEventListener('DOMContentLoaded', renderUserName);
+  function setupLogoutButton() {
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        Auth.logout(true);
+      });
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    renderUserName();
+    setupLogoutButton();
+  });
 })();

@@ -60,11 +60,19 @@
   }
 
   // logout -> clear session e redirect para o login, a depender do parâetro
-  function logout(redirect = true) {
+    async function logout(redirect = true) {
+    try {
+      await fetchWithAuth('/api/auth/logout', { method: 'POST' });
+    } 
+    catch (err) {
+      console.error('Falha ao registrar logout no servidor:', err);
+    }
+
     clearSession();
 
-    if (redirect) 
+    if (redirect) {
       window.location.href = 'login.html';
+    }
   }
 
   // faz parse no JWT

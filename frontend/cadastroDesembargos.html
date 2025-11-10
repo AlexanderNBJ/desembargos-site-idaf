@@ -289,8 +289,6 @@
   <!-- Preenche a data do desembargo automaticamente com a data de hoje -->
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const btn = document.getElementById('logoutBtn');
-      if (btn) btn.addEventListener('click', () => Auth.logout(true));
       Auth.initAuth({ redirectIfMissing: true});
       document.getElementById('dataDesembargo').value = new Date().toISOString().split('T')[0];
     });

@@ -245,14 +245,6 @@
   <script src="js/auth.js"></script>
   <script src="js/userHeader.js"></script>
 
-  <!-- Funcionalidade do botão de logout -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const btn = document.getElementById('logoutBtn');
-      if (btn) btn.addEventListener('click', () => Auth.logout(true));
-    });
-  </script>
-
   <!-- Garantir que o usuário esteja logado -->
   <script>
     Auth.initAuth({ redirectIfMissing: true});

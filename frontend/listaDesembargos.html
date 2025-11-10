@@ -144,11 +144,6 @@
 
   <!-- Logout -->
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const btn = document.getElementById('logoutBtn');
-      if (btn) btn.addEventListener('click', () => Auth.logout(true));
-    });
-
     Auth.initAuth({ redirectIfMissing: true});
   </script>
 

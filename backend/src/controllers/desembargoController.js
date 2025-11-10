@@ -131,19 +131,32 @@ exports.updateDesembargo = asyncHandler(async (req, res, next) => {
   if (error) 
     return next(new AppError(error.details[0].message, 400));
 
-  // O service retorna tanto o estado 'antes' quanto o 'depois'
   const { updated, antes } = await desembargoService.updateDesembargo(id, value, req.user);
   
   const changed = {};
 
-  for (const campo of Object.keys(value)) {
-    if (antes.hasOwnProperty(campo) && antes[campo] !== updated[campo]) {
+  for (const campo of Object.keys(updated)) {
+    if (antes.hasOwnProperty(campo)) {
+      const valorAntigo = antes[campo];
+      const valorNovo = updated[campo];
 
-      changed[campo] = { antes: antes[campo], depois: updated[campo] };
+      let mudou = false;
+
+      if (valorAntigo instanceof Date && valorNovo instanceof Date) {
+        mudou = valorAntigo.getTime() !== valorNovo.getTime();
+      } 
+      else {
+        mudou = valorAntigo !== valorNovo;
+      }
+
+      if (mudou) {
+        changed[campo] = { antes: valorAntigo, depois: valorNovo };
+      }
     }
   }
 
   await audit.logAction({ req, action: 'desembargo.update', details: { id, changed } });
+  
   res.json({ success: true, data: updated });
 });
 
