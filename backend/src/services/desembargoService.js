@@ -223,12 +223,6 @@ exports.getDesembargoById = async (id) => {
   return result.rows[0];
 };
 
-exports.getDesembargoByProcesso = async (processo) => {
-  const result = await db.query(`SELECT * FROM ${schema}.${desembargoTable} WHERE processo_simlam = $1`, [processo]);
-
-  return mapDesembargo(result.rows[0]);
-};
-
 exports.updateDesembargo = async (id, dados, user) => {
   const antesResult = await db.query(`SELECT * FROM ${schema}.${desembargoTable} WHERE id = $1`, [id]);
 
