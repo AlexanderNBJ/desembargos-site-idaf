@@ -307,10 +307,13 @@ document.addEventListener('DOMContentLoaded', () => {
             y += 20;
 
             doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.setTextColor(primaryColor);
-            let texto_aux_header='OFÍCIO DE INDEFERIMENTO';
+            let texto_aux_header='TERMO DE DESEMBARGO';
 
-            if (formData.tipoDesembargo?.toUpperCase() != 'INDEFERIMENTO'){ 
-                texto_aux_header= 'TERMO DE DESEMBARGO';
+            if (formData.tipoDesembargo?.toUpperCase() === 'INDEFERIMENTO'){ 
+                texto_aux_header= 'OFÍCIO DE INDEFERIMENTO';
+            }
+            else if (formData.tipoDesembargo?.toUpperCase() === 'DESINTERDIÇÃO'){ 
+                texto_aux_header= 'OFÍCIO DE DESINTERDIÇÃO';
             }
 
             doc.text(`${texto_aux_header} Nº X/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center'); 

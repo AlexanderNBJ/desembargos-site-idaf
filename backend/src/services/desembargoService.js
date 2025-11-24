@@ -71,6 +71,9 @@ function _drawPdfTitle(doc, y, desembargo) {
   if (desembargo.tipo_desembargo === "INDEFERIMENTO") {
     texto_header_aux = 'OFÍCIO DE INDEFERIMENTO';
   }
+  else if (desembargo.tipo_desembargo === 'DESINTERDIÇÃO'){
+    texto_header_aux = 'OFÍCIO DE DESINTERDIÇÃO';
+  }
 
   doc.text(`${texto_header_aux} Nº ${desembargo.numero_ano}/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center');
   
