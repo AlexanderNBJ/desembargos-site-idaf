@@ -313,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 texto_aux_header= 'OFÍCIO DE INDEFERIMENTO';
             }
             else if (formData.tipoDesembargo?.toUpperCase() === 'DESINTERDIÇÃO'){ 
-                texto_aux_header= 'OFÍCIO DE DESINTERDIÇÃO';
+                texto_aux_header= 'TERMO DE DESINTERDIÇÃO';
             }
 
             doc.text(`${texto_aux_header} Nº X/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center'); 
