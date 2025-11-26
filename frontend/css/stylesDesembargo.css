@@ -24,17 +24,21 @@
   box-sizing: border-box;
 
   display: grid;
+  /* Colunas mantidas para consistência */
   grid-template-columns: var(--left-col-w) var(--mid-col-w) 1fr;
+  
+  /* Layout atualizado */
   grid-template-areas:
     "intro intro intro"
     "busca busca busca"
-    "processo processo nome"
-    "sep sep area"
-    "termo termo tipo"
-    "edocs edocs data"
+    "nome nome area"               /* Linha reorganizada */
+    "processos processos processos" /* Nova linha completa */
+    "termo termo data"             /* Linha reorganizada */
+    "tipo tipo tipo"
     "responsavel responsavel responsavel"
     "coordenadas coordenadas status"
     "descricao descricao descricao";
+    
   column-gap: 18px;
   row-gap: 12px;
 }
@@ -42,18 +46,33 @@
 /* Mapeamento das áreas do Grid */
 .sv-intro-row         { grid-area: intro; }
 .busca-tipo           { grid-area: busca; }
-.termo                { grid-area: termo; }
+.processos-group      { grid-area: processos; }
 .nome                 { grid-area: nome; }
-.processo             { grid-area: processo; }
 .area                 { grid-area: area; }
-.sep                  { grid-area: sep; }
-.tipo                 { grid-area: tipo; }
-.edocs                { grid-area: edocs; }
+.termo                { grid-area: termo; }
 .data                 { grid-area: data; }
+.tipo                 { grid-area: tipo; }
 .responsavel          { grid-area: responsavel; }
 .coordenadas          { grid-area: coordenadas; }
 .status-coord-wrapper { grid-area: status; }
 .descricao            { grid-area: descricao; }
+
+.processos-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.processos-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+
+.processo-item {
+    flex: 1; /* Distribui o espaço igualmente */
+    display: flex;
+    flex-direction: column;
+}
 
 /* Regra para containers que ocupam 2 colunas */
 .termo, .processo, .sep, .edocs {
@@ -250,4 +269,32 @@ input[type="radio"], input[type="checkbox"] {
 
 #textoStatus{
   margin-top: 20px;
+}
+
+@media (max-width: 980px) {
+  .sv-grid {
+    display: flex;
+    flex-direction: column;
+    grid-template-areas: none;
+  }
+  
+  /* Empilha os processos em telas pequenas */
+  .processos-row {
+    flex-direction: column;
+  }
+
+  /* Reseta colunas */
+  .termo, .processos-group, .nome, .area {
+    grid-column: auto;
+  }
+  
+  .sv-actions { 
+    flex-direction: column; 
+    align-items: stretch; 
+  }
+}
+
+/* Ajustes de espaçamento em labels */
+#textoTipoDesembargo, #textoStatus {
+  margin-top: 10px; /* Reduzido de 20px para alinhar melhor */
 }

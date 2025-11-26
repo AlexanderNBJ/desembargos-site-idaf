@@ -99,7 +99,7 @@
 
     <div class="title-text">
       <h1>SeloVerde ES - Área Técnica</h1>
-      <h2>Formulário de Cadastro de Desembargos</h2>
+      <h2>Formulário de Cadastro Deliberações de Desembargos</h2>
       <span class="restricted-badge">Área Restrita</span>
     </div>
 
@@ -129,71 +129,69 @@
         </div>
       </div>
 
-      <!-- Seção do Nome do Autuado -->
+      <!-- NOVA SEÇÃO AGRUPADA: PROCESSOS -->
+      <div class="processos-group">
+        <label class="section-title">Número do(s) Processo(s):</label>
+        
+        <div class="processos-row">
+            
+            <!-- 1. E-Docs -->
+            <div class="processo-item">
+                <label for="numeroEdocs" class="semirequired">E-Docs:</label>
+                <input id="numeroEdocs" name="numeroEdocs" class="input" type="text" placeholder="Ex: 2025-A12345" />
+                <span class="error-msg" id="error-numeroEdocs"></span>
+            </div>
+
+            <!-- 2. Simlam -->
+            <div class="processo-item">
+                <label for="processoSimlam" class="required">Simlam:</label>
+                <div class="input-with-icon">
+                    <input id="processoSimlam" name="processoSimlam" class="input" type="text" placeholder="Ex: 12345/2025" required/>
+                    <button type="button" id="btnBuscarProcesso" class="icon-btn" aria-label="Buscar processo" title="Buscar dados SIMLAM">
+                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.471 6.471 0 0 0 1.57-4.23C15.99 6.01 13.48 3.5 10.5 3.5S5.01 6.01 5.01 9s2.51 5.5 5.49 5.5c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14Zm-5 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14Z"/></svg>
+                    </button>
+                </div>
+                <span class="error-msg" id="error-processoSimlam"></span>
+                <span id="mensagem-busca" class="mensagem-validacao"></span>
+            </div>
+
+            <!-- 3. SEP -->
+            <div class="processo-item">
+                <label for="numeroSEP" class="semirequired">SEP:</label>
+                <div class="input-with-icon">
+                    <input id="numeroSEP" name="numeroSEP" class="input" type="text" placeholder="Ex: 123456789" />
+                    <button type="button" id="btnBuscarSEP" class="icon-btn" aria-label="Buscar SEP" title="Buscar dados SEP">
+                        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.471 6.471 0 0 0 1.57-4.23C15.99 6.01 13.48 3.5 10.5 3.5S5.01 6.01 5.01 9s2.51 5.5 5.49 5.5c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14Zm-5 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14Z"/></svg>
+                    </button>
+                </div>
+                <span class="error-msg" id="error-numeroSEP"></span>
+            </div>
+
+        </div>
+      </div>
+
+      <!-- Nome e Area reorganizados -->
       <div class="nome">
         <label for="nomeAutuado" id="textoNomeAutuado">Nome do autuado:</label>
         <input id="nomeAutuado" name="nomeAutuado" class="input" type="text" placeholder="" />
         <span class="error-msg" id="error-nomeAutuado"></span>
       </div>
 
-      <!-- Seção do Processo Simlam -->
-      <div class="processo">
-        <label for="processoSimlam" class="required">Processo Simlam:</label>
-
-        <div class="input-with-icon">
-          <input id="processoSimlam" name="processoSimlam" class="input" type="text" placeholder="Ex: 12345/2025" required/>
-
-          <!-- Botão para buscar dados por meio do Processo Simlam-->
-          <button type="button" id="btnBuscarProcesso" class="icon-btn" aria-label="Buscar processo no banco" title="Buscar dados por SIMLAM no banco">
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <path fill="currentColor"
-                d="M15.5 14h-.79l-.28-.27a6.471 6.471 0 0 0 1.57-4.23C15.99 6.01 13.48 3.5 10.5 3.5S5.01 6.01 5.01 9s2.51 5.5 5.49 5.5c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14Zm-5 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14Z"/>
-            </svg>
-          </button>
-        </div>
-
-        <span class="error-msg" id="error-processoSimlam"></span>
-        <span id="mensagem-busca" class="mensagem-validacao"></span>
-      </div>
-
-      <!-- Seção da Área Desembargada -->
       <div class="area">
         <label for="area">Área desembargada (ha):</label>
         <input id="area" name="area" class="input" type="text" placeholder="Ex: 0.5" />
         <span class="error-msg" id="error-area"></span>
       </div>
 
-      <!-- Seção do Número SEP-->
-      <div class="sep">
-        <label for="numeroSEP" class="semirequired">Número do SEP:</label>
-        <div class="input-with-icon">
-          
-          <input id="numeroSEP" name="numeroSEP" class="input" type="text" placeholder="Ex: 123456789" />
-          <button type="button" id="btnBuscarSEP" class="icon-btn" aria-label="Buscar SEP no banco" title="Buscar dados LEGADO por SEP no banco">
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <path fill="currentColor"
-                d="M15.5 14h-.79l-.28-.27a6.471 6.471 0 0 0 1.57-4.23C15.99 6.01 13.48 3.5 10.5 3.5S5.01 6.01 5.01 9s2.51 5.5 5.49 5.5c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14Zm-5 0C8.01 14 6 11.99 6 9.5S8.01 5 10.5 5 15 7.01 15 9.5 12.99 14 10.5 14Z"/>
-            </svg>
-          </button>
-        </div>
-        <span class="error-msg" id="error-numeroSEP"></span>
-      </div>
-
-      <!-- Seção do Termo de Embargo Ambiental -->
+      <!-- Termo e Data na mesma linha -->
       <div class="termo">
-
-        <div class="section-title">Termo de Embargo Ambiental</div>
-
+        <div class="section-title">Termo de Embargo</div>
         <div class="termo-small">
-
-          <!-- Seção do Número do Termo de Embargo Ambiental -->
           <div class="small-wrap">
             <label for="numero" class="required">Número:</label>
             <input id="numero" name="numero" class="input-left" type="text" placeholder="Ex: 12345" required/>
             <span id="mensagem-numero" class="mensagem-validacao"></span>
           </div>
-
-          <!-- Seção da Série de Termo de Embargo Ambiental -->
           <div class="small-wrap">
             <label for="serie" class="required">Série:</label>
             <input id="serie" name="serie" class="input-left" type="text" placeholder="Ex: A"/>
@@ -202,11 +200,15 @@
         </div>
       </div>
 
-      <!-- Seção do Número SEP, radio button -->
+      <div class="data">
+        <label for="dataDesembargo" class="required">Data de desembargo:</label>
+        <input id="dataDesembargo" name="dataDesembargo" class="input" type="date"/>
+        <span class="error-msg" id="error-dataDesembargo"></span>
+      </div>
+
+      <!-- Tipo de Desembargo em linha própria -->
       <div class="tipo">
         <label class="label-bold required-section" id="textoTipoDesembargo">Tipo de desembargo:</label>
-
-        <!-- Dispõe as opções TOTAL, PARCIAL e INDEFERIMENTO -->
         <div class="tipo-controls">
           <label><input type="radio" name="tipoDesembargo" value="TOTAL" checked /> <span>Total</span></label>
           <label><input type="radio" name="tipoDesembargo" value="PARCIAL" /> <span>Parcial</span></label>
@@ -215,44 +217,24 @@
         </div>
       </div>
 
-      <!-- Seção para o Número E-Docs -->
-      <div class="edocs">
-        <label for="numeroEdocs" class="semirequired">Número do processo e-Docs:</label>
-        <input id="numeroEdocs" name="numeroEdocs" class="input" type="text" placeholder="Ex: 2025-A12345" />
-        <span class="error-msg" id="error-numeroEdocs"></span>
-      </div>
-
-      <!-- Seção para a Data do Desembargo -->
-      <div class="data">
-        <label for="dataDesembargo" class="required">Data de desembargo:</label>
-        <input id="dataDesembargo" name="dataDesembargo" class="input" type="date"/>
-        <span class="error-msg" id="error-dataDesembargo"></span>
-      </div>
-
-      <!-- Seção para as Coordenadas UTM -->
+      <!-- Coordenadas UTM -->
       <div class="coordenadas">
         <div class="section-title">Coordenadas UTM:</div>
-
         <div class="coordenadas-small">
-
-          <!-- Coordenada X(m) -->
           <div class="small-wrap">
             <label for="coordenadaX" class="required">X(m)</label>
             <input type="text" id="coordenadaX" name="coordenadaX" class="input-left" placeholder="Ex: -19.9167">
             <span class="error-msg" id="error-coordenadaX"></span>
           </div>
-
-          <!-- Coordenada Y(m) -->
           <div class="small-wrap">
             <label for="coordenadaY" class="required">Y(m)</label>
             <input type="text" id="coordenadaY" name="coordenadaY" class="input-left" placeholder="Ex: -43.9345">
             <span class="error-msg" id="error-coordenadaY"></span>
           </div>
         </div>
-
       </div>
 
-      <!-- Seção da Descrição do Desembargo-->
+      <!-- Descrição -->
       <div class="descricao">
         <label for="descricao">Descrição do desembargo:</label>
         <textarea id="descricao" name="descricao" class="textarea"></textarea>
