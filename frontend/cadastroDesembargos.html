@@ -110,12 +110,11 @@
   </header>
 
   <main>
-    <!-- Formulário de Cadastro dos desembargos -->
     <form id="desembargoForm" class="sv-grid" autocomplete="off" novalidate>
 
-      <!-- Intro e Busca (Mantidos) -->
       <p class="sv-intro">Preencha as seguintes informações:</p>
 
+      <!-- Busca -->
       <div class="busca-tipo">
         <label class="label-bold">Pesquise embargos existentes:</label>
         <div class="tipo-controls">
@@ -124,7 +123,7 @@
         </div>
       </div>
 
-      <!-- PROCESSOS -->
+      <!-- Processos -->
       <div class="processos-group">
         <label class="section-title">Número do(s) Processo(s):</label>
         <div class="processos-row">
@@ -153,7 +152,7 @@
         </div>
       </div>
 
-      <!-- TERMO (Esq) e NOME (Dir) -->
+      <!-- Termo e Nome -->
       <div class="termo">
         <div class="section-title">Termo de Embargo</div>
         <div class="termo-small">
@@ -176,16 +175,16 @@
         <span class="error-msg" id="error-nomeAutuado"></span>
       </div>
 
-      <!-- COORDENADAS + DADOS ORIGINAIS -->
+      <!-- Coordenadas e Dados do Embargo -->
       <div class="coordenadas">
         <div class="geo-row">
           <div class="geo-item">
-            <label for="coordenadaX" class="required">Coordenada X (m):</label>
+            <label for="coordenadaX" class="required">Coord. X (m):</label>
             <input type="text" id="coordenadaX" name="coordenadaX" class="input" placeholder="Ex: -19.9167">
             <span class="error-msg" id="error-coordenadaX"></span>
           </div>
           <div class="geo-item">
-            <label for="coordenadaY" class="required">Coordenada Y (m):</label>
+            <label for="coordenadaY" class="required">Coord. Y (m):</label>
             <input type="text" id="coordenadaY" name="coordenadaY" class="input" placeholder="Ex: -43.9345">
             <span class="error-msg" id="error-coordenadaY"></span>
           </div>
@@ -202,18 +201,35 @@
         </div>
       </div>
 
-      <!-- TIPO DE DESEMBARGO (MOVIDO PARA CÁ) -->
-      <div class="tipo">
-        <label class="label-bold required-section" id="textoTipoDesembargo">Tipo de desembargo:</label>
+      <!-- 1. Parecer Técnico -->
+      <div class="parecer">
+        <label class="label-bold required-section">Recomendação do parecer técnico:</label>
         <div class="tipo-controls">
-          <label><input type="radio" name="tipoDesembargo" value="TOTAL" checked /> <span>Total</span></label>
-          <label><input type="radio" name="tipoDesembargo" value="PARCIAL" /> <span>Parcial</span></label>
-          <label><input type="radio" name="tipoDesembargo" value="INDEFERIMENTO" /> <span>Indeferimento</span></label>
-          <span class="error-msg" id="error-tipoDesembargo"></span>
+          <label><input type="radio" name="parecerTecnico" value="DEFERIMENTO" /> <span>Deferimento</span></label>
+          <label><input type="radio" name="parecerTecnico" value="INDEFERIMENTO" /> <span>Indeferimento</span></label>
         </div>
       </div>
 
-      <!-- DADOS DO DESEMBARGO (Fica abaixo do Tipo) -->
+      <!-- 2. Deliberação (Controla o que aparece abaixo) -->
+      <div class="deliberacao">
+        <label class="label-bold required-section">Deliberação da solicitação de desembargo (Autoridade):</label>
+        <div class="tipo-controls">
+          <label><input type="radio" name="deliberacaoAutoridade" value="DEFERIDA" id="radioDeferida"/> <span>Deferida</span></label>
+          <label><input type="radio" name="deliberacaoAutoridade" value="INDEFERIDA" id="radioIndeferida"/> <span>Indeferida</span></label>
+        </div>
+      </div>
+
+      <!-- 3. Sub-opções (Total/Parcial) - SÓ APARECE SE DEFERIDA -->
+      <div class="sub-tipo" id="containerSubTipo" style="display:none;">
+        <label class="label-bold required-section">Tipo de Deferimento:</label>
+        <div class="tipo-controls">
+          <label><input type="radio" name="tipoDesembargo" value="TOTAL" id="radioTotal" /> <span>Desembargo Total</span></label>
+          <label><input type="radio" name="tipoDesembargo" value="PARCIAL" id="radioParcial" /> <span>Desembargo Parcial</span></label>
+        </div>
+        <span class="error-msg" id="error-tipoDesembargo"></span>
+      </div>
+
+      <!-- Dados do Desembargo -->
       <div class="desembargo-dados">
         <div class="geo-row">
             <div class="geo-item">
@@ -221,8 +237,10 @@
                 <input id="dataDesembargo" name="dataDesembargo" class="input" type="date"/>
                 <span class="error-msg" id="error-dataDesembargo"></span>
             </div>
-            <div class="geo-item">
-                <label for="area">Área desembargada (ha):</label>
+            
+            <!-- Campo Área (Controlado via JS: Some se for TOTAL) -->
+            <div class="geo-item" id="containerAreaDesembargada">
+                <label for="area" class="required">Área desembargada (ha):</label>
                 <input id="area" name="area" class="input" type="text" placeholder="Ex: 0.5" />
                 <span class="error-msg" id="error-area"></span>
             </div>
@@ -237,22 +255,17 @@
       </div>
     </form>
 
-    <!-- Seção das ações do usuário -->
+    <!-- Ações -->
     <div class="sv-actions">
-
-      <!-- Botão de voltar -->
       <button type="button" class="btn back" onclick="window.location.href='menuPrincipal.html'">
         <i class="fa-solid fa-arrow-left"></i> Voltar
       </button>
-
-      <!-- Botão de enviar o desembargo -->
       <div class="right-actions">
         <button type="submit" form="desembargoForm" class="btn submit" id="botaoEnviar">
           <i class="fa-solid fa-paper-plane"></i> Enviar
         </button>
       </div>
     </div>
-
     <div id="mensagem-insercao" class="mensagem"></div>
   </main>
 
