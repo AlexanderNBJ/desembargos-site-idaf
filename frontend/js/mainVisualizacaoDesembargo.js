@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Verifica autenticação antes de tudo
     if (!Auth.initAuth()) return;
 
     // Módulo de estado da página
@@ -8,14 +9,15 @@ document.addEventListener('DOMContentLoaded', () => {
         currentRecord: null,
     };
 
-    // Módulo de elementos de UI
+    // Módulo de elementos de UI (Cache de seletores)
     const ui = {
         form: document.getElementById('desembargoForm'),
         enableEdit: document.getElementById('enableEdit'),
         updateBtn: document.getElementById('updateBtn'),
+        // Botões de busca podem não existir se o HTML for simplificado, então tratamos com cuidado
         btnBuscar: document.getElementById('btnBuscarProcesso'),
-        mensagemBusca: document.getElementById('mensagem-busca'),
         btnBuscarSEP: document.getElementById('btnBuscarSEP'),
+        mensagemBusca: document.getElementById('mensagem-busca'),
         numeroSEPInput: document.getElementById('numeroSEP'),
         tipoBuscaRadios: document.querySelectorAll('input[name="tipoBusca"]'),
     };
@@ -33,51 +35,36 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         },
         parseJwtPayload: (token) => {
-            if (!token) 
-                return null;
-
+            if (!token) return null;
             try {
                 const part = token.split('.')[1];
-
-                if (!part) 
-                    return null;
-
+                if (!part) return null;
                 const json = atob(part.replace(/-/g, '+').replace(/_/g, '/'));
-
                 return JSON.parse(decodeURIComponent(escape(json)));
-            } 
-            catch { 
+            } catch { 
                 return null;
             }
         },
         normalizeRole: (raw) => {
-            if (!raw) 
-                return null;
-
+            if (!raw) return null;
             if (Array.isArray(raw)) {
                 const u = raw.map(r => String(r).toUpperCase());
-
-                if (u.includes('GERENTE')) 
-                    return 'GERENTE';
-
-                if (u.includes('COMUM')) 
-                    return 'COMUM';
-
+                if (u.includes('GERENTE')) return 'GERENTE';
+                if (u.includes('COMUM')) return 'COMUM';
                 return u[0];
             }
             return String(raw).toUpperCase();
         },
         normalizeRow: (row) => {
-            if (!row) 
-                return null;
+            if (!row) return null;
             
             const pick = (o, ...keys) => {
                 for (const k of keys) {
-                    if (o && k in o && o[k] !== undefined)
-                        return o[k];
+                    if (o && k in o && o[k] !== undefined) return o[k];
                 }
                 return undefined;
             };
+
             return {
                 id:                     pick(row, 'id'), 
                 numero:                 pick(row, 'numero', 'numero_embargo'),
@@ -91,35 +78,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 area:                   pick(row, 'area', 'area_desembargada'),
                 tipoDesembargo:         pick(row, 'tipoDesembargo', 'tipo_desembargo', 'tipo'), 
                 dataDesembargo:         pick(row, 'dataDesembargo', 'data_desembargo', 'data'),
+                
+                // Novos campos mapeados (Data Embargo e Area Embargada)
+                dataEmbargo:            pick(row, 'dataEmbargo', 'data_embargo'),
+                areaEmbargada:          pick(row, 'areaEmbargada', 'area_embargada'),
+                
                 descricao:              pick(row, 'descricao', 'descricao'), 
                 status:                 pick(row, 'status', 'estado', 'situacao'),
                 responsavelDesembargo:  pick(row, 'responsavelDesembargo', 'responsavel_desembargo', 'responsavel', 'usuario', 'responsavel_nome')
             };
         },
         setSelectValue: (selectEl, value) => {
-            if (!selectEl) 
-                return;
-
+            if (!selectEl) return;
             const vStr = String(value ?? '');
             const exact = Array.from(selectEl.options).find(o => o.value === vStr);
-            
             if (exact) { 
                 selectEl.value = exact.value; 
                 return;
             }
-
             const ci = Array.from(selectEl.options).find(o => (o.value && o.value.toLowerCase() === vStr.toLowerCase()) || (o.text && o.text.toLowerCase() === vStr.toLowerCase()));
-            if (ci) 
-                selectEl.value = ci.value;
+            if (ci) selectEl.value = ci.value;
         },
     };
 
     // Módulo da view
     const view = {
         fillForm: (data) => {
-            if (!data) 
-                return;
+            if (!data || !ui.form) return;
 
+            // 1. Preenche campos de texto, select e data
             Object.keys(data).forEach(key => {
                 if (data[key] !== null && data[key] !== undefined) {
                     const el = ui.form.elements[key];
@@ -128,61 +115,74 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (el.nodeName === 'SELECT') { 
                             utils.setSelectValue(el, data[key]);
                         } 
-
                         else if (el.type === 'date' && data[key]?.includes('T')) { 
                             el.value = data[key].split('T')[0];
                         }
-
-                        else { el.value = data[key] ?? ''; }
+                        else { 
+                            el.value = data[key] ?? ''; 
+                        }
                     }
                 }
             });
 
+            // 2. Lógica específica para o Tipo de Desembargo
             if (data.tipoDesembargo) {
-                const radio = ui.form.querySelector(`input[name="tipoDesembargo"][value="${String(data.tipoDesembargo).toUpperCase()}"]`);
+                const tipoValue = String(data.tipoDesembargo).toUpperCase();
+                
+                // Pega o container da opção Desinterdição
+                const labelDesinterdicao = document.getElementById('labelDesinterdicao');
 
-                if (radio) 
-                    radio.checked = true;
+                // Verifica se é desinterdição (com ou sem acento, por segurança)
+                const isDesinterdicao = (tipoValue === 'DESINTERDIÇÃO' || tipoValue === 'DESINTERDICAO');
+
+                if (labelDesinterdicao) {
+                    if (isDesinterdicao) {
+                        // Se for desinterdição, mostra o botão e garante que o value do input bate com o dado
+                        labelDesinterdicao.style.display = 'inline-flex';
+                        const radioInput = labelDesinterdicao.querySelector('input');
+                        if (radioInput) radioInput.value = tipoValue; // Ajusta valor para garantir match
+                    } else {
+                        // Se não for, esconde
+                        labelDesinterdicao.style.display = 'none';
+                    }
+                }
+
+                // Marca o radio correto
+                const radio = ui.form.querySelector(`input[name="tipoDesembargo"][value="${tipoValue}"]`);
+                if (radio) radio.checked = true;
             }
         },
         clearForm: (preserveField = null) => {
-            if (!ui.form) 
-                return;
+            if (!ui.form) return;
 
             const fieldsToClear = [
                 'numero', 'serie', 'nomeAutuado', 'processoSimlam',
                 'area', 'numeroSEP', 'numeroEdocs', 'coordenadaX',
-                'coordenadaY', 'descricao'
+                'coordenadaY', 'descricao', 'dataEmbargo', 'areaEmbargada'
             ];
 
             fieldsToClear.forEach(fieldName => {
                 const el = ui.form.elements[fieldName];
-                if (fieldName !== preserveField) { 
-                    if (el) {
-                        el.value = '';
-                    }
+                if (fieldName !== preserveField && el) { 
+                    el.value = '';
                 }
             });
 
+            // Reseta data para hoje se existir
             const dataEl = ui.form.elements.dataDesembargo;
-
             if (dataEl) {
                 dataEl.value = new Date().toISOString().split('T')[0];
             }
 
             const tipoTotalRadio = ui.form.querySelector('input[name="tipoDesembargo"][value="TOTAL"]');
-
-            if (tipoTotalRadio) {
-                tipoTotalRadio.checked = true;
-            }
+            if (tipoTotalRadio) tipoTotalRadio.checked = true;
 
             document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
-
-            if (ui.mensagemBusca)
-                ui.mensagemBusca.textContent = '';
-            
+            if (ui.mensagemBusca) ui.mensagemBusca.textContent = '';
         },
         toggleFormLock: (isUnlocked) => {
+            if (!ui.form) return;
+
             const role = pageState.currentUserInfo?.role;
 
             Array.from(ui.form.elements).forEach(el => {
@@ -191,6 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
+            // Regras específicas de permissão
             if (role === 'COMUM') {
                 if (ui.form.elements.status) 
                     ui.form.elements.status.disabled = true;
@@ -201,20 +202,22 @@ document.addEventListener('DOMContentLoaded', () => {
             } 
             else if (role === 'GERENTE') {
                 const respEl = document.getElementById('responsavelDesembargo');
-
-                if(respEl)
-                    respEl.disabled = !isUnlocked;
+                if(respEl) respEl.disabled = !isUnlocked;
             }
-            ui.updateBtn.disabled = !isUnlocked;
-            ui.btnBuscar.disabled = !isUnlocked;
+
+            if (ui.updateBtn) ui.updateBtn.disabled = !isUnlocked;
+            
+            // Controle dos botões de busca
+            if (ui.btnBuscar) ui.btnBuscar.disabled = !isUnlocked;
+            if (ui.btnBuscarSEP) ui.btnBuscarSEP.disabled = !isUnlocked;
         },
         renderUserDropdown: async (currentResponsavel) => {
-            if (pageState.currentUserInfo?.role !== 'GERENTE') 
-                return;
+            if (pageState.currentUserInfo?.role !== 'GERENTE') return;
 
             const el = document.getElementById('responsavelDesembargo');
-            const users = await api.getUsers();
+            if (!el) return;
 
+            const users = await api.getUsers();
             if (!users) {
                 window.UI.showToast("Aviso: lista de usuários não carregada.", "info");
                 return;
@@ -231,9 +234,9 @@ document.addEventListener('DOMContentLoaded', () => {
             el.parentNode.replaceChild(select, el);
             utils.setSelectValue(select, currentResponsavel);
         },
-        // Checar permissões de ediao do usuário
         updateUIAfterPermissions: (canEdit) => {
             const editToggleContainer = document.querySelector('.edit-toggle');
+            if (!editToggleContainer) return;
 
             if (canEdit) {
                 editToggleContainer.style.display = 'flex';
@@ -243,19 +246,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 if (pageState.currentRecord?.status?.toUpperCase() === 'APROVADO') {
                     window.UI.showToast('Este desembargo já foi aprovado e não pode mais ser editado.', 'info', { duration: 5000 });
-                } 
-                else {
+                } else {
                     window.UI.showToast('Você não tem permissão para editar este registro.', 'info');
                 }
             }
         },
         setSearchMessage: (message, type) => {
-            ui.mensagemBusca.textContent = message;
-            ui.mensagemBusca.className = `mensagem-validacao ${type}`;
+            if (ui.mensagemBusca) {
+                ui.mensagemBusca.textContent = message;
+                ui.mensagemBusca.className = `mensagem-validacao ${type}`;
+            }
         },
         setEmbargoCheckMessage: (message, type) => {
             const msgEl = document.getElementById('error-numero');
-
             if (msgEl) {
                 msgEl.textContent = message;
                 msgEl.className = type === 'success' ? 'mensagem-validacao sucesso' : 'error-msg';
@@ -263,14 +266,12 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         setEmbargoSEPMessage: (message, type) => {
             const msgEl = document.getElementById('error-numeroSEP');
-
             if (msgEl) {
                 msgEl.textContent = message;
                 msgEl.className = type === 'success' ? 'mensagem-validacao sucesso' : 'error-msg';
             }
         },
         displayValidationErrors: (errors) => {
-
             document.querySelectorAll('.error-msg').forEach(el => {
                 if(el.id !== 'error-numero') el.textContent = '';
             });
@@ -283,72 +284,56 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         updateBuscaVisibility: () => {
-        const isEditing = ui.enableEdit.checked;
+            // Se o elemento não existe, não faz nada
+            if (!ui.enableEdit) return;
 
-        // Se a edição não estiver habilitada, esconde ambos os botões e sai da função.
-        if (!isEditing) {
-            if (ui.btnBuscar) 
-                ui.btnBuscar.style.display = 'none';
+            const isEditing = ui.enableEdit.checked;
 
-            if (ui.btnBuscarSEP) 
-                ui.btnBuscarSEP.style.display = 'none';
-            return;
-        }
+            // Se a edição não estiver habilitada, esconde ambos os botões
+            if (!isEditing) {
+                if (ui.btnBuscar) ui.btnBuscar.style.display = 'none';
+                if (ui.btnBuscarSEP) ui.btnBuscarSEP.style.display = 'none';
+                return;
+            }
 
-        // Se a edição está habilitada, verifica qual rádio está selecionado.
-        const selectedType = document.querySelector('input[name="tipoBusca"]:checked').value;
+            // Verifica qual rádio está selecionado com segurança
+            const radioChecked = document.querySelector('input[name="tipoBusca"]:checked');
+            if (!radioChecked) return;
 
-        if (selectedType === 'ate2012') {
-            if (ui.btnBuscarSEP) 
-                ui.btnBuscarSEP.style.display = 'flex';
+            const selectedType = radioChecked.value;
 
-            if (ui.btnBuscar) 
-                ui.btnBuscar.style.display = 'none';
-        } 
-        else {
-            if (ui.btnBuscar)
-                ui.btnBuscar.style.display = 'flex';
-
-            if (ui.btnBuscarSEP)
-                ui.btnBuscarSEP.style.display = 'none';
-        }
-    },
+            if (selectedType === 'ate2012') {
+                if (ui.btnBuscarSEP) ui.btnBuscarSEP.style.display = 'flex';
+                if (ui.btnBuscar) ui.btnBuscar.style.display = 'none';
+            } else {
+                if (ui.btnBuscar) ui.btnBuscar.style.display = 'flex';
+                if (ui.btnBuscarSEP) ui.btnBuscarSEP.style.display = 'none';
+            }
+        },
     };
 
     // Módulo de API
     const api = {
         fetchDesembargoById: async (id) => {
             const res = await Auth.fetchWithAuth(`/api/desembargos/${id}`);
-
             if (!res.ok) { 
                 const txt = await res.text();
                 throw new Error(`HTTP ${res.status} - ${txt}`);
             }
-
             const json = await res.json();
             return utils.normalizeRow(json.data || json.desembargo || json);
         },
         fetchEmbargoByProcesso: async (proc) => {
             const res = await Auth.fetchWithAuth(`/api/embargos/processo?valor=${encodeURIComponent(proc)}`);
-
-            if (res.status === 404) 
-                return null;
-
-            if (!res.ok)
-                throw new Error('Falha na busca por processo');
-
+            if (res.status === 404) return null;
+            if (!res.ok) throw new Error('Falha na busca por processo');
             const json = await res.json();
             return json.embargo;
         },
-            fetchEmbargoBySEP: async (sep) => {
+        fetchEmbargoBySEP: async (sep) => {
             const res = await Auth.fetchWithAuth(`/api/embargos/sep?valor=${encodeURIComponent(sep)}`);
-
-            if (res.status === 404)
-                return null;
-
-            if (!res.ok)
-                throw new Error('Falha na busca por SEP');
-
+            if (res.status === 404) return null;
+            if (!res.ok) throw new Error('Falha na busca por SEP');
             const json = await res.json();
             return json.embargo;
         },
@@ -361,10 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data)
             });
             const result = await res.json();
-
-            if (!res.ok) 
-                throw new Error(result.message || "Erro ao atualizar");
-
+            if (!res.ok) throw new Error(result.message || "Erro ao atualizar");
             return result;
         },
         validateForm: async (formData) => {
@@ -384,19 +366,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Módulo de lógica de negócio
     const businessLogic = {
         canUserEdit: (userInfo, record) => {
-            if (!userInfo || !record) 
-                return false;
-
+            if (!userInfo || !record) return false;
             const { role, username } = userInfo;
             const status = (record.status || '').toUpperCase();
             const responsavel = (record.responsavelDesembargo || '').toLowerCase();
 
-            if (status === 'APROVADO') 
-                return false;
-
-            if (role === 'GERENTE') 
-                return true;
-
+            if (status === 'APROVADO') return false;
+            if (role === 'GERENTE') return true;
             if (role === 'COMUM') {
                 return status === 'REVISÃO PENDENTE' && username && responsavel === username.toLowerCase();
             }
@@ -406,21 +382,27 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = Object.fromEntries(new FormData(ui.form).entries());
             const radio = ui.form.querySelector('input[name="tipoDesembargo"]:checked');
 
-            if (radio) 
-                data.tipoDesembargo = radio.value;
+            if (radio) data.tipoDesembargo = radio.value;
 
             if (ui.form.dataDesembargo?.value) {
                 const [ano, mes, dia] = ui.form.dataDesembargo.value.split('-');
                 const dt = new Date(ano, Number(mes) - 1, Number(dia));
-
                 data.dataDesembargo = dt.toISOString();
-            } 
-            else {
+            } else {
                 data.dataDesembargo = null;
             }
+            
+            // Trata data do embargo (novo campo)
+             if (ui.form.dataEmbargo?.value) {
+                const [ano, mes, dia] = ui.form.dataEmbargo.value.split('-');
+                const dt = new Date(ano, Number(mes) - 1, Number(dia));
+                data.dataEmbargo = dt.toISOString();
+            } else {
+                data.dataEmbargo = null;
+            }
+
             if (pageState.currentUserInfo.role === 'COMUM') {
                 data.status = 'EM ANÁLISE';
-
                 if (!data.responsavelDesembargo) 
                     data.responsavelDesembargo = pageState.currentUserInfo.username;
             }
@@ -434,7 +416,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (validationResult.errors && Object.keys(validationResult.errors).length > 0) {
                 view.displayValidationErrors(validationResult.errors);
                 window.UI.showToast("Corrija os erros no formulário antes de salvar.", "error");
-
                 return false;
             }
             if (!data.numeroSEP && !data.numeroEdocs) {
@@ -443,7 +424,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     numeroEdocs: 'Preencha pelo menos um dos campos: SEP ou E-Docs' 
                 });
                 window.UI.showToast("É obrigatório preencher o número SEP ou E-Docs.", "error");
-
                 return false;
             }
             view.displayValidationErrors({});
@@ -456,47 +436,39 @@ document.addEventListener('DOMContentLoaded', () => {
         onUpdateClick: async (e) => {
             e.preventDefault();
             const canEdit = businessLogic.canUserEdit(pageState.currentUserInfo, pageState.currentRecord);
-
             if (!canEdit) {
                 window.UI.showToast("Você não tem permissão para editar.", "error"); return;
             }
-
             const isFormValid = await businessLogic.validateFullForm();
-
-            if (!isFormValid) 
-                return;
+            if (!isFormValid) return;
 
             const data = businessLogic.prepareDataForUpdate();
-
             try {
                 await api.update(pageState.desembargoId, data);
                 window.UI.showToast("Desembargo atualizado com sucesso!", "success");
                 setTimeout(() => { window.location.href = "listaDesembargos.html"; }, 1200);
-            }
-            catch (err) {
+            } catch (err) {
                 window.UI.showToast(err.message, "error");
             }
         },
-        fillFormWithEmbargoData: (embargoData, searchType) => {
+        fillFormWithEmbargoData: (embargoData) => {
             if (embargoData) {
                 const dataToFill = utils.normalizeRow(embargoData);
                 const tipoRadio = ui.form.querySelector('input[name="tipoDesembargo"]:checked');
 
-                // Lógica para preencher (ou não) o campo de área
+                // Lógica para preencher (ou não) o campo de área desembargada
+                // Se o embargo encontrado tem área, e o tipo é TOTAL, preenchemos a area desembargada
+                // Se não, deixamos em branco para o usuário digitar
                 if (tipoRadio && tipoRadio.value === 'TOTAL') {
-                    if (!ui.form.elements.area.value) {
-                        dataToFill.area = dataToFill.area;
+                    if (dataToFill.areaEmbargada && !ui.form.elements.area.value) {
+                        dataToFill.area = dataToFill.areaEmbargada; // Copia area embargada para area desembargada
                     }
-                } else {
-                    delete dataToFill.area; // Não preenche a área se não for desembargo TOTAL
-                }
-
+                } 
                 view.fillForm(dataToFill);
             }
         },
         onFieldBlur: async (event) => {
-            if (!ui.enableEdit.checked) 
-                return;
+            if (!ui.enableEdit || !ui.enableEdit.checked) return;
 
             const field = event.target;
             const fieldName = field.name;
@@ -504,18 +476,15 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const result = await api.validateForm({ [fieldName]: field.value });
                 const errorEl = document.getElementById(`error-${fieldName}`);
-
                 if (errorEl) {
                     errorEl.textContent = result.errors?.[fieldName] ?? '';
                 }
-            } 
-            catch (error) {
+            } catch (error) {
                 console.error(`Erro na validação do campo ${fieldName}:`, error);
             }
         },
         onEditToggle: () => {
             const canEdit = businessLogic.canUserEdit(pageState.currentUserInfo, pageState.currentRecord);
-
             if (!canEdit) {
                 ui.enableEdit.checked = false;
                 window.UI.showToast("Você não tem permissão para editar.", "error");
@@ -529,90 +498,73 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         onSearchSEPClick: async () => {
             const sep = ui.numeroSEPInput.value.trim();
-
             if (!sep) {
                 window.UI.showToast("Informe o número do SEP para buscar.", "info");
                 return;
             }
-
             view.setEmbargoCheckMessage('', '');
             view.clearForm('numeroSEP');
-            ui.btnBuscarSEP.disabled = true;
+            
+            if(ui.btnBuscarSEP) ui.btnBuscarSEP.disabled = true;
 
             try {
                 const embargoData = await api.fetchEmbargoBySEP(sep);
-                await handlers.fillFormWithEmbargoData(embargoData, 'sep');
+                // Preenche o formulário com dados encontrados
+                handlers.fillFormWithEmbargoData(embargoData);
 
                 if(embargoData){
                     window.UI.showToast("Dados LEGADO preenchidos por meio do número SEP", "info");
-                }
-                else{
+                } else{
                     window.UI.showToast("Nenhum dado LEGADO encontrado para esse número SEP", "error");
                 }
-            } 
-            catch (error) {
+            } catch (error) {
                 view.setEmbargoSEPMessage('Erro ao realizar a busca.', 'erro');
                 console.error("Erro na busca por SEP:", error);
-            } 
-            finally {
-                ui.btnBuscarSEP.disabled = false;
+            } finally {
+                if(ui.btnBuscarSEP) ui.btnBuscarSEP.disabled = false;
             }
         },
         onSearchProcessoClick: async () => {
-            if (!ui.enableEdit.checked) {
+            if (ui.enableEdit && !ui.enableEdit.checked) {
                 view.setSearchMessage('Habilite a edição para buscar.', 'erro'); return;
             }
 
             let processo = ui.form.elements.processoSimlam.value.trim().replace(/^0+/, '');
-
             if (!processo) {
                 window.UI.showToast("Informe o número do Processo Simlam para realizar a busca.", 'info');
                 return;
             }
             
             view.setSearchMessage('', '');
-            ui.btnBuscar.classList.add('loading');
+            if(ui.btnBuscar) {
+                ui.btnBuscar.classList.add('loading');
+                ui.btnBuscar.disabled = true;
+            }
+            
             view.clearForm('processoSimlam');
-            ui.btnBuscar.disabled = true;
             
             try {
                 const embargoData = await api.fetchEmbargoByProcesso(processo);
-
                 if (embargoData) {
-                    const dataToFill = utils.normalizeRow(embargoData);
-                    const tipoRadio = ui.form.querySelector('input[name="tipoDesembargo"]:checked');
-
-                    if (tipoRadio && tipoRadio.value === 'TOTAL') {
-                        if (!ui.form.elements.area.value) {
-                            dataToFill.area = dataToFill.area;
-                        }
-                        window.UI.showToast("A área do embargo foi preenchida, sendo válida para APENAS para desembargo TOTAL.", "info", { duration: 5000 });
-                    }
-                    else {
-                        delete dataToFill.area;
-                    }
-
-                    view.fillForm(dataToFill);
+                    handlers.fillFormWithEmbargoData(embargoData);
                     window.UI.showToast('Dados do embargo preenchidos.', 'success');
-                } 
-                else {
+                } else {
                     window.UI.showToast('Nenhum embargo encontrado para este processo.', 'error');
                 }
-            } 
-            catch (error) {
+            } catch (error) {
                 window.UI.showToast('Erro ao realizar a busca.', 'error');
                 console.error("Erro na busca por processo:", error);
-            } 
-            finally {
-                ui.btnBuscar.classList.remove('loading');
-                ui.btnBuscar.disabled = false;
+            } finally {
+                if(ui.btnBuscar) {
+                    ui.btnBuscar.classList.remove('loading');
+                    ui.btnBuscar.disabled = false;
+                }
             }
         },
         onNumeroEmbargoBlur: async (event) => {
             const field = event.target;
             const fieldName = field.name;
             const numero = field.value.trim();
-
             if (!numero) {
                 view.setEmbargoCheckMessage('', 'none');
                 return;
@@ -620,21 +572,17 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const validationResult = await api.validateForm({ [fieldName]: numero });
                 const errorMsg = validationResult.errors?.[fieldName];
-
                 if (errorMsg) {
                     view.setEmbargoCheckMessage(errorMsg, 'error');
                     return;
                 }
                 const found = await api.checkEmbargoExists(numero);
-
                 if (found) {
                     view.setEmbargoCheckMessage('✓ Embargo encontrado', 'success');
-                } 
-                else {
+                } else {
                     view.setEmbargoCheckMessage('Embargo não encontrado no banco de dados.', 'error');
                 }
-            } 
-            catch (error) {
+            } catch (error) {
                 console.error('Erro ao checar número do embargo:', error);
                 view.setEmbargoCheckMessage('Erro ao verificar. Tente novamente.', 'error');
             }
@@ -645,91 +593,96 @@ document.addEventListener('DOMContentLoaded', () => {
             const value = field.value.trim();
             const errorEl = document.getElementById(`error-${fieldName}`);
 
-            if (ui.enableEdit && !ui.enableEdit.checked) 
-                return;
+            if (ui.enableEdit && !ui.enableEdit.checked) return;
             
             if (!value) {
                 const numeroSEP = ui.form.elements.numeroSEP.value.trim();
                 const numeroEdocs = ui.form.elements.numeroEdocs.value.trim();
-
                 if (!numeroSEP && !numeroEdocs) {
                     const msg = 'Preencha SEP ou E-Docs';
-                    document.getElementById('error-numeroSEP').textContent = msg;
-                    document.getElementById('error-numeroEdocs').textContent = msg;
+                    const elSep = document.getElementById('error-numeroSEP');
+                    const elEdocs = document.getElementById('error-numeroEdocs');
+                    if(elSep) elSep.textContent = msg;
+                    if(elEdocs) elEdocs.textContent = msg;
                 }
                 return;
             }
-
             try {
                 const validationResult = await api.validateForm({ [fieldName]: value });
                 const errorMsg = validationResult.errors?.[fieldName];
-
                 if (errorMsg) {
-                    if (errorEl)
-                        errorEl.textContent = errorMsg;
-                } 
-                else {
-                    if (errorEl)
-                        errorEl.textContent = '';
-                    
+                    if (errorEl) errorEl.textContent = errorMsg;
+                } else {
+                    if (errorEl) errorEl.textContent = '';
                     const otherField = fieldName === 'numeroSEP' ? 'numeroEdocs' : 'numeroSEP';
                     const otherErrorEl = document.getElementById(`error-${otherField}`);
-
-                    if (otherErrorEl)
-                        otherErrorEl.textContent = '';
+                    if (otherErrorEl) otherErrorEl.textContent = '';
                 }
-            } 
-            catch (error) {
+            } catch (error) {
                 console.error(`Erro na validação do campo ${fieldName}:`, error);
             }
         },
     };
     
-    // Inicialização
+    // Inicialização segura
     async function init() {
         if (!pageState.desembargoId) {
-            alert("Nenhum desembargo selecionado."); window.location.href = "listaDesembargos.html"; return;
+            alert("Nenhum desembargo selecionado."); 
+            window.location.href = "listaDesembargos.html"; 
+            return;
         }
         
-        ui.updateBtn.addEventListener("click", handlers.onUpdateClick);
-        ui.enableEdit.addEventListener("change", handlers.onEditToggle);
-        ui.btnBuscar.addEventListener("click", handlers.onSearchProcessoClick);
-        ui.btnBuscarSEP.addEventListener("click", handlers.onSearchSEPClick);
+        // Adiciona listeners com verificação de existência para evitar o TypeError
+        if (ui.updateBtn) 
+            ui.updateBtn.addEventListener("click", handlers.onUpdateClick);
+        
+        if (ui.enableEdit) 
+            ui.enableEdit.addEventListener("change", handlers.onEditToggle);
+        
+        if (ui.btnBuscar) 
+            ui.btnBuscar.addEventListener("click", handlers.onSearchProcessoClick);
+        
+        if (ui.btnBuscarSEP) 
+            ui.btnBuscarSEP.addEventListener("click", handlers.onSearchSEPClick);
 
-        if (ui.form.elements.numero) {
+        if (ui.form && ui.form.elements.numero) {
             ui.form.elements.numero.addEventListener('blur', handlers.onNumeroEmbargoBlur);
         }
 
-        if (ui.form.elements.numeroSEP) {
+        if (ui.form && ui.form.elements.numeroSEP) {
             ui.form.elements.numeroSEP.addEventListener('blur', handlers.onSepEdocsBlur);
         }
-        if (ui.form.elements.numeroEdocs) {
+        if (ui.form && ui.form.elements.numeroEdocs) {
             ui.form.elements.numeroEdocs.addEventListener('blur', handlers.onSepEdocsBlur);
         }
 
         const fieldsToValidateOnBlur = [
             'serie', 'nomeAutuado', 'area', 'processoSimlam',
-            'dataDesembargo', 'coordenadaX', 'coordenadaY', 'descricao'
+            'dataDesembargo', 'coordenadaX', 'coordenadaY', 'descricao',
+            'dataEmbargo', 'areaEmbargada'
         ];
 
         fieldsToValidateOnBlur.forEach(fieldName => {
-            const el = ui.form.elements[fieldName];
-
-            if (el) {
-            el.addEventListener('blur', handlers.onFieldBlur);
+            if (ui.form && ui.form.elements[fieldName]) {
+                ui.form.elements[fieldName].addEventListener('blur', handlers.onFieldBlur);
             }
         });
 
-        ui.tipoBuscaRadios.forEach(radio => {
-            radio.addEventListener('change', handlers.onTipoBuscaChange);
-        });
+        if (ui.tipoBuscaRadios) {
+            ui.tipoBuscaRadios.forEach(radio => {
+                radio.addEventListener('change', handlers.onTipoBuscaChange);
+            });
+        }
 
         try {
             pageState.currentUserInfo = utils.getCurrentUserInfo();
             view.toggleFormLock(false);
+            
             pageState.currentRecord = await api.fetchDesembargoById(pageState.desembargoId);
+            
             await view.renderUserDropdown(pageState.currentRecord.responsavelDesembargo);
             view.fillForm(pageState.currentRecord);
+            
             const canEdit = businessLogic.canUserEdit(pageState.currentUserInfo, pageState.currentRecord);
             view.updateUIAfterPermissions(canEdit);
             view.toggleFormLock(false);
@@ -737,9 +690,11 @@ document.addEventListener('DOMContentLoaded', () => {
         } 
         catch (err) {
             console.error("Erro ao carregar a página:", err);
-            alert("Erro ao carregar desembargo. Veja o console para detalhes.");
+            // alert("Erro ao carregar desembargo. Veja o console para detalhes.");
+            window.UI.showToast("Erro ao carregar desembargo: " + err.message, "error");
         }
     }
 
+    // Inicia
     init();
 });

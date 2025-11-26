@@ -1,3 +1,6 @@
+/* ==========================================================================
+   VARIÁVEIS E CONFIGURAÇÕES GERAIS (Sua Identidade Visual)
+   ========================================================================== */
 :root {
   --container-w: 920px;
   --input-h: 36px;
@@ -8,6 +11,9 @@
   --base-font: "Sora", "Hanken Grotesk", Arial, sans-serif;
 }
 
+/* ==========================================================================
+   GRID PRINCIPAL
+   ========================================================================== */
 .sv-grid {
   width: var(--container-w);
   margin: 22px auto;
@@ -20,59 +26,46 @@
   box-sizing: border-box;
 
   display: grid;
-  /* Mantivemos as colunas originais */
-  grid-template-columns: 260px 220px 1fr;
+  /* Colunas originais mantidas */
+  grid-template-columns: 260px 220px 1fr; 
   gap: 12px 18px;
   
-  /* Novo Layout das Áreas */
+  /* --- AQUI ESTÁ A ORDEM CORRETA DO LAYOUT --- */
   grid-template-areas:
     "intro intro intro"
     "busca busca busca"
-    "nome nome area"           /* Nome ocupa 2 colunas, Area ocupa 1 */
-    "processos processos processos" /* Processos ocupa a linha inteira */
-    "termo termo data"         /* Termo ocupa 2 colunas, Data ocupa 1 */
-    "tipo tipo tipo"           /* Tipo ocupa linha inteira */
-    "coordenadas coordenadas coordenadas"
+    "processos processos processos"
+    "termo termo nome"                   /* Termo (2 cols) | Nome (1 col) */
+    "coordenadas coordenadas coordenadas" /* X, Y, Data Emb, Area Emb */
+    "tipo tipo tipo"                     /* Tipo movido para baixo das coord */
+    "desembargo desembargo desembargo"   /* Data Desemb, Area Desemb */
     "descricao descricao descricao";
 }
 
-.sv-intro    { grid-area: intro; }
-.busca-tipo  { grid-area: busca; }
-.processos-group { grid-area: processos; }
-.nome        { grid-area: nome; }
-.area        { grid-area: area; }
-.termo       { grid-area: termo; }
-.data        { grid-area: data; }
-.tipo        { grid-area: tipo; }
-.coordenadas { grid-area: coordenadas; }
-.descricao   { grid-area: descricao; }
+/* ==========================================================================
+   MAPEAMENTO DAS ÁREAS (Vincula o HTML ao Grid acima)
+   ========================================================================== */
+.sv-intro-row     { grid-area: intro; }
+.busca-tipo       { grid-area: busca; }
+.processos-group  { grid-area: processos; }
+.termo            { grid-area: termo; }
+.nome             { grid-area: nome; }
+.coordenadas      { grid-area: coordenadas; }
+.tipo             { grid-area: tipo; }
+.desembargo-dados { grid-area: desembargo; } /* Classe nova mapeada */
+.descricao        { grid-area: descricao; }
 
-.processos-group {
-    display: flex;
-    flex-direction: column;
-}
+/* ==========================================================================
+   ESTILIZAÇÃO DOS ELEMENTOS (Mantendo sua identidade)
+   ========================================================================== */
 
-.processos-row {
-    display: flex;
-    gap: 12px; /* Espaço entre os inputs */
-    width: 100%;
-}
-
-.processo-item {
-    flex: 1; /* Faz os 3 inputs terem o mesmo tamanho */
-    display: flex;
-    flex-direction: column;
-}
-
-.termo, .processo, .sep, .edocs {
-  grid-column: 1 / 3;
-}
-
-.termo, .nome, .processo, .area, .sep, .tipo, .edocs, .data, .coordenadas, .descricao {
+/* Flex containers para empilhar Label + Input */
+.termo, .nome, .processo, .area, .sep, .tipo, .edocs, .data, .coordenadas, .descricao, .desembargo-dados {
   display: flex;
   flex-direction: column;
 }
 
+/* Títulos e Labels */
 .section-title, 
 .label-bold,
 label {
@@ -87,6 +80,7 @@ label.required::before { content: "* "; color: red; }
 label.semirequired::before { content: "* "; color: orange; }
 label.required::before, label.semirequired::before { font-weight: bold; }
 
+/* Inputs */
 .input, .input-left, .textarea {
   padding: 8px 10px;
   border-radius: 6px;
@@ -100,6 +94,7 @@ label.required::before, label.semirequired::before { font-weight: bold; }
 .input, .input-left { height: var(--input-h); }
 .textarea { min-height: 120px; resize: vertical; padding: 10px; }
 
+/* Intro e Busca */
 .sv-intro {
   margin: 0 0 6px;
   color: var(--brand-green);
@@ -113,11 +108,10 @@ label.required::before, label.semirequired::before { font-weight: bold; }
   margin-bottom: 0.5rem;
   border-bottom: 1px solid #e0e0e0;
 }
-.busca-tipo .label-bold {
-  margin-bottom: 0;
-}
+.busca-tipo .label-bold { margin-bottom: 0; }
 
-.termo-small, .coordenadas-small {
+/* Estruturas Internas (Flex Rows) */
+.termo-small {
   display: flex;
   gap: var(--small-gap);
 }
@@ -132,6 +126,7 @@ label.required::before, label.semirequired::before { font-weight: bold; }
   margin-bottom: 6px; 
 }
 
+/* Controles de Tipo (Radio) */
 .tipo-controls { 
   display: flex; 
   gap: 16px; 
@@ -148,6 +143,7 @@ input[type="radio"], input[type="checkbox"] {
   accent-color: #2f9e4a; 
 }
 
+/* Ícones nos Inputs */
 .input-with-icon { 
   position: relative; 
   display: flex; 
@@ -169,15 +165,15 @@ input[type="radio"], input[type="checkbox"] {
 .icon-btn.loading svg { animation: sv-spin 1s linear infinite; }
 @keyframes sv-spin { 100% { transform: rotate(360deg); } }
 
-#btnBuscarProcesso, #btnBuscarSEP {
-  display: none;
-}
+#btnBuscarProcesso, #btnBuscarSEP { display: none; }
 
+/* Mensagens de Erro */
 .error-msg { font-size: 12px; color: red; }
 .mensagem-validacao { display: block; font-size: 12px; margin-top: 4px; }
 .mensagem-validacao.sucesso { color: green; }
 .mensagem-validacao.erro { color: orange; }
 
+/* Botões de Ação */
 .sv-actions {
   width: var(--container-w);
   margin: 16px auto 40px;
@@ -203,7 +199,47 @@ input[type="radio"], input[type="checkbox"] {
 .btn.back { background: #f4f4f4; color: var(--action-green); border: 1px solid #cfd9d5; }
 .btn.back:hover { background: #e8f6ee; border-color: var(--action-green); }
 
-/* Responsividade */
+/* Ajustes de margem */
+#textoTipoDesembargo { margin-top: 20px; }
+
+
+/* ==========================================================================
+   ESTILOS NOVOS (Para os grupos horizontais)
+   ========================================================================== */
+
+/* Grupo de Processos (E-Docs, Simlam, SEP) */
+.processos-group {
+    display: flex;
+    flex-direction: column;
+}
+.processos-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+}
+.processo-item {
+    flex: 1; 
+    display: flex;
+    flex-direction: column;
+}
+
+/* Linha de Coordenadas e Dados (X, Y, Data Emb, Area Emb) + Desembargo */
+.geo-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  align-items: flex-start;
+}
+.geo-item {
+  flex: 1; 
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* ==========================================================================
+   RESPONSIVIDADE
+   ========================================================================== */
 @media (max-width: 980px) {
   .sv-grid, .sv-actions { width: 94%; }
   
@@ -212,8 +248,14 @@ input[type="radio"], input[type="checkbox"] {
     flex-direction: column;
     grid-template-areas: none;
   }
+  
+  /* Quebra as linhas horizontais em colunas no mobile */
+  .processos-row, 
+  .geo-row {
+    flex-direction: column; 
+  }
 
-  .termo, .processo, .sep, .edocs {
+  .processos-group, .termo, .processo, .sep, .edocs, .nome, .area, .desembargo-dados {
     grid-column: auto;
   }
   
@@ -224,82 +266,8 @@ input[type="radio"], input[type="checkbox"] {
   .btn.submit { width: 100%; }
 }
 
-#textoTipoDesembargo{
-  margin-top: 20px;
-}
-
-.mensagem-validacao {
-  display: block;
-  font-size: 12px;
-  margin-top: 4px;
-  font-weight: 500;
-}
-
-.mensagem-validacao.success {
-  color: #1a7431;
-}
-
-.mensagem-validacao.error {
-  color: #c92a2a;
-}
-
-.error-msg {
-  font-size: 12px;
-  color: #c92a2a;
-}
-
-@media (max-width: 980px) {
-  .sv-grid {
-    display: flex;
-    flex-direction: column;
-    grid-template-areas: none;
-  }
-  
-  .processos-row {
-    flex-direction: column; /* Em mobile, empilha os processos */
-  }
-
-  .processos-group, .termo, .processo, .sep, .edocs, .nome, .area {
-    grid-column: auto;
-  }
-}
-
-/* Ajuste no label do tipo para remover margem excessiva se houver */
-#textoTipoDesembargo {
-  margin-top: 10px;
-}
-
-/* --- Estilos para a linha de Coordenadas e Dados do Embargo --- */
-
-/* Container flexível que segura os 4 campos */
-.geo-row {
-  display: flex;
-  gap: 12px; /* Espaço entre os campos */
-  width: 100%;
-  align-items: flex-start; /* Alinha os inputs no topo */
-}
-
-/* Cada item ocupa espaço igual (25% cada) */
-.geo-item {
-  flex: 1; 
-  display: flex;
-  flex-direction: column;
-  min-width: 0; /* Previne overflow em flex items */
-}
-
-/* Responsividade: Em telas menores que 980px, quebra em 2 linhas (2 itens por linha) */
-@media (max-width: 980px) {
-  .geo-row {
-    flex-wrap: wrap; 
-  }
-  
-  .geo-item {
-    flex: 1 1 45%; /* Cada item tenta ocupar 45% (2 por linha) */
-  }
-}
-
-/* Responsividade: Em telas muito pequenas (Mobile), empilha tudo (1 por linha) */
 @media (max-width: 600px) {
+  /* Garante empilhamento total em telas muito pequenas */
   .geo-item {
     flex: 1 1 100%;
   }
