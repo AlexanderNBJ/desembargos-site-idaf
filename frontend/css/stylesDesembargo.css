@@ -24,19 +24,19 @@
   box-sizing: border-box;
 
   display: grid;
-  /* Colunas mantidas para consistência */
   grid-template-columns: var(--left-col-w) var(--mid-col-w) 1fr;
   
-  /* Layout atualizado */
+  /* LAYOUT CORRIGIDO */
   grid-template-areas:
     "intro intro intro"
     "busca busca busca"
-    "nome nome area"               /* Linha reorganizada */
-    "processos processos processos" /* Nova linha completa */
-    "termo termo data"             /* Linha reorganizada */
+    "processos processos processos"
+    "nome nome area"               /* Nome + Área Desembargada */
+    "termo termo data"             /* Termo + Data Desembargo */
     "tipo tipo tipo"
     "responsavel responsavel responsavel"
-    "coordenadas coordenadas status"
+    "coordenadas coordenadas coordenadas" /* X, Y, Data Embargo, Área Embargada */
+    "status status status"
     "descricao descricao descricao";
     
   column-gap: 18px;
@@ -48,31 +48,46 @@
 .busca-tipo           { grid-area: busca; }
 .processos-group      { grid-area: processos; }
 .nome                 { grid-area: nome; }
-.area                 { grid-area: area; }
+.area                 { grid-area: area; } /* Área Desembargada */
 .termo                { grid-area: termo; }
-.data                 { grid-area: data; }
+.data                 { grid-area: data; } /* Data Desembargo */
 .tipo                 { grid-area: tipo; }
 .responsavel          { grid-area: responsavel; }
-.coordenadas          { grid-area: coordenadas; }
+.coordenadas          { grid-area: coordenadas; } /* Bloco de 4 itens */
 .status-coord-wrapper { grid-area: status; }
 .descricao            { grid-area: descricao; }
 
+
+/* --- 1. Estilos para PROCESSOS (Horizontal) --- */
 .processos-group {
     display: flex;
     flex-direction: column;
 }
-
 .processos-row {
     display: flex;
     gap: 12px;
     width: 100%;
 }
-
 .processo-item {
-    flex: 1; /* Distribui o espaço igualmente */
+    flex: 1;
     display: flex;
     flex-direction: column;
 }
+
+/* --- 2. Estilos para COORDENADAS + DADOS ORIGINAIS (Horizontal 4 colunas) --- */
+.geo-row {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  align-items: flex-start;
+}
+.geo-item {
+  flex: 1; 
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 
 /* Regra para containers que ocupam 2 colunas */
 .termo, .processo, .sep, .edocs {

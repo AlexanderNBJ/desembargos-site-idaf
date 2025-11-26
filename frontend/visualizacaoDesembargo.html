@@ -35,7 +35,7 @@
   <!-- Início do formulário -->
   <form id="desembargoForm" class="sv-grid" autocomplete="off" novalidate>
 
-    <!-- Texto acima do formulário -->
+    <!-- Intro e Toggle -->
     <div class="sv-intro-row">
       <p class="sv-intro">Visualize ou edite as informações do desembargo:</p>
       <div class="edit-toggle">
@@ -60,20 +60,19 @@
       </div>
     </div>
 
-    <!-- NOVA SEÇÃO AGRUPADA: PROCESSOS -->
+    <!-- 1. GRUPO DE PROCESSOS (Horizontal) -->
     <div class="processos-group">
         <label class="section-title">Número do(s) Processo(s):</label>
         
         <div class="processos-row">
-            
-            <!-- 1. E-Docs -->
+            <!-- E-Docs -->
             <div class="processo-item">
                 <label for="numeroEdocs" class="semirequired">E-Docs:</label>
                 <input id="numeroEdocs" name="numeroEdocs" class="input" type="text" placeholder="Ex: 2025-A12345" disabled/>
                 <span class="error-msg" id="error-numeroEdocs"></span>
             </div>
 
-            <!-- 2. Simlam -->
+            <!-- Simlam -->
             <div class="processo-item">
                 <label for="processoSimlam" class="required">Simlam:</label>
                 <div class="input-with-icon">
@@ -86,7 +85,7 @@
                 <span id="mensagem-busca" class="mensagem-validacao"></span>
             </div>
 
-            <!-- 3. SEP -->
+            <!-- SEP -->
             <div class="processo-item">
                 <label for="numeroSEP" class="semirequired">SEP:</label>
                 <div class="input-with-icon">   
@@ -97,11 +96,10 @@
                 </div>
                 <span class="error-msg" id="error-numeroSEP"></span>
             </div>
-
         </div>
     </div>
 
-    <!-- Nome e Area reorganizados -->
+    <!-- Nome e Área Desembargada (Original) -->
     <div class="nome">
       <label for="nomeAutuado" id="textoNomeAutuado">Nome do autuado:</label>
       <input id="nomeAutuado" name="nomeAutuado" class="input" type="text" disabled />
@@ -109,12 +107,12 @@
     </div>
 
     <div class="area">
-      <label for="area">Área desembargada (ha):</label>
+      <label for="area">Área Desembargada (ha):</label>
       <input id="area" name="area" class="input" type="text" placeholder="Ex: 0.5" disabled/>
       <span class="error-msg" id="error-area"></span>
     </div>
 
-    <!-- Termo e Data -->
+    <!-- Termo e Data Desembargo (Original) -->
     <div class="termo">
       <div class="section-title">Termo de Embargo</div>
       <div class="termo-small">
@@ -132,7 +130,7 @@
     </div>
 
     <div class="data">
-      <label for="dataDesembargo" class="required">Data de desembargo:</label>
+      <label for="dataDesembargo" class="required">Data de Desembargo:</label>
       <input id="dataDesembargo" name="dataDesembargo" class="input" type="date" disabled/>
       <span class="error-msg" id="error-dataDesembargo"></span>
     </div>
@@ -155,23 +153,42 @@
       <span class="error-msg" id="error-responsavelDesembargo"></span>
     </div>
 
-    <!-- Coordenadas e Status -->
+    <!-- 2. COORDENADAS + DADOS ORIGINAIS (4 colunas) -->
     <div class="coordenadas">
-      <div class="section-title">Coordenadas UTM:</div>
-      <div class="coordenadas-small">
-        <div class="small-wrap">
-          <label for="coordenadaX" class="required">X(m)</label>
-          <input type="text" id="coordenadaX" name="coordenadaX" class="input-left" placeholder="Ex: -19.9167" disabled>
+      <!-- Linha flexível para 4 itens -->
+      <div class="geo-row">
+        
+        <!-- Coord X -->
+        <div class="geo-item">
+          <label for="coordenadaX" class="required">Coord. X (m):</label>
+          <input type="text" id="coordenadaX" name="coordenadaX" class="input" placeholder="Ex: -19.9167" disabled>
           <span class="error-msg" id="error-coordenadaX"></span>
         </div>
-        <div class="small-wrap">
-          <label for="coordenadaY" class="required">Y(m)</label>
-          <input type="text" id="coordenadaY" name="coordenadaY" class="input-left" placeholder="Ex: -43.9345" disabled>
+
+        <!-- Coord Y -->
+        <div class="geo-item">
+          <label for="coordenadaY" class="required">Coord. Y (m):</label>
+          <input type="text" id="coordenadaY" name="coordenadaY" class="input" placeholder="Ex: -43.9345" disabled>
           <span class="error-msg" id="error-coordenadaY"></span>
+        </div>
+
+        <!-- Data do Embargo (NOVO CAMPO) -->
+        <div class="geo-item">
+            <label for="dataEmbargo">Data do Embargo:</label>
+            <input id="dataEmbargo" name="dataEmbargo" class="input" type="date" disabled/>
+            <span class="error-msg" id="error-dataEmbargo"></span>
+        </div>
+
+        <!-- Área Embargada (NOVO CAMPO) -->
+        <div class="geo-item">
+            <label for="areaEmbargada">Área Embargada (ha):</label>
+            <input id="areaEmbargada" name="areaEmbargada" class="input" type="text" placeholder="Ex: 50.00" disabled/>
+            <span class="error-msg" id="error-areaEmbargada"></span>
         </div>
       </div>
     </div>
 
+    <!-- Status -->
     <div class="status-coord-wrapper">
       <label for="status" id="textoStatus">Status:</label>
       <select id="status" name="status" class="input" disabled>
@@ -185,7 +202,7 @@
 
     <!-- Descrição -->
     <div class="descricao">
-      <label for="descricao">Descrição do desembargo:</label>
+      <label for="descricao">Justificativa da deliberação:</label>
       <textarea id="descricao" name="descricao" class="textarea" disabled></textarea>
       <span class="error-msg" id="error-descricao"></span>
     </div>

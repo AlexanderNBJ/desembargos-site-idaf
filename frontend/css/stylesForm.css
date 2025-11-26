@@ -268,3 +268,39 @@ input[type="radio"], input[type="checkbox"] {
 #textoTipoDesembargo {
   margin-top: 10px;
 }
+
+/* --- Estilos para a linha de Coordenadas e Dados do Embargo --- */
+
+/* Container flexível que segura os 4 campos */
+.geo-row {
+  display: flex;
+  gap: 12px; /* Espaço entre os campos */
+  width: 100%;
+  align-items: flex-start; /* Alinha os inputs no topo */
+}
+
+/* Cada item ocupa espaço igual (25% cada) */
+.geo-item {
+  flex: 1; 
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* Previne overflow em flex items */
+}
+
+/* Responsividade: Em telas menores que 980px, quebra em 2 linhas (2 itens por linha) */
+@media (max-width: 980px) {
+  .geo-row {
+    flex-wrap: wrap; 
+  }
+  
+  .geo-item {
+    flex: 1 1 45%; /* Cada item tenta ocupar 45% (2 por linha) */
+  }
+}
+
+/* Responsividade: Em telas muito pequenas (Mobile), empilha tudo (1 por linha) */
+@media (max-width: 600px) {
+  .geo-item {
+    flex: 1 1 100%;
+  }
+}

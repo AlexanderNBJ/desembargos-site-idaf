@@ -219,24 +219,44 @@
 
       <!-- Coordenadas UTM -->
       <div class="coordenadas">
-        <div class="section-title">Coordenadas UTM:</div>
-        <div class="coordenadas-small">
-          <div class="small-wrap">
-            <label for="coordenadaX" class="required">X(m)</label>
-            <input type="text" id="coordenadaX" name="coordenadaX" class="input-left" placeholder="Ex: -19.9167">
+        <!-- Linha flexível para 4 itens -->
+        <div class="geo-row">
+          
+          <!-- Coordenada X -->
+          <div class="geo-item">
+            <label for="coordenadaX" class="required">Coordenada X (m):</label>
+            <input type="text" id="coordenadaX" name="coordenadaX" class="input" placeholder="Ex: -19.9167">
             <span class="error-msg" id="error-coordenadaX"></span>
           </div>
-          <div class="small-wrap">
-            <label for="coordenadaY" class="required">Y(m)</label>
-            <input type="text" id="coordenadaY" name="coordenadaY" class="input-left" placeholder="Ex: -43.9345">
+
+          <!-- Coordenada Y -->
+          <div class="geo-item">
+            <label for="coordenadaY" class="required">Coordenada Y (m):</label>
+            <input type="text" id="coordenadaY" name="coordenadaY" class="input" placeholder="Ex: -43.9345">
             <span class="error-msg" id="error-coordenadaY"></span>
           </div>
+
+          <!-- Data do Embargo (Novo) -->
+          <div class="geo-item">
+            <label for="dataEmbargo">Data do Embargo:</label>
+            <input type="date" id="dataEmbargo" name="dataEmbargo" class="input">
+            <span class="error-msg" id="error-dataEmbargo"></span>
+          </div>
+
+          <!-- Área Embargada (Novo) -->
+          <div class="geo-item">
+            <label for="areaEmbargada" class="required">Área Embargada (ha):</label>
+            <input type="text" id="areaEmbargada" name="areaEmbargada" class="input" placeholder="Ex: 15.50">
+            <span class="error-msg" id="error-areaEmbargada"></span>
+          </div>
+
         </div>
       </div>
 
+
       <!-- Descrição -->
       <div class="descricao">
-        <label for="descricao">Descrição do desembargo:</label>
+        <label for="descricao">Justificativa da deliberação:</label>
         <textarea id="descricao" name="descricao" class="textarea"></textarea>
         <span class="error-msg" id="error-descricao"></span>
       </div>
