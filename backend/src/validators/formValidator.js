@@ -161,6 +161,7 @@ const formSchema = Joi.object({
   // 4. Data do Embargo (Novo Campo Obrigatório)
   dataEmbargo: Joi.date()
     .max('now')
+    .allow(null)
     .messages({
       'date.base': 'Data do Embargo inválida.',
       'date.max': 'A Data do Embargo não pode ser no futuro.',

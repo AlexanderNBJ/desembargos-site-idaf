@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const { jsPDF } = require("jspdf");
 const AppError = require('../utils/AppError'); 
+const { info } = require('console');
 
 const desembargoTable = process.env.DESEMBARGO_TABLE;
 const usersTable = process.env.USER_TABLE;
@@ -11,15 +12,11 @@ const schema = process.env.SCHEMA;
 
 /**
  * Mapeia uma linha do banco de dados para o formato esperado pelo frontend.
- * Esta função agora centraliza a formatação dos dados.
- * @param {object} dbRow - A linha de dados vinda do banco.
- * @returns {object|null} - O objeto formatado ou null.
  */
 function mapDesembargo(dbRow) {
   if (!dbRow) return null;
   
-  // Lógica para Deliberação (Frontend Only) baseada no Tipo
-  // Se o tipo no banco for INDEFERIMENTO, a deliberação foi INDEFERIDA. Caso contrário, DEFERIDA.
+  // Lógica para Deliberação
   let deliberacao = null;
   if (dbRow.tipo_desembargo) {
       deliberacao = (dbRow.tipo_desembargo === 'INDEFERIMENTO') ? 'INDEFERIDA' : 'DEFERIDA';
@@ -27,6 +24,7 @@ function mapDesembargo(dbRow) {
 
   return {
     id: dbRow.id,
+    numeroAno: dbRow.numero_ano,
     numero: dbRow.numero_embargo,
     serie: dbRow.serie_embargo,
     processoSimlam: dbRow.processo_simlam,
@@ -42,25 +40,36 @@ function mapDesembargo(dbRow) {
     status: dbRow.status,
     responsavelDesembargo: dbRow.responsavel_desembargo,
     
-    // --- NOVOS CAMPOS ---
+    // Novos campos
     dataEmbargo: dbRow.data_embargo ? new Date(dbRow.data_embargo).toISOString().split("T")[0] : null,
     areaEmbargada: dbRow.area_embargada,
     parecerTecnico: dbRow.recomendacao_parecer_tecnico,
-    deliberacaoAutoridade: deliberacao // Campo calculado para o front preencher o rádio corretamente
+    deliberacaoAutoridade: deliberacao,
+    
+    // Campos extras para o PDF (vindos do join)
+    aprovadorName: dbRow.aprovador_name,
+    aprovadorPosition: dbRow.aprovador_position
   };
 }
 
-
-// Funções Auxiliares para a Geração de PDF
+// --- FUNÇÕES DE PDF (CORRIGIDAS) ---
 
 function _drawPdfHeader(doc) {
+  // Ajuste o caminho conforme sua estrutura de pastas
   const imgPath = path.join(__dirname, "../../../frontend/assets/logos.png");
-  const imageData = fs.readFileSync(imgPath).toString("base64");
-  let y = 40;
+  
+  try {
+      if (fs.existsSync(imgPath)) {
+          const imageData = fs.readFileSync(imgPath).toString("base64");
+          doc.addImage("data:image/png;base64," + imageData, "PNG", 30, 20, 540, 90);
+      }
+  } catch (e) {
+      console.warn("Logo não encontrada para o PDF", e);
+  }
+
+  let y = 140; // Ajustado para não sobrepor logo
   const primaryColor = "#17903f";
   
-  doc.addImage("data:image/png;base64," + imageData, "PNG", 30, 20, 540, 90);
-  y += 100;
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
   doc.setTextColor(primaryColor);
@@ -82,14 +91,19 @@ function _drawPdfTitle(doc, y, desembargo) {
   doc.setTextColor(primaryColor);
 
   let texto_header_aux = 'TERMO DE DESEMBARGO';
-  if (desembargo.tipo_desembargo === "INDEFERIMENTO") {
+  // Usa as chaves do objeto mapeado (camelCase)
+  if (desembargo.tipoDesembargo === "INDEFERIMENTO") {
     texto_header_aux = 'OFÍCIO DE INDEFERIMENTO';
   }
-  else if (desembargo.tipo_desembargo === 'DESINTERDIÇÃO'){
+  else if (desembargo.tipoDesembargo === 'DESINTERDIÇÃO'){
     texto_header_aux = 'TERMO DE DESINTERDIÇÃO';
   }
 
-  doc.text(`${texto_header_aux} Nº ${desembargo.numero_ano}/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center');
+  // Se não tiver ano separado, usa o ano da data de desembargo ou atual
+  const ano = desembargo.dataDesembargo ? desembargo.dataDesembargo.split('-')[0] : new Date().getFullYear();
+  const numeroCompleto = desembargo.numeroAno || '-'; 
+
+  doc.text(`${texto_header_aux} Nº ${numeroCompleto}/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center');
   
   y += 10;
   doc.setTextColor(secondaryColor);
@@ -101,26 +115,54 @@ function _drawPdfTitle(doc, y, desembargo) {
 function _drawPdfInfoBlock(doc, y, desembargo) {
   const secondaryColor = "#444";
   const lineHeight = 18;
+  
   const formatDate = (d) => {
     if (!d) return "-";
+    if (typeof d === 'string' && d.includes('-')) {
+        const parts = d.split('-');
+        if(parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
     const date = new Date(d);
-    return `${String(date.getDate()).padStart(2, '0')}-${String(date.getMonth() + 1).padStart(2, '0')}-${date.getFullYear()}`;
+    if(isNaN(date.getTime())) return "-";
+    return `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}/${date.getFullYear()}`;
   };
 
+  // Lista completa de campos
   const infoFields = [
-    { label: "Termo de Embargo Ambiental", value: `${desembargo.numero_embargo || '-'} ${desembargo.serie_embargo || '-'}` },
-    { label: "Processo Simlam", value: desembargo.processo_simlam || '-' },
-    { label: "Processo E-Docs", value: desembargo.numero_edocs || '-' },
-    { label: "Número do SEP", value: desembargo.numero_sep || '-' },
-    { label: "Autuado", value: desembargo.nome_autuado || '-' },
-    { label: "Área Desembargada", value: `${desembargo.area_desembargada || '-'} ha` },
-    { label: "Tipo de Desembargo", value: (desembargo.tipo_desembargo || '-').toUpperCase() },
-    { label: "Data do Desembargo", value: formatDate(desembargo.data_desembargo) },
-    { label: "Coordenadas UTM", value: `X(m): ${desembargo.coordenada_x || '-'}, Y(m): ${desembargo.coordenada_y || '-'}` },
+    { label: "Termo de Embargo", value: `${desembargo.numero || '-'} ${desembargo.serie || '-'}` },
+    { label: "Processo Simlam",            value: desembargo.processoSimlam || '-' },
+    { label: "Processo E-Docs",            value: desembargo.numeroEdocs || '-' },
+    { label: "Número do SEP",              value: desembargo.numeroSEP || '-' },
+    { label: "Autuado",                    value: desembargo.nomeAutuado || '-' },
+    
+    { label: "Data do Embargo",            value: formatDate(desembargo.dataEmbargo) },
+    { label: "Área Embargada",             value: `${desembargo.areaEmbargada || '-'} ha` },
+    { label: "Parecer Técnico",            value: (desembargo.parecerTecnico || '-').toUpperCase() },
+    { label: "Deliberação",  value: (desembargo.deliberacaoAutoridade || '-').toUpperCase() },
+    
+    // Este campo será filtrado abaixo se for Indeferimento
+    { label: "Tipo de Desembargo",         value: (desembargo.tipoDesembargo || '-').toUpperCase() },
+    
+    { label: "Área Desembargada",          value: `${desembargo.area || '-'} ha` },
+    { label: "Data do Desembargo",         value: formatDate(desembargo.dataDesembargo) },
+    { label: "Coordenadas UTM",            value: `X(m): ${desembargo.coordenadaX || '-'}, Y(m): ${desembargo.coordenadaY || '-'}` },
   ];
 
+  // FILTRO: Remove "Tipo de Desembargo" se for INDEFERIMENTO
+  const fieldsToDisplay = infoFields.filter(item => {
+    if (item.label === "Tipo de Desembargo" && desembargo.tipoDesembargo === "INDEFERIMENTO") {
+        return false; // Não exibe
+    }
+    if(item.label === "Área Desembargada" && desembargo.tipoDesembargo === "INDEFERIMENTO"){
+      return false;
+    }
+    return true; // Exibe os demais
+  });
+
   doc.setFontSize(12);
-  infoFields.forEach(item => {
+  
+  // Itera sobre a lista filtrada
+  fieldsToDisplay.forEach(item => {
     doc.setFont("helvetica", "bold");
     doc.text(item.label + ":", 40, y);
     doc.setFont("helvetica", "normal");
@@ -128,18 +170,18 @@ function _drawPdfInfoBlock(doc, y, desembargo) {
     doc.text(String(item.value), 250, y);
     y += lineHeight;
   });
+  
   y += 10;
   return y;
 }
 
-// Funções do service
+// --- CRUD EXISTENTE (Mantido igual, apenas garantindo os exports) ---
 
 exports.inserirDesembargo = async (dados) => {
   const { 
     numero, serie, nomeAutuado, area, processoSimlam,
     numeroSEP, numeroEdocs, tipoDesembargo,
     dataDesembargo, coordenadaX, coordenadaY, descricao, responsavelDesembargo,
-    // Novos
     dataEmbargo, areaEmbargada, parecerTecnico
   } = dados;
 
@@ -160,7 +202,7 @@ exports.inserirDesembargo = async (dados) => {
   ];
   
   const result = await db.query(query, values);
-  return mapDesembargo(result.rows[0]); // Retorna mapeado
+  return mapDesembargo(result.rows[0]);
 };
 
 exports.listarDesembargos = async (params = {}) => {
@@ -213,19 +255,21 @@ exports.listarDesembargos = async (params = {}) => {
   }
 
   const whereClause = where.length ? `WHERE ${where.join(' AND ')}` : '';
-  const sortableColumns = { termo: "NUMERO_EMBARGO", processo: "PROCESSO_SIMLAM", autuado: "NOME_AUTUADO", status: "STATUS", data: "DATA_DESEMBARGO", sep: "NUMERO_SEP", edocs: "NUMERO_EDOCS", tipo: "TIPO_DESEMBARGO" };
   let orderClause = 'ORDER BY DATA_DESEMBARGO DESC';
-  if (sortKey && sortableColumns[sortKey]) {
-    const dir = (String(sortDir || '').toUpperCase() === 'ASC') ? 'ASC' : 'DESC';
-    orderClause = `ORDER BY ${sortableColumns[sortKey]} ${dir}`;
+  if (sortKey) {
+      // Mapeamento simples de sortKey para coluna do banco se necessário
+      const mapSort = { termo: "NUMERO_EMBARGO", processo: "PROCESSO_SIMLAM", autuado: "NOME_AUTUADO", status: "STATUS", data: "DATA_DESEMBARGO", tipo: "TIPO_DESEMBARGO" };
+      const col = mapSort[sortKey] || sortKey; 
+      const dir = (String(sortDir || '').toUpperCase() === 'ASC') ? 'ASC' : 'DESC';
+      orderClause = `ORDER BY ${col} ${dir}`;
   }
 
-  // SELECT atualizado para incluir colunas novas se necessário na listagem
+  // SELECT Incluindo novos campos
   const listQuery = `
     SELECT ID as id, CONCAT(NUMERO_EMBARGO, ' ', SERIE_EMBARGO) AS termo, PROCESSO_SIMLAM AS processo, NUMERO_SEP AS sep,
            NUMERO_EDOCS AS edocs, NOME_AUTUADO AS autuado, TIPO_DESEMBARGO AS tipo, STATUS AS status,
            RESPONSAVEL_DESEMBARGO AS responsavel, DATA_DESEMBARGO AS data,
-           DATA_EMBARGO, AREA_EMBARGADA, RECOMENDACAO_PARECER_TECNICO
+           DATA_EMBARGO, AREA_EMBARGADA, RECOMENDACAO_PARECER_TECNICO, TIPO_DESEMBARGO
     FROM ${schema}.${desembargoTable} ${whereClause} ${orderClause}
     LIMIT $${idx++} OFFSET $${idx++}
   `;
@@ -238,10 +282,20 @@ exports.listarDesembargos = async (params = {}) => {
   const total = countResult.rows[0]?.total || 0;
 
   const listResult = await db.query(listQuery, listParams);
-  // Opcional: Mapear resultados da lista também
+  
+  // Mapeia para o formato esperado pela tabela do front
   const mappedRows = listResult.rows.map(row => ({
-      ...row,
-      // Se quiser camelCase na lista também
+      id: row.id,
+      termo: row.termo,
+      processo: row.processo,
+      sep: row.sep,
+      edocs: row.edocs,
+      autuado: row.autuado,
+      tipo: row.tipo,
+      status: row.status,
+      responsavel: row.responsavel,
+      data: row.data ? new Date(row.data).toISOString().split('T')[0] : null,
+      // Se quiser retornar os novos campos na listagem também:
       dataEmbargo: row.data_embargo,
       areaEmbargada: row.area_embargada,
       parecerTecnico: row.recomendacao_parecer_tecnico
@@ -268,7 +322,7 @@ exports.updateDesembargo = async (id, dados, user) => {
     throw new AppError("Desembargo não encontrado para atualização", 404);
   }
 
-  const antes = mapDesembargo(antesResult.rows[0]); // Mapeia o estado anterior
+  const antes = mapDesembargo(antesResult.rows[0]);
   
   if (dados.status && String(dados.status).trim().toUpperCase() === 'APROVADO') {
     if (!user || user.role !== 'GERENTE') {
@@ -287,7 +341,6 @@ exports.updateDesembargo = async (id, dados, user) => {
       numero, serie, processoSimlam, numeroSEP, numeroEdocs, coordenadaX, coordenadaY, 
       nomeAutuado, area, tipoDesembargo, dataDesembargo, descricao, status, 
       responsavelDesembargo, aprovado_por,
-      // Novos
       dataEmbargo, areaEmbargada, parecerTecnico
   } = dados;
   
@@ -339,8 +392,9 @@ exports.gerarPdfDesembargo = async (desembargo) => {
   doc.text(descricaoSplit, 40, y, { maxWidth: 500, align: 'justify' });
   y += descricaoSplit.length * lineHeight + 20;
 
-  const aprovadorName = desembargo.aprovador_name || desembargo.aprovado_por || desembargo.responsavel_desembargo || '-';
-  const aprovadorPosition = desembargo.aprovador_position || '-';
+  const aprovadorName = desembargo.aprovadorName || desembargo.aprovado_por || desembargo.responsavelDesembargo || '-';
+  const aprovadorPosition = desembargo.aprovadorPosition || '-';
+  
   doc.setTextColor(secondaryColor);
   doc.setFont("helvetica", "bold");
   doc.text(String(aprovadorName), doc.internal.pageSize.getWidth() / 2, y, 'center'); y += lineHeight;

@@ -366,13 +366,17 @@ document.addEventListener('DOMContentLoaded', () => {
             y += 20;
 
             doc.setFont("helvetica", "bold"); doc.setFontSize(14); doc.setTextColor(primaryColor);
-            let texto_aux_header='TERMO DE DESEMBARGO';
+            
+            // Lógica do Título
+            let texto_aux_header = 'TERMO DE DESEMBARGO';
+            const tipoUpper = formData.tipoDesembargo?.toUpperCase();
+            const deliberacaoUpper = formData.deliberacaoAutoridade?.toUpperCase();
 
-            if (formData.tipoDesembargo?.toUpperCase() === 'INDEFERIMENTO' || formData.deliberacaoAutoridade === 'INDEFERIDA'){ 
-                texto_aux_header= 'OFÍCIO DE INDEFERIMENTO';
+            if (tipoUpper === 'INDEFERIMENTO' || deliberacaoUpper === 'INDEFERIDA'){ 
+                texto_aux_header = 'OFÍCIO DE INDEFERIMENTO';
             }
-            else if (formData.tipoDesembargo?.toUpperCase() === 'DESINTERDIÇÃO'){ 
-                texto_aux_header= 'TERMO DE DESINTERDIÇÃO';
+            else if (tipoUpper === 'DESINTERDIÇÃO'){ 
+                texto_aux_header = 'TERMO DE DESINTERDIÇÃO';
             }
 
             doc.text(`${texto_aux_header} Nº X/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center'); 
@@ -381,23 +385,47 @@ document.addEventListener('DOMContentLoaded', () => {
             doc.setTextColor(secondaryColor); doc.setDrawColor(200); doc.setLineWidth(0.8); doc.line(40, y, 555, y);
             y += 30;
 
+            // Lista completa de campos
             const infoFields = [
-                { label: "Termo de Embargo Ambiental",  value: `${formData.numero || '-'} ${formData.serie?.toUpperCase() || '-'}` },
+                { label: "Termo de Embargo",  value: `${formData.numero || '-'} ${formData.serie?.toUpperCase() || '-'}` },
                 { label: "Processo Simlam",             value: formData.processoSimlam || '-' },
                 { label: "Processo E-Docs",             value: formData.numeroEdocs || '-' },
                 { label: "Número do SEP",               value: formData.numeroSEP || '-' },
                 { label: "Autuado",                     value: formData.nomeAutuado?.toUpperCase() || '-' },
-                { label: "Área Desembargada",           value: `${formData.area ?? '-'} ${formData.area && formData.area !== '-' ? 'ha' : ''}` },
+
+                { label: "Data do Embargo",             value: formData.dataEmbargo ? (new Date(formData.dataEmbargo)).toLocaleDateString() : '-' },
+                { label: "Área Embargada",              value: `${formData.areaEmbargada ?? '-'} ${formData.areaEmbargada ? 'ha' : ''}` },
+                { label: "Parecer Técnico",             value: (formData.parecerTecnico || '-').toUpperCase() },
                 { label: "Deliberação",                 value: formData.deliberacaoAutoridade || '-' },
+                
+                // Este campo será filtrado se for indeferimento
                 { label: "Tipo de Desembargo",          value: (formData.tipoDesembargo || '-').toUpperCase() },
+                
+                { label: "Área Desembargada",           value: `${formData.area ?? '-'} ${formData.area && formData.area !== '-' ? 'ha' : ''}` },
                 { label: "Data do Desembargo",          value: formData.dataDesembargo ? (new Date(formData.dataDesembargo)).toLocaleDateString() : '-' },
                 { label: "Coordenadas UTM",             value: `X(m): ${formData.coordenadaX ?? '-'}, Y(m): ${formData.coordenadaY ?? '-'}` },
             ];
 
+            // --- FILTRO LÓGICO ---
+            const fieldsToDisplay = infoFields.filter(item => {
+                if (item.label === "Tipo de Desembargo") {
+                    if (tipoUpper === 'INDEFERIMENTO' || deliberacaoUpper === 'INDEFERIDA') {
+                        return false; // Não exibe a linha
+                    }
+                }
+                if(item.label === 'Área Desembargada'){
+                    if(tipoUpper === 'INDEFERIMENTO' || deliberacaoUpper === 'INDEFERIDA'){
+                        return false;
+                    }
+                }
+                return true;
+            });
+
             const labelX = 40; const valueX = 250;
             doc.setFont("helvetica", "bold"); doc.setFontSize(12);
 
-            infoFields.forEach(item => {
+            // Itera sobre a lista FILTRADA
+            fieldsToDisplay.forEach(item => {
                 const label = String(item.label || ""); const value = String(item.value ?? "-");
                 doc.setFont("helvetica", "bold"); doc.text(label + ":", labelX, y);
                 doc.setFont("helvetica", "normal");
