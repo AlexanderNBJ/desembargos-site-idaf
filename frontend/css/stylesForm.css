@@ -284,3 +284,7 @@ input[type="radio"], input[type="checkbox"] {
     flex: 1 1 100%;
   }
 }
+
+#textoNomeAutuado{
+  margin-top: 20px;
+}
