@@ -150,15 +150,17 @@
           <label><input type="radio" name="parecerTecnico" value="DEFERIMENTO" disabled /> <span>Deferimento</span></label>
           <label><input type="radio" name="parecerTecnico" value="INDEFERIMENTO" disabled /> <span>Indeferimento</span></label>
         </div>
+        <span class="error-msg" id="error-parecerTecnico"></span>
     </div>
 
     <!-- 2. Deliberação -->
     <div class="deliberacao">
-        <label class="label-bold required-section">Deliberação da solicitação de desembargo (Autoridade):</label>
+        <label class="label-bold required-section">Deliberação da solicitação de desembargo, pela autoridade competente:</label>
         <div class="tipo-controls">
           <label><input type="radio" name="deliberacaoAutoridade" value="DEFERIDA" id="radioDeferida" disabled/> <span>Deferida</span></label>
           <label><input type="radio" name="deliberacaoAutoridade" value="INDEFERIDA" id="radioIndeferida" disabled/> <span>Indeferida</span></label>
         </div>
+        <span class="error-msg" id="error-deliberacaoAutoridade"></span>
     </div>
 
     <!-- 3. Sub-opções (Total/Parcial) -->

@@ -41,10 +41,14 @@ document.addEventListener('DOMContentLoaded', () => {
         
         radioTotal: document.getElementById('radioTotal'),
         radioParcial: document.getElementById('radioParcial'),
+        // Novos radios ocultos
+        radioTipoIndeferimento: document.getElementById('radioTipoIndeferimento'),
+        radioTipoDesinterdicao: document.getElementById('radioTipoDesinterdicao'),
         
         containerAreaDesembargada: document.getElementById('containerAreaDesembargada'),
-        inputAreaDesembargada: document.getElementById('area'), // input 'area'
-        inputAreaEmbargada: document.getElementById('areaEmbargada'), // input origem
+        inputAreaDesembargada: document.getElementById('area'),
+        inputAreaEmbargada: document.getElementById('areaEmbargada'),
+        enableEdit: document.getElementById('enableEdit'), // Caso use no logic
     };
   
     // --- MÓDULO DE UTILITÁRIOS ---
@@ -108,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
         fillForm: (data) => {
             if (!data || !ui.form) return;
             
+            // 1. Preenche inputs normais (Texto, Data, Select, Number)
             Object.keys(data).forEach(key => {
                 if (data[key] !== null && data[key] !== undefined) {
                     const el = ui.form.elements[key];
@@ -119,10 +124,49 @@ document.addEventListener('DOMContentLoaded', () => {
                              el.value = data[key];
                         }
                     }
+                    if (el.type === 'date' && typeof data[key] === 'string' && data[key].includes('T')) {
+                        el.value = data[key].split('T')[0];
+                    } else {
+                        el.value = data[key]; // Se já vier YYYY-MM-DD do backend, cai aqui e preenche direto
+                    }
                 }
             });
             
-            // Dispara lógica de UI após preencher área embargada
+            // 2. Marca Parecer
+            if (data.parecerTecnico) {
+                 const r = ui.form.querySelector(`input[name="parecerTecnico"][value="${data.parecerTecnico}"]`);
+                 if(r) r.checked = true;
+            }
+
+            // 3. Marca Deliberação
+            if (data.deliberacaoAutoridade) {
+                 const r = ui.form.querySelector(`input[name="deliberacaoAutoridade"][value="${data.deliberacaoAutoridade}"]`);
+                 if(r) r.checked = true;
+            }
+
+            // 4. Marca Tipo (Pode ser TOTAL, PARCIAL, INDEFERIMENTO ou DESINTERDIÇÃO)
+            if (data.tipoDesembargo) {
+                const tipoValue = String(data.tipoDesembargo).toUpperCase();
+
+                // Se for Desinterdição (para visualização), precisamos mostrar o label antes de marcar
+                const labelDesinterdicao = document.getElementById('labelDesinterdicao');
+                if (labelDesinterdicao && (tipoValue === 'DESINTERDIÇÃO' || tipoValue === 'DESINTERDICAO')) {
+                    labelDesinterdicao.style.display = 'inline-flex';
+                }
+
+                // Busca o rádio correspondente (seja nos visíveis ou nos ocultos)
+                const radio = ui.form.querySelector(`input[name="tipoDesembargo"][value="${tipoValue}"]`);
+                if (radio) radio.checked = true;
+            }
+
+            // 5. Executa a lógica visual para mostrar/esconder as áreas certas
+            // Isso vai esconder a área se for Indeferimento, ou mostrar se for Deferida
+            logic.handleDeliberacaoChange();
+            logic.handleTipoChange();
+
+            // 6. Cópia de segurança APENAS se for Total
+            // A função logic.copyAreaEmbargadaToDesembargada() JÁ DEVE ter a verificação "if (radioTotal.checked)", 
+            // mas colocar aqui também não faz mal.
             logic.copyAreaEmbargadaToDesembargada();
         },
         clearForm: (preserveField = null) => {
@@ -427,6 +471,90 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ui.radioTotal && ui.radioTotal.checked && ui.inputAreaEmbargada && ui.inputAreaDesembargada) {
                 ui.inputAreaDesembargada.value = ui.inputAreaEmbargada.value;
             }
+        },
+        handleDeliberacaoChange: () => {
+            if (!ui.radioDeferida || !ui.radioIndeferida) return;
+            
+            if (ui.radioDeferida.checked) {
+                // CASO 1: DEFERIDA
+                // Mostra opções de Total/Parcial
+                if(ui.containerSubTipo) ui.containerSubTipo.style.display = 'flex';
+                
+                // Se o tipo estava marcado como Indeferimento, limpa a seleção para obrigar o usuário a escolher Total ou Parcial
+                if (ui.radioTipoIndeferimento.checked) {
+                    ui.radioTipoIndeferimento.checked = false;
+                    // Limpa visualmente Total/Parcial para forçar escolha
+                    ui.radioTotal.checked = false;
+                    ui.radioParcial.checked = false;
+                }
+                
+                // Dispara lógica de area para ver se precisa mostrar/esconder baseada na seleção atual
+                logic.handleTipoChange();
+
+            } else if (ui.radioIndeferida.checked) {
+                // CASO 2: INDEFERIDA
+                // Esconde opções de Total/Parcial
+                if(ui.containerSubTipo) ui.containerSubTipo.style.display = 'none';
+                
+                // AUTOMATICAMENTE MARCA O TIPO COMO "INDEFERIMENTO"
+                if (ui.radioTipoIndeferimento) {
+                    ui.radioTipoIndeferimento.checked = true;
+                }
+                
+                // Limpa seleções visuais de Total/Parcial
+                if (ui.radioTotal) ui.radioTotal.checked = false;
+                if (ui.radioParcial) ui.radioParcial.checked = false;
+                
+                // Esconde área desembargada (não há desembargo)
+                if(ui.containerAreaDesembargada) ui.containerAreaDesembargada.style.display = 'none';
+                if(ui.inputAreaDesembargada) ui.inputAreaDesembargada.value = '';
+            }
+        },
+
+        handleTipoChange: () => {
+            if (!ui.containerAreaDesembargada || !ui.inputAreaDesembargada) return;
+
+            // Se for Desinterdição (vindo do banco ou marcado ocultamente)
+            if (ui.radioTipoDesinterdicao && ui.radioTipoDesinterdicao.checked) {
+                 ui.containerAreaDesembargada.style.display = 'none';
+                 return;
+            }
+            
+            // Se for Indeferimento (marcado automaticamente)
+            if (ui.radioTipoIndeferimento && ui.radioTipoIndeferimento.checked) {
+                 ui.containerAreaDesembargada.style.display = 'none';
+                 return;
+            }
+
+            // Lógica Total vs Parcial
+            if (ui.radioTotal && ui.radioTotal.checked) {
+                // TOTAL: Esconde input, copia valor
+                ui.containerAreaDesembargada.style.display = 'none';
+                logic.copyAreaEmbargadaToDesembargada();
+            } 
+            else if (ui.radioParcial && ui.radioParcial.checked) {
+                // PARCIAL: Mostra input
+                ui.containerAreaDesembargada.style.display = 'flex';
+                // Se estiver vazio, foca
+                if(!ui.inputAreaDesembargada.value) {
+                    ui.inputAreaDesembargada.focus();
+                }
+            }
+            else {
+                // Nenhum selecionado (estado inicial de Deferida)
+                ui.containerAreaDesembargada.style.display = 'none';
+            }
+        },
+
+        copyAreaEmbargadaToDesembargada: () => {
+            // SÓ COPIA SE O RÁDIO "TOTAL" ESTIVER MARCADO
+            // Isso impede que sobrescreva valores parciais carregados do banco
+            if (ui.radioTotal && ui.radioTotal.checked && ui.inputAreaEmbargada && ui.inputAreaDesembargada) {
+                // Copia apenas se o campo de origem tiver valor
+                if(ui.inputAreaEmbargada.value) {
+                    ui.inputAreaDesembargada.value = ui.inputAreaEmbargada.value;
+                }
+            }
         }
     };
 
@@ -532,12 +660,36 @@ document.addEventListener('DOMContentLoaded', () => {
             const fieldName = field.name;
             if (!fieldName) return;
 
+            // Prepara dados para validação
+            let dataToValidate = { [fieldName]: field.value };
+
+            // CASO ESPECIAL: Se estiver validando 'area', precisamos enviar também 'areaEmbargada' e 'tipoDesembargo'
+            // para que o JOI consiga fazer a comparação (.less(ref)) e a lógica condicional.
+            if (fieldName === 'area' || fieldName === 'areaEmbargada') {
+                const formData = new FormData(ui.form);
+                // Envia todos os dados para garantir que as referências do Joi funcionem
+                dataToValidate = Object.fromEntries(formData.entries());
+                
+                // Correção para números vazios virarem null na validação
+                if(dataToValidate.area === '') dataToValidate.area = null;
+            }
+
             try {
-                const result = await api.validateForm({ [fieldName]: field.value });
+                // Agora validamos com contexto
+                const result = await api.validateForm(dataToValidate);
+                
                 const errorEl = document.getElementById(`error-${fieldName}`);
                 if (errorEl) {
+                    // Se enviamos o objeto todo, o erro específico estará em result.errors[fieldName]
                     errorEl.textContent = result.errors?.[fieldName] ?? '';
                 }
+                
+                // Se alterou a área embargada, vale a pena limpar/atualizar o erro da área desembargada também
+                if (fieldName === 'areaEmbargada') {
+                     const errorAreaEl = document.getElementById(`error-area`);
+                     if(errorAreaEl) errorAreaEl.textContent = result.errors?.area ?? '';
+                }
+
             } catch (error) {
                 console.error(`Erro validação ${fieldName}`, error);
             }
@@ -566,27 +718,52 @@ document.addEventListener('DOMContentLoaded', () => {
         const fieldsToValidate = [
             'serie', 'nomeAutuado', 'area', 'processoSimlam',
             'numeroSEP', 'numeroEdocs', 'dataDesembargo',
-            'coordenadaX', 'coordenadaY', 'descricao', 'numero'
+            'coordenadaX', 'coordenadaY', 'descricao', 'numero', 'dataEmbargo', 'areaEmbargada'
         ];
         fieldsToValidate.forEach(fieldName => {
             const el = ui.form.elements[fieldName];
-            if (el) el.addEventListener('blur', handlers.onFieldBlur);
+            if (el) {
+                el.addEventListener('blur', handlers.onFieldBlur);
+            }
         });
 
-        // 5. LISTENERS NOVOS (Deliberação e Área)
-        if (ui.radioDeferida && ui.radioIndeferida) {
-            ui.radioDeferida.addEventListener('change', logic.handleDeliberacaoChange);
-            ui.radioIndeferida.addEventListener('change', logic.handleDeliberacaoChange);
-        }
-        if (ui.radioTotal && ui.radioParcial) {
-            ui.radioTotal.addEventListener('change', logic.handleTipoChange);
-            ui.radioParcial.addEventListener('change', logic.handleTipoChange);
-        }
+        // 2. Validação em Change para Rádios (Tipo, Parecer, Deliberação)
+        // Agrupamos os nomes dos radios para facilitar
+        const radioGroups = ['tipoBusca', 'tipoDesembargo', 'parecerTecnico', 'deliberacaoAutoridade'];
+
+        radioGroups.forEach(groupName => {
+            const radios = document.querySelectorAll(`input[name="${groupName}"]`);
+            radios.forEach(radio => {
+                // Adiciona listener para lógica visual (se houver)
+                if (groupName === 'tipoBusca') {
+                    radio.addEventListener('change', handlers.onTipoBuscaChange);
+                } 
+                else if (groupName === 'deliberacaoAutoridade') {
+                    radio.addEventListener('change', (e) => {
+                        logic.handleDeliberacaoChange();
+                        // Também valida o campo ao mudar
+                        handlers.onFieldBlur(e); 
+                    });
+                }
+                else if (groupName === 'tipoDesembargo') {
+                    radio.addEventListener('change', (e) => {
+                        logic.handleTipoChange();
+                        handlers.onFieldBlur(e);
+                    });
+                }
+                // Para Parecer Técnico, apenas validação
+                else {
+                    radio.addEventListener('change', handlers.onFieldBlur);
+                }
+            });
+        });
+
+        // 3. Listener especial para Área Embargada (Cópia de valor)
         if (ui.inputAreaEmbargada) {
             ui.inputAreaEmbargada.addEventListener('input', logic.copyAreaEmbargadaToDesembargada);
         }
 
-        // 6. Configurações Iniciais
+        // 4. Configurações Iniciais
         const dataEl = document.getElementById('dataDesembargo');
         if (dataEl) dataEl.value = new Date().toISOString().split('T')[0];
         

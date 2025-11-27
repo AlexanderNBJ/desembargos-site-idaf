@@ -22,6 +22,7 @@ function _formatEmbargoForFrontend(embargoDb) {
     coordenada_y: embargoDb.northing,
     processo_simlam: embargoDb.processo,
     area: embargoDb.area,
+    data_embargo: embargoDb.data_embargo ? new Date(embargoDb.data_embargo).toISOString().split('T')[0] : null,
     numeroSEP: numeroSEP,
     numeroEdocs: numeroEdocs,
   };
@@ -59,7 +60,7 @@ exports.findByNumero = async (numero) => {
 
 exports.findByProcesso = async (processo) => {
   const result = await pool.query(
-    `SELECT n_iuf_emb, serie, northing, easting, sep_edocs, processo, area  
+    `SELECT n_iuf_emb, serie, northing, easting, sep_edocs, processo, area, data_embargo  
       FROM ${schema}.${embargosTable} WHERE processo = $1 LIMIT 1`,
     [processo]
   );

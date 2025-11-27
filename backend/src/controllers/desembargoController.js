@@ -13,14 +13,12 @@ exports.validarFormulario = asyncHandler(async (req, res, next) => {
     error.details.forEach((d) => {
       erros[d.path[0]] = d.message;
     });
-
     return res.status(200).json({ success: false, errors: erros });
   }
   res.status(200).json({ success: true, errors: null });
 });
 
 exports.inserir = asyncHandler(async (req, res, next) => {
-
   const validationOptions = { 
     abortEarly: false, 
     stripUnknown: true
@@ -31,11 +29,11 @@ exports.inserir = asyncHandler(async (req, res, next) => {
   if (error) {
     const errors = {};
     error.details.forEach((err) => { errors[err.path[0]] = err.message; });
-    
     return next(new AppError('Erro de validação', 400, { errors })); 
   }
 
   const responsavel = req.user?.username || req.user?.name || "DESCONHECIDO";
+  
   const dadosFormatados = {
     numero: value.numero,
     serie: value.serie?.toUpperCase().trim() || null,
@@ -49,7 +47,12 @@ exports.inserir = asyncHandler(async (req, res, next) => {
     coordenadaX: value.coordenadaX ?? null,
     coordenadaY: value.coordenadaY ?? null,
     descricao: value.descricao?.trim() || null,
-    responsavelDesembargo: responsavel
+    responsavelDesembargo: responsavel,
+    
+    // --- NOVOS CAMPOS ---
+    dataEmbargo: value.dataEmbargo || null,
+    areaEmbargada: value.areaEmbargada ?? null,
+    parecerTecnico: value.parecerTecnico?.toUpperCase() || null
   };
 
   const novoDesembargo = await desembargoService.inserirDesembargo(dadosFormatados);
@@ -69,26 +72,20 @@ exports.listarDesembargos = asyncHandler(async (req, res, next) => {
 
   if (!requestingUser && String(owner || '').toLowerCase() === 'mine') {
     const authHeader = req.headers && (req.headers.authorization || req.headers.Authorization);
-
     if (authHeader && typeof authHeader === 'string') {
       const parts = authHeader.split(' ');
-
       if (parts.length === 2 && /^Bearer$/i.test(parts[0])) {
-
         try {
           const token = parts[1];
           const payloadB64 = token.split('.')[1] || '';
           const b64 = payloadB64.replace(/-/g, '+').replace(/_/g, '/');
           const json = Buffer.from(b64, 'base64').toString('utf8');
           const parsed = JSON.parse(json);
-
           requestingUser = {
             username: parsed.username || parsed.preferred_username || parsed.sub || parsed.name || null,
             role: (parsed.role || parsed.roles || '').toString().toUpperCase()
           };
-
-        } 
-        catch (e) {}
+        } catch (e) {}
       }
     }
   }
@@ -113,7 +110,6 @@ exports.listarDesembargos = asyncHandler(async (req, res, next) => {
 
 exports.getDesembargoById = asyncHandler(async (req, res, next) => {
   const desembargo = await desembargoService.getDesembargoById(req.params.id);
-
   if (!desembargo) {
     return next(new AppError("Desembargo não encontrado", 404));
   }
@@ -122,33 +118,27 @@ exports.getDesembargoById = asyncHandler(async (req, res, next) => {
 
 exports.updateDesembargo = asyncHandler(async (req, res, next) => {
   const id = parseInt(req.params.id);
+  if (isNaN(id)) return next(new AppError("ID inválido", 400));
 
-  if (isNaN(id)) 
-    return next(new AppError("ID inválido", 400));
-
+  // A validação permite unknown, mas o Service espera os campos mapeados
+  // O value aqui já deve conter dataEmbargo, areaEmbargada, parecerTecnico se o front mandar
   const { error, value } = formSchema.validate(req.body, { allowUnknown: true });
 
-  if (error) 
-    return next(new AppError(error.details[0].message, 400));
+  if (error) return next(new AppError(error.details[0].message, 400));
 
   const { updated, antes } = await desembargoService.updateDesembargo(id, value, req.user);
   
   const changed = {};
-
   for (const campo of Object.keys(updated)) {
     if (antes.hasOwnProperty(campo)) {
       const valorAntigo = antes[campo];
       const valorNovo = updated[campo];
-
       let mudou = false;
-
       if (valorAntigo instanceof Date && valorNovo instanceof Date) {
         mudou = valorAntigo.getTime() !== valorNovo.getTime();
-      } 
-      else {
+      } else {
         mudou = valorAntigo !== valorNovo;
       }
-
       if (mudou) {
         changed[campo] = { antes: valorAntigo, depois: valorNovo };
       }
@@ -156,22 +146,17 @@ exports.updateDesembargo = asyncHandler(async (req, res, next) => {
   }
 
   await audit.logAction({ req, action: 'desembargo.update', details: { id, changed } });
-  
   res.json({ success: true, data: updated });
 });
 
 exports.gerarPdf = asyncHandler(async (req, res, next) => {
   const { id } = req.params;
   const desembargo = await desembargoService.getDesembargoById(id);
-
   if (!desembargo) {
     return next(new AppError("Desembargo não encontrado para gerar PDF", 404));
   }
-
   const pdfBuffer = await desembargoService.gerarPdfDesembargo(desembargo);
-
   await audit.logAction({ req, action: 'desembargo.generate_pdf', details: { id } });
-
   res.setHeader("Content-Type", "application/pdf");
   res.setHeader("Content-Disposition", `inline; filename=desembargo_${id}.pdf`);
   res.send(Buffer.from(pdfBuffer));
@@ -180,10 +165,8 @@ exports.gerarPdf = asyncHandler(async (req, res, next) => {
 exports.getDesembargoByProcesso = asyncHandler(async (req, res, next) => {
   const { valor } = req.query;
   const desembargoFormatado = await desembargoService.getDesembargoByProcesso(valor);
-  
   if (!desembargoFormatado) {
     return next(new AppError("Processo não encontrado", 404));
   }
-  // O service já retornou os dados formatados com mapDesembargo
   res.json(desembargoFormatado);
 });

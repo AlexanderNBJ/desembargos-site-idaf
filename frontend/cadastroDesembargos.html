@@ -201,32 +201,41 @@
         </div>
       </div>
 
-      <!-- 1. Parecer Técnico -->
       <div class="parecer">
         <label class="label-bold required-section">Recomendação do parecer técnico:</label>
         <div class="tipo-controls">
           <label><input type="radio" name="parecerTecnico" value="DEFERIMENTO" /> <span>Deferimento</span></label>
           <label><input type="radio" name="parecerTecnico" value="INDEFERIMENTO" /> <span>Indeferimento</span></label>
         </div>
+        <span class="error-msg" id="error-parecerTecnico"></span>
       </div>
 
-      <!-- 2. Deliberação (Controla o que aparece abaixo) -->
+      <!-- 2. Deliberação (O "Pai" da decisão) -->
       <div class="deliberacao">
         <label class="label-bold required-section">Deliberação da solicitação de desembargo (Autoridade):</label>
         <div class="tipo-controls">
           <label><input type="radio" name="deliberacaoAutoridade" value="DEFERIDA" id="radioDeferida"/> <span>Deferida</span></label>
           <label><input type="radio" name="deliberacaoAutoridade" value="INDEFERIDA" id="radioIndeferida"/> <span>Indeferida</span></label>
         </div>
+        <span class="error-msg" id="error-deliberacaoAutoridade"></span>
       </div>
 
-      <!-- 3. Sub-opções (Total/Parcial) - SÓ APARECE SE DEFERIDA -->
+      <!-- 3. Sub-opções (Se Deferida -> Escolhe o Tipo) -->
       <div class="sub-tipo" id="containerSubTipo" style="display:none;">
         <label class="label-bold required-section">Tipo de Deferimento:</label>
         <div class="tipo-controls">
+          <!-- Note: name="tipoDesembargo" aqui define o valor final -->
           <label><input type="radio" name="tipoDesembargo" value="TOTAL" id="radioTotal" /> <span>Desembargo Total</span></label>
           <label><input type="radio" name="tipoDesembargo" value="PARCIAL" id="radioParcial" /> <span>Desembargo Parcial</span></label>
         </div>
         <span class="error-msg" id="error-tipoDesembargo"></span>
+      </div>
+
+      <!-- 4. Inputs Ocultos para Tipos Especiais (Indeferimento e Desinterdição) -->
+      <!-- O usuário não vê, mas o JS marca isso quando a Deliberação for Indeferida -->
+      <div style="display:none;">
+          <input type="radio" name="tipoDesembargo" value="INDEFERIMENTO" id="radioTipoIndeferimento">
+          <input type="radio" name="tipoDesembargo" value="DESINTERDIÇÃO" id="radioTipoDesinterdicao">
       </div>
 
       <!-- Dados do Desembargo -->
@@ -238,7 +247,6 @@
                 <span class="error-msg" id="error-dataDesembargo"></span>
             </div>
             
-            <!-- Campo Área (Controlado via JS: Some se for TOTAL) -->
             <div class="geo-item" id="containerAreaDesembargada">
                 <label for="area" class="required">Área desembargada (ha):</label>
                 <input id="area" name="area" class="input" type="text" placeholder="Ex: 0.5" />

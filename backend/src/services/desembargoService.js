@@ -17,6 +17,14 @@ const schema = process.env.SCHEMA;
  */
 function mapDesembargo(dbRow) {
   if (!dbRow) return null;
+  
+  // Lógica para Deliberação (Frontend Only) baseada no Tipo
+  // Se o tipo no banco for INDEFERIMENTO, a deliberação foi INDEFERIDA. Caso contrário, DEFERIDA.
+  let deliberacao = null;
+  if (dbRow.tipo_desembargo) {
+      deliberacao = (dbRow.tipo_desembargo === 'INDEFERIMENTO') ? 'INDEFERIDA' : 'DEFERIDA';
+  }
+
   return {
     id: dbRow.id,
     numero: dbRow.numero_embargo,
@@ -32,7 +40,13 @@ function mapDesembargo(dbRow) {
     tipoDesembargo: dbRow.tipo_desembargo,
     descricao: dbRow.descricao,
     status: dbRow.status,
-    responsavelDesembargo: dbRow.responsavel_desembargo
+    responsavelDesembargo: dbRow.responsavel_desembargo,
+    
+    // --- NOVOS CAMPOS ---
+    dataEmbargo: dbRow.data_embargo ? new Date(dbRow.data_embargo).toISOString().split("T")[0] : null,
+    areaEmbargada: dbRow.area_embargada,
+    parecerTecnico: dbRow.recomendacao_parecer_tecnico,
+    deliberacaoAutoridade: deliberacao // Campo calculado para o front preencher o rádio corretamente
   };
 }
 
@@ -121,21 +135,32 @@ function _drawPdfInfoBlock(doc, y, desembargo) {
 // Funções do service
 
 exports.inserirDesembargo = async (dados) => {
-  const { numero, serie, nomeAutuado, area, processoSimlam,
-          numeroSEP, numeroEdocs, tipoDesembargo,
-          dataDesembargo, coordenadaX, coordenadaY, descricao, responsavelDesembargo } = dados;
+  const { 
+    numero, serie, nomeAutuado, area, processoSimlam,
+    numeroSEP, numeroEdocs, tipoDesembargo,
+    dataDesembargo, coordenadaX, coordenadaY, descricao, responsavelDesembargo,
+    // Novos
+    dataEmbargo, areaEmbargada, parecerTecnico
+  } = dados;
 
   const query = `
     INSERT INTO ${schema}.${desembargoTable}(
         NUMERO_EMBARGO, SERIE_EMBARGO, NOME_AUTUADO, AREA_DESEMBARGADA, PROCESSO_SIMLAM,
         NUMERO_SEP, NUMERO_EDOCS, TIPO_DESEMBARGO, DATA_DESEMBARGO, COORDENADA_X, COORDENADA_Y,
-        DESCRICAO, STATUS, RESPONSAVEL_DESEMBARGO
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, 'EM ANÁLISE', $13)
+        DESCRICAO, STATUS, RESPONSAVEL_DESEMBARGO,
+        DATA_EMBARGO, AREA_EMBARGADA, RECOMENDACAO_PARECER_TECNICO
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, 'EM ANÁLISE', $13, $14, $15, $16)
     RETURNING *;
   `;
-  const values = [numero, serie, nomeAutuado, area, processoSimlam, numeroSEP, numeroEdocs, tipoDesembargo, dataDesembargo, coordenadaX, coordenadaY, descricao, responsavelDesembargo];
+  const values = [
+      numero, serie, nomeAutuado, area, processoSimlam, 
+      numeroSEP, numeroEdocs, tipoDesembargo, dataDesembargo, coordenadaX, coordenadaY, 
+      descricao, responsavelDesembargo,
+      dataEmbargo, areaEmbargada, parecerTecnico
+  ];
+  
   const result = await db.query(query, values);
-  return result.rows[0];
+  return mapDesembargo(result.rows[0]); // Retorna mapeado
 };
 
 exports.listarDesembargos = async (params = {}) => {
@@ -195,10 +220,12 @@ exports.listarDesembargos = async (params = {}) => {
     orderClause = `ORDER BY ${sortableColumns[sortKey]} ${dir}`;
   }
 
+  // SELECT atualizado para incluir colunas novas se necessário na listagem
   const listQuery = `
     SELECT ID as id, CONCAT(NUMERO_EMBARGO, ' ', SERIE_EMBARGO) AS termo, PROCESSO_SIMLAM AS processo, NUMERO_SEP AS sep,
            NUMERO_EDOCS AS edocs, NOME_AUTUADO AS autuado, TIPO_DESEMBARGO AS tipo, STATUS AS status,
-           RESPONSAVEL_DESEMBARGO AS responsavel, DATA_DESEMBARGO AS data
+           RESPONSAVEL_DESEMBARGO AS responsavel, DATA_DESEMBARGO AS data,
+           DATA_EMBARGO, AREA_EMBARGADA, RECOMENDACAO_PARECER_TECNICO
     FROM ${schema}.${desembargoTable} ${whereClause} ${orderClause}
     LIMIT $${idx++} OFFSET $${idx++}
   `;
@@ -211,7 +238,16 @@ exports.listarDesembargos = async (params = {}) => {
   const total = countResult.rows[0]?.total || 0;
 
   const listResult = await db.query(listQuery, listParams);
-  return { rows: listResult.rows || [], total };
+  // Opcional: Mapear resultados da lista também
+  const mappedRows = listResult.rows.map(row => ({
+      ...row,
+      // Se quiser camelCase na lista também
+      dataEmbargo: row.data_embargo,
+      areaEmbargada: row.area_embargada,
+      parecerTecnico: row.recomendacao_parecer_tecnico
+  }));
+
+  return { rows: mappedRows, total };
 };
 
 exports.getDesembargoById = async (id) => {
@@ -222,8 +258,7 @@ exports.getDesembargoById = async (id) => {
     WHERE d.id = $1 LIMIT 1
   `;
   const result = await db.query(query, [id]);
-
-  return result.rows[0];
+  return mapDesembargo(result.rows[0]);
 };
 
 exports.updateDesembargo = async (id, dados, user) => {
@@ -233,7 +268,7 @@ exports.updateDesembargo = async (id, dados, user) => {
     throw new AppError("Desembargo não encontrado para atualização", 404);
   }
 
-  const antes = antesResult.rows[0];
+  const antes = mapDesembargo(antesResult.rows[0]); // Mapeia o estado anterior
   
   if (dados.status && String(dados.status).trim().toUpperCase() === 'APROVADO') {
     if (!user || user.role !== 'GERENTE') {
@@ -248,23 +283,39 @@ exports.updateDesembargo = async (id, dados, user) => {
     }
   }
 
-  const { numero, serie, processoSimlam, numeroSEP, numeroEdocs, coordenadaX, coordenadaY, nomeAutuado, area, tipoDesembargo, dataDesembargo, descricao, status, responsavelDesembargo, aprovado_por } = dados;
+  const { 
+      numero, serie, processoSimlam, numeroSEP, numeroEdocs, coordenadaX, coordenadaY, 
+      nomeAutuado, area, tipoDesembargo, dataDesembargo, descricao, status, 
+      responsavelDesembargo, aprovado_por,
+      // Novos
+      dataEmbargo, areaEmbargada, parecerTecnico
+  } = dados;
   
-  const result = await db.query(
-    `UPDATE ${schema}.${desembargoTable}
+  const query = `
+     UPDATE ${schema}.${desembargoTable}
      SET numero_embargo = $1, serie_embargo = $2, processo_simlam = $3, numero_sep = $4,
          numero_edocs = $5, coordenada_x = $6, coordenada_y = $7, nome_autuado = $8,
          area_desembargada = $9, tipo_desembargo = $10, data_desembargo = $11::date, descricao = $12,
-         status = $13, responsavel_desembargo = $14, aprovado_por = $15
-     WHERE id = $16 RETURNING *`,
-    [numero, serie, processoSimlam, numeroSEP, numeroEdocs, coordenadaX, coordenadaY, nomeAutuado, area, tipoDesembargo, dataDesembargo, descricao, status, responsavelDesembargo, aprovado_por, id]
-  );
+         status = $13, responsavel_desembargo = $14, aprovado_por = $15,
+         DATA_EMBARGO = $16::date, AREA_EMBARGADA = $17, RECOMENDACAO_PARECER_TECNICO = $18
+     WHERE id = $19 RETURNING *
+  `;
+
+  const values = [
+      numero, serie, processoSimlam, numeroSEP, numeroEdocs, coordenadaX, coordenadaY, 
+      nomeAutuado, area, tipoDesembargo, dataDesembargo, descricao, status, 
+      responsavelDesembargo, aprovado_por, 
+      dataEmbargo, areaEmbargada, parecerTecnico,
+      id
+  ];
+
+  const result = await db.query(query, values);
 
   if (result.rows.length === 0) {
     throw new AppError("Desembargo não encontrado para atualização", 404);
   }
 
-  return { updated: result.rows[0], antes: antes };
+  return { updated: mapDesembargo(result.rows[0]), antes: antes };
 };
 
 exports.gerarPdfDesembargo = async (desembargo) => {
