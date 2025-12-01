@@ -133,10 +133,15 @@ label.required::before, label.semirequired::before { font-weight: bold; }
   display: flex;
   flex-direction: column;
   gap: 10px;
+}
+
+.processos-group{
+  gap: 10px;
   padding-bottom: 1rem;
   margin-bottom: 0.5rem;
   border-bottom: 1px solid #e0e0e0;
 }
+
 .busca-tipo .label-bold { margin-bottom: 0; }
 
 /* Estruturas Internas (Termo) */
