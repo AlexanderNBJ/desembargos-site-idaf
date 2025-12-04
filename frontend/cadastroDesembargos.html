@@ -210,7 +210,7 @@
         <span class="error-msg" id="error-parecerTecnico"></span>
       </div>
 
-      <!-- 2. Deliberação (O "Pai" da decisão) -->
+      <!-- Deliberação -->
       <div class="deliberacao">
         <label class="label-bold required-section">Deliberação da solicitação de desembargo, pela autoridade competente:</label>
         <div class="tipo-controls">
@@ -220,19 +220,17 @@
         <span class="error-msg" id="error-deliberacaoAutoridade"></span>
       </div>
 
-      <!-- 3. Sub-opções (Se Deferida -> Escolhe o Tipo) -->
+      <!-- Sub-opções -->
       <div class="sub-tipo" id="containerSubTipo" style="display:none;">
         <label class="label-bold required-section">Tipo de Deferimento:</label>
         <div class="tipo-controls">
-          <!-- Note: name="tipoDesembargo" aqui define o valor final -->
           <label><input type="radio" name="tipoDesembargo" value="TOTAL" id="radioTotal" /> <span>Desembargo Total</span></label>
           <label><input type="radio" name="tipoDesembargo" value="PARCIAL" id="radioParcial" /> <span>Desembargo Parcial</span></label>
         </div>
         <span class="error-msg" id="error-tipoDesembargo"></span>
       </div>
 
-      <!-- 4. Inputs Ocultos para Tipos Especiais (Indeferimento e Desinterdição) -->
-      <!-- O usuário não vê, mas o JS marca isso quando a Deliberação for Indeferida -->
+      <!-- Inputs Ocultos para Tipos Indeferimento e Desinterdição -->
       <div style="display:none;">
           <input type="radio" name="tipoDesembargo" value="INDEFERIMENTO" id="radioTipoIndeferimento">
           <input type="radio" name="tipoDesembargo" value="DESINTERDIÇÃO" id="radioTipoDesinterdicao">

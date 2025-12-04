@@ -30,9 +30,9 @@
     "processos processos processos"
     "termo termo nome"
     "coordenadas coordenadas coordenadas"
-    "parecer parecer parecer"            /* Nova linha: Parecer */
-    "deliberacao deliberacao deliberacao" /* Nova linha: Deliberação */
-    "subtipo subtipo subtipo"             /* Nova linha: Total/Parcial (condicional) */
+    "parecer parecer parecer"            
+    "deliberacao deliberacao deliberacao" 
+    "subtipo subtipo subtipo"             
     "desembargo desembargo desembargo"
     "descricao descricao descricao";
 }
@@ -66,10 +66,6 @@
 }
 /* Remove borda do último elemento antes dos dados */
 .sub-tipo { border-bottom: none; }
-
-/* ==========================================================================
-   ESTILIZAÇÃO DOS ELEMENTOS (Mantendo sua identidade)
-   ========================================================================== */
 
 /* Flex containers para empilhar Label + Input */
 .termo, .nome, .processo, .area, .sep, .tipo, .edocs, .data, .coordenadas, .descricao, .desembargo-dados {
@@ -218,11 +214,6 @@ input[type="radio"], input[type="checkbox"] {
 /* Ajustes de margem */
 #textoTipoDesembargo { margin-top: 20px; }
 
-
-/* ==========================================================================
-   ESTILOS NOVOS (Para os grupos horizontais)
-   ========================================================================== */
-
 /* Grupo de Processos (E-Docs, Simlam, SEP) */
 .processos-group {
     display: flex;
@@ -239,7 +230,6 @@ input[type="radio"], input[type="checkbox"] {
     flex-direction: column;
 }
 
-/* Linha de Coordenadas e Dados (X, Y, Data Emb, Area Emb) + Desembargo */
 .geo-row {
   display: flex;
   gap: 12px;
@@ -253,9 +243,6 @@ input[type="radio"], input[type="checkbox"] {
   min-width: 0;
 }
 
-/* ==========================================================================
-   RESPONSIVIDADE
-   ========================================================================== */
 @media (max-width: 980px) {
   .sv-grid, .sv-actions { width: 94%; }
   

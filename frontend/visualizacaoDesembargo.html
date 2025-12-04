@@ -58,7 +58,7 @@
       </div>
     </div>
 
-    <!-- 1. GRUPO DE PROCESSOS -->
+    <!-- Grupo de Processos -->
     <div class="processos-group">
         <label class="section-title">Número do(s) Processo(s):</label>
         <div class="processos-row">
@@ -110,7 +110,7 @@
       <span class="error-msg" id="error-nomeAutuado"></span>
     </div>
 
-    <!-- Coordenadas + Dados do Embargo Original -->
+    <!-- Coordenadas + Dados do Embargo -->
     <div class="coordenadas">
       <div class="geo-row">
         <div class="geo-item">
@@ -136,7 +136,7 @@
       </div>
     </div>
 
-    <!-- 1. Parecer Técnico -->
+    <!-- Parecer Técnico -->
     <div class="parecer">
         <label class="label-bold required-section">Recomendação do parecer técnico:</label>
         <div class="tipo-controls">
@@ -146,7 +146,7 @@
         <span class="error-msg" id="error-parecerTecnico"></span>
     </div>
 
-    <!-- 2. Deliberação (O "Pai" da decisão) -->
+    <!-- Deliberação -->
     <div class="deliberacao">
         <label class="label-bold required-section">Deliberação da solicitação de desembargo, pela autoridade competente:</label>
         <div class="tipo-controls">
@@ -156,7 +156,7 @@
         <span class="error-msg" id="error-deliberacaoAutoridade"></span>
     </div>
 
-    <!-- 3. Sub-opções (Total/Parcial) - SÓ APARECE SE DEFERIDA -->
+    <!-- Sub-opções (Total/Parcial)-->
     <div class="sub-tipo" id="containerSubTipo" style="display:none;">
         <label class="label-bold required-section">Tipo de Deferimento:</label>
         <div class="tipo-controls">
@@ -172,7 +172,7 @@
         <span class="error-msg" id="error-tipoDesembargo"></span>
     </div>
 
-    <!-- 4. Inputs Ocultos para Lógica Híbrida (Indeferimento automático) -->
+    <!-- Inputs Ocultos para Lógica Híbrida -->
     <div style="display:none;">
         <input type="radio" name="tipoDesembargo" value="INDEFERIMENTO" id="radioTipoIndeferimento" disabled>
         <input type="radio" name="tipoDesembargo" value="DESINTERDIÇÃO" id="radioTipoDesinterdicao" disabled>
@@ -236,8 +236,6 @@
 
   <div id="mensagem-insercao" class="mensagem"></div>
 </main>
-
-  <!-- Containter para mensagens toast para o usuário -->
 
   <!-- Scripts para login/logout-->
   <script src="js/auth.js"></script>

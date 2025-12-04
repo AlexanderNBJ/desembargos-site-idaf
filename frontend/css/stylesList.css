@@ -62,7 +62,6 @@ body { background: var(--bg); }
   opacity: 0.9;
 }
 
-/* TABS */
 .tabs { display:flex; gap:8px; margin:12px 0 6px 0; flex-wrap:wrap; align-items:center; }
 .tab { padding:8px 14px; border-radius:999px; cursor:pointer; background:transparent; border:1px solid transparent; color:var(--muted-2); font-weight:700; transition: all .12s ease; }
 .tab:hover { transform: translateY(-2px); }
@@ -279,21 +278,18 @@ thead th.sortable.desc::after { content: '▼'; transform: translateY(-50%) tran
 thead th.sortable.active-sort { color: var(--green-dark); }
 thead th.sortable:focus { outline: 2px solid rgba(16,168,74,0.14); outline-offset: 2px; }
 
-/* permite scroll horizontal apenas no card da tabela (não na página inteira) */
 .table-card {
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch; /* scroll suave em mobile */
-  padding-bottom: 6px; /* evita que a sombra/padding esconda a barra de scroll */
+  -webkit-overflow-scrolling: touch; 
+  padding-bottom: 6px;
 }
 
-/* garante que a tabela não force a página inteira a crescer */
 table.desembargos {
   width: 100%;
-  table-layout: auto; /* mantemos auto para desktops */
-  min-width: 720px;   /* valor seguro para a maioria das telas; ajustável */
+  table-layout: auto; 
+  min-width: 720px;
 }
 
-/* reduz um pouco os min-widths (foco em telas menores) */
 .col-termo{ min-width:60px; }
 .col-processo{ min-width:80px; }
 .col-sep{ min-width:70px; }
@@ -304,14 +300,12 @@ table.desembargos {
 .col-data{ min-width:70px; }
 .col-acoes{ min-width:60px; }
 
-/* para telas estreitas, permitir table-layout: fixed (ajusta melhor colunas) e reduzir min-widths */
 @media (max-width: 1200px) {
   table.desembargos { table-layout: fixed; min-width: 640px; }
   .col-autuado { min-width: 150px; }
   .col-status  { min-width: 140px; }
 }
 
-/* em telas bem pequenas (mobile), escondemos colunas menos importantes e deixamos o status legível */
 @media (max-width: 760px) {
   table.desembargos { min-width: 520px; }
   .col-sep, .col-edocs, .col-tipo, .col-data { display: none; }
@@ -325,12 +319,10 @@ table.desembargos {
 .table-card::-webkit-scrollbar { height: 10px; }
 .table-card::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.06); border-radius: 8px; }
 
-
-/* Overlay de carregamento (para quando busca no BD) */
 .sv-loader {
   position: fixed;
   inset: 0;
-  display: none;               /* Escondido por padrão */
+  display: none;
   align-items: center;
   justify-content: center;
   background: rgba(255,255,255,0.75);
@@ -338,7 +330,6 @@ table.desembargos {
   z-index: 9999;
 }
 
-/* quando ativo, mostrar o overlay */
 .sv-loader.active {
   display: flex;
 }

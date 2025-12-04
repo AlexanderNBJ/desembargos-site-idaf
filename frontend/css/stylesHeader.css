@@ -5,7 +5,7 @@ body {
     margin: 0;
     padding: 0;
     background: white;
-    font-family: Arial, sans-serif; /* Fonte de fallback */
+    font-family: Arial, sans-serif;
 }
 
 /* --- Layout da Barra Superior --- */
@@ -106,7 +106,6 @@ body {
     outline-offset: 2px;
 }
 
-/* --- Design Responsivo --- */
 @media (max-width: 1000px) {
     .title-text h1 {
         font-size: 40px;
