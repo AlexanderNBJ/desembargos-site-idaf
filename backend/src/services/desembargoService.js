@@ -385,7 +385,7 @@ exports.gerarPdfDesembargo = async (desembargo) => {
 
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryColor);
-  doc.text("Descrição do Desembargo:", 40, y); y += lineHeight;
+  doc.text("Justificativa da deliberação:", 40, y); y += lineHeight;
   doc.setFont("helvetica", "normal");
   doc.setTextColor(secondaryColor);
   const descricaoSplit = doc.splitTextToSize(desembargo.descricao || '-', 500);

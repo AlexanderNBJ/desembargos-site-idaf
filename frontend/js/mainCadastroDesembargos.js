@@ -436,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
             y += 10;
 
             doc.setFont("helvetica", "bold"); doc.setTextColor(primaryColor);
-            doc.text("Descrição da Deliberação:", 40, y); 
+            doc.text("Justificativa da deliberação:", 40, y); 
             y += lineHeight;
 
             doc.setFont("helvetica", "normal"); doc.setTextColor(secondaryColor);
