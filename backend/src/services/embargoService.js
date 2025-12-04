@@ -6,14 +6,6 @@ const schema = process.env.SCHEMA;
 
 function _formatEmbargoForFrontend(embargoDb) {
   if (!embargoDb) return null;
-
-  const separarSepEdocs = (valor) => {
-    if (!valor) return { numeroSEP: null, numeroEdocs: null };
-    if (/^\d{4}-/.test(valor)) return { numeroSEP: null, numeroEdocs: valor };
-    return { numeroSEP: valor, numeroEdocs: null };
-  };
-
-  const { numeroSEP, numeroEdocs } = separarSepEdocs(embargoDb.sep_edocs);
     
   return {
     numero_embargo: embargoDb.n_iuf_emb,
@@ -23,8 +15,8 @@ function _formatEmbargoForFrontend(embargoDb) {
     processo_simlam: embargoDb.processo,
     area: embargoDb.area,
     data_embargo: embargoDb.data_embargo ? new Date(embargoDb.data_embargo).toISOString().split('T')[0] : null,
-    numeroSEP: numeroSEP,
-    numeroEdocs: numeroEdocs,
+    numeroSEP: embargoDb.numero_sep,
+    numeroEdocs: embargoDb.numero_edocs,
   };
 }
 
@@ -60,7 +52,7 @@ exports.findByNumero = async (numero) => {
 
 exports.findByProcesso = async (processo) => {
   const result = await pool.query(
-    `SELECT n_iuf_emb, serie, northing, easting, sep_edocs, processo, area, data_embargo  
+    `SELECT n_iuf_emb, serie, northing, easting, numero_sep, numero_edocs, processo, area, data_embargo  
       FROM ${schema}.${embargosTable} WHERE processo = $1 LIMIT 1`,
     [processo]
   );
