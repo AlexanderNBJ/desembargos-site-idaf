@@ -118,7 +118,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 clone.querySelector('.col-autuado').textContent = d.autuado || '';
                 clone.querySelector('.col-tipo').textContent = d.tipo || '';
                 clone.querySelector('.col-status').textContent = d.status || '';
-                clone.querySelector('.col-data').textContent = (d.data) ? new Date(d.data).toLocaleDateString('pt-BR') : '';
+                if (d.data) {
+                    const [year, month, day] = d.data.split('T')[0].split('-');
+                    const dateObj = new Date(year, month - 1, day);
+                    clone.querySelector('.col-data').textContent = dateObj.toLocaleDateString('pt-BR');
+                } else {
+                    clone.querySelector('.col-data').textContent = '';
+                }
 
                 // Botões de ação
                 const viewBtn = clone.querySelector('button[data-action="view"]');
