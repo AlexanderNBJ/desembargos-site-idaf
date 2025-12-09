@@ -32,12 +32,12 @@ const commonMessages = {
 };
 
 const formSchema = Joi.object({
-  // --- Campos Existentes ---
+  
   numero: Joi.string()
     .pattern(validationConstants.NUMERO_REGEX)
     .required()
     .messages({
-      'string.base': 'O campo Número é obrigatório',
+      'string.base': 'O campo número é obrigatório',
       'string.empty': commonMessages.string.empty,
       'string.pattern.base': 'O número deve seguir o padrão NÚMERO ou NÚMERO/NÚMERO',
       'any.required': commonMessages.required.any,
@@ -49,10 +49,10 @@ const formSchema = Joi.object({
     .required()
     .valid('A', 'B', 'C', 'D', 'E')
     .messages({
-      'string.base': 'O campo Série é obrigatório.',
+      'string.base': 'O campo série é obrigatório.',
       'string.empty': commonMessages.string.empty,
-      'string.pattern.base': 'A Série deve conter uma única letra.',
-      'any.only': 'A Série deve ser A, B, C, D ou E.',
+      'string.pattern.base': 'A série deve conter uma única letra.',
+      'any.only': 'A série deve ser A, B, C, D ou E.',
       'any.required': commonMessages.required.any,
     }),
 
@@ -64,24 +64,27 @@ const formSchema = Joi.object({
     .allow(null)
     .uppercase()
     .messages({
-      'string.min': 'O Nome do Autuado deve ter no mínimo 3 caracteres.',
-      'string.pattern.base': 'O Nome do Autuado contém caracteres inválidos.',
+      'string.min': 'O nome do autuado deve ter no mínimo 3 caracteres.',
+      'string.pattern.base': 'O nome do autuado contém caracteres inválidos.',
     }),
 
   processoSimlam: Joi.string()
     .trim()
+    .empty('')
     .pattern(validationConstants.PROCESSO_REGEX)
     .required()
     .messages({
-      'any.only': 'O Processo Simlam é inválido.',
+      'string.base': 'O campo processo Simlam é obrigatório',
+      'any.only': 'O processo Simlam é inválido.',
       'string.empty': commonMessages.string.empty,
-      'string.pattern.base': 'O Processo Simlam deve ter o formato NÚMERO/ANO (ex: 12345/2025).',
+      'string.pattern.base': 'O processo Simlam deve ter o formato NÚMERO/ANO (ex: 12345/2025).',
       'any.required': commonMessages.required.any,
     }),
 
   numeroSEP: Joi.number()
     .integer()
     .positive()
+    .empty('')
     .allow(null)
     .allow(0)
     .messages({
@@ -95,28 +98,30 @@ const formSchema = Joi.object({
     .empty('')
     .allow(null)
     .messages({
-      'string.pattern.base': 'O E-Docs deve ter o formato NÚMERO-CÓDIGO (ex: 2024-AB123).',
+      'string.pattern.base': 'O E-docs deve ter o formato NÚMERO-CÓDIGO (ex: 2024-AB123).',
     }),
 
   coordenadaX: Joi.number()
+    .empty('') 
     .min(validationConstants.COORD_X_MIN)
     .max(validationConstants.COORD_X_MAX)
     .required()
     .messages({
       'number.base': commonMessages.number.base,
-      'number.min': 'A Coordenada X está fora dos limites do ES.',
-      'number.max': 'A Coordenada X está fora dos limites do ES.',
+      'number.min': 'A coordenada X está fora dos limites do ES.',
+      'number.max': 'A coordenada X está fora dos limites do ES.',
       'any.required': commonMessages.required.any,
     }),
 
   coordenadaY: Joi.number()
+    .empty('')
     .min(validationConstants.COORD_Y_MIN)
     .max(validationConstants.COORD_Y_MAX)
     .required()
     .messages({
       'number.base': commonMessages.number.base,
-      'number.min': 'A Coordenada Y está fora dos limites do ES.',
-      'number.max': 'A Coordenada Y está fora dos limites do ES.',
+      'number.min': 'A coordenada Y está fora dos limites do ES.',
+      'number.max': 'A coordenada Y está fora dos limites do ES.',
       'any.required': commonMessages.required.any,
     }),
 
@@ -126,18 +131,16 @@ const formSchema = Joi.object({
     .empty('')
     .allow(null)
     .messages({
-      'string.max': 'A Descrição pode ter no máximo 4000 caracteres.',
+      'string.max': 'A descrição pode ter no máximo 4000 caracteres.',
     }),
 
-  // --- NOVOS CAMPOS E LÓGICAS ---
 
-  // 1. Parecer Técnico (Obrigatório e Enum)
   parecerTecnico: Joi.string()
     .valid('DEFERIMENTO', 'INDEFERIMENTO')
     .required()
     .messages({
-      'any.only': 'A Recomendação deve ser DEFERIMENTO ou INDEFERIMENTO.',
-      'any.required': 'A Recomendação do parecer técnico é obrigatória.',
+      'any.only': 'A recomendação deve ser DEFERIMENTO ou INDEFERIMENTO.',
+      'any.required': 'A recomendação do parecer técnico é obrigatória.',
     }),
 
   // 2. Deliberação da Autoridade (Obrigatório e Enum)
@@ -145,8 +148,8 @@ const formSchema = Joi.object({
     .valid('DEFERIDA', 'INDEFERIDA')
     .required()
     .messages({
-      'any.only': 'A Deliberação deve ser DEFERIDA ou INDEFERIDA.',
-      'any.required': 'A Deliberação da autoridade é obrigatória.',
+      'any.only': 'A deliberação deve ser DEFERIDA ou INDEFERIDA.',
+      'any.required': 'A deliberação da autoridade é obrigatória.',
     }),
 
   // 3. Tipo de Desembargo
@@ -154,8 +157,8 @@ const formSchema = Joi.object({
     .valid('PARCIAL', 'TOTAL', 'INDEFERIMENTO', 'DESINTERDIÇÃO')
     .required()
     .messages({
-      'any.only': 'O Tipo de Desembargo é inválido.',
-      'any.required': 'O Tipo de Desembargo é obrigatório.',
+      'any.only': 'O tipo de desembargo é inválido.',
+      'any.required': 'O tipo de desembargo é obrigatório.',
     }),
 
   // 4. Data do Embargo (Novo Campo Obrigatório)
@@ -163,9 +166,9 @@ const formSchema = Joi.object({
     .max('now')
     .allow(null)
     .messages({
-      'date.base': 'Data do Embargo inválida.',
-      'date.max': 'A Data do Embargo não pode ser no futuro.',
-      'any.required': 'A Data do Embargo é obrigatória.',
+      'date.base': 'Data do embargo inválida.',
+      'date.max': 'A data do embargo não pode ser no futuro.',
+      'any.required': 'A data do embargo é obrigatória.',
     }),
 
   // 5. Data do Desembargo (Existente)
@@ -180,16 +183,18 @@ const formSchema = Joi.object({
 
   // 6. Área Embargada (Novo Campo Obrigatório)
   areaEmbargada: Joi.number()
+    .empty('')
     .positive()
     .required()
     .messages({
-      'number.base': 'A Área Embargada deve ser um número.',
-      'number.positive': 'A Área Embargada deve ser positiva.',
-      'any.required': 'A Área Embargada é obrigatória.',
+      'number.base': 'A área embargada deve ser um número.',
+      'number.positive': 'A área embargada deve ser positiva.',
+      'any.required': 'A área embargada é obrigatória.',
     }),
 
   // 7. Área Desembargada (Lógica Condicional Complexa)
   area: Joi.number()
+    .empty('')
     .positive()
     .allow(null)
     .when('deliberacaoAutoridade', {
@@ -199,15 +204,15 @@ const formSchema = Joi.object({
         is: 'PARCIAL',
         then: Joi.number().required().less(Joi.ref('areaEmbargada'))
           .messages({
-            'number.less': 'A Área Desembargada deve ser menor que a Área Embargada.',
-            'any.required': 'A Área Desembargada é obrigatória para deferimentos parciais.',
+            'number.less': 'A área desembargada deve ser menor que a área embargada.',
+            'any.required': 'A área desembargada é obrigatória para deferimentos parciais.',
             'number.base': commonMessages.number.base,
           }),
         // Se for TOTAL: Obrigatório (O front deve copiar, mas validamos aqui)
         otherwise: Joi.when('tipoDesembargo', {
             is: 'TOTAL',
             then: Joi.number().required().messages({
-                'any.required': 'A Área Desembargada é obrigatória.'
+                'any.required': 'A área desembargada é obrigatória.'
             })
         })
       })
@@ -221,7 +226,7 @@ const formSchema = Joi.object({
 // Validação Cruzada de Documentos
 .or('numeroSEP', 'numeroEdocs')
 .messages({
-  'object.missing': 'É obrigatório preencher o número do SEP ou do E-Docs.'
+  'object.missing': 'É obrigatório preencher o número do SEP ou do E-docs.'
 });
 
 module.exports = { formSchema };

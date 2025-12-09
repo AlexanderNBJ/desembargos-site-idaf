@@ -198,6 +198,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const radioIndeferida = document.getElementById('radioIndeferida');
             if (radioIndeferida) radioIndeferida.checked = false;
 
+
+
             // Limpa erros e mensagens
             document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
             if (ui.mensagemBusca) ui.mensagemBusca.textContent = '';
@@ -537,6 +539,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(ui.containerAreaDesembargada) ui.containerAreaDesembargada.style.display = 'none';
                 if(ui.inputAreaDesembargada) ui.inputAreaDesembargada.value = '';
             }
+            else{
+                if(ui.containerSubTipo) ui.containerSubTipo.style.display = 'none';
+                if (ui.radioTotal) ui.radioTotal.checked = false;
+                if (ui.radioParcial) ui.radioParcial.checked = false;
+            }
         },
 
         handleTipoChange: () => {
@@ -686,36 +693,83 @@ document.addEventListener('DOMContentLoaded', () => {
         onFieldBlur: async (event) => {
             const field = event.target;
             const fieldName = field.name;
+            const fieldValue = field.value.trim();
+            
             if (!fieldName) return;
 
-            // Prepara dados para validação
-            let dataToValidate = { [fieldName]: field.value };
+            if (fieldName === 'numero') {
+                const msgEl = document.getElementById('error-numero');
+                
+                if (msgEl) {
+                    msgEl.textContent = 'Verificando...';
+                    msgEl.className = 'mensagem-validacao error-msg';
+                }
 
-            // CASO ESPECIAL: Se estiver validando 'area', precisamos enviar também 'areaEmbargada' e 'tipoDesembargo'
-            // para que o JOI consiga fazer a comparação (.less(ref)) e a lógica condicional.
+                const dataToValidate = { numero: fieldValue };
+                
+                try {
+                    const result = await api.validateForm(dataToValidate);
+
+                    if (result.errors && result.errors.numero) {
+                        if (msgEl) {
+                            msgEl.textContent = result.errors.numero;
+                            msgEl.classList.add('erro');
+                        }
+                        return;
+                    }
+                } catch (err) {
+                    console.error("Erro na validação local", err);
+                    return;
+                }
+
+                if (fieldValue) {
+                    try {
+                        // Chama a API que criamos no passo 1
+                        // Nota: api.checkEmbargoExists deve retornar true/false ou o objeto json
+                        const existe = await api.checkEmbargoExists(fieldValue); 
+
+                        if (msgEl) {
+                            if (existe) {
+                                msgEl.textContent = 'Embargo encontrado.';
+                                msgEl.classList.add('sucesso');
+                            } else {
+                                msgEl.textContent = 'Embargo não encontrado.';
+                                msgEl.classList.add('alerta');
+                            }
+                        }
+                    } catch (error) {
+                        if (msgEl) {
+                            msgEl.textContent = 'Erro ao consultar.';
+                            msgEl.classList.add('erro');
+                        }
+                    }
+                } else {
+                    if(msgEl) msgEl.textContent = '';
+                }
+                return; // Fim da lógica especial do número
+            }
+            
+            // Prepara dados contextuais (ex: area precisa de areaEmbargada)
+            let dataToValidate = { [fieldName]: field.value };
             if (fieldName === 'area' || fieldName === 'areaEmbargada') {
                 const formData = new FormData(ui.form);
-                // Envia todos os dados para garantir que as referências do Joi funcionem
                 dataToValidate = Object.fromEntries(formData.entries());
-                
-                // Correção para números vazios virarem null na validação
                 if(dataToValidate.area === '') dataToValidate.area = null;
             }
 
             try {
-                // Agora validamos com contexto
                 const result = await api.validateForm(dataToValidate);
                 
+                // Procura pelo ID padrão error-NOME
                 const errorEl = document.getElementById(`error-${fieldName}`);
                 if (errorEl) {
-                    // Se enviamos o objeto todo, o erro específico estará em result.errors[fieldName]
                     errorEl.textContent = result.errors?.[fieldName] ?? '';
                 }
                 
-                // Se alterou a área embargada, vale a pena limpar/atualizar o erro da área desembargada também
+                // Atualização cruzada de area
                 if (fieldName === 'areaEmbargada') {
-                     const errorAreaEl = document.getElementById(`error-area`);
-                     if(errorAreaEl) errorAreaEl.textContent = result.errors?.area ?? '';
+                    const errorAreaEl = document.getElementById(`error-area`);
+                    if(errorAreaEl) errorAreaEl.textContent = result.errors?.area ?? '';
                 }
 
             } catch (error) {

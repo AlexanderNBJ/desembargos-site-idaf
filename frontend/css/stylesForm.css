@@ -183,7 +183,7 @@ input[type="radio"], input[type="checkbox"] {
 .error-msg { font-size: 12px; color: red; }
 .mensagem-validacao { display: block; font-size: 12px; margin-top: 4px; }
 .mensagem-validacao.sucesso { color: green; }
-.mensagem-validacao.erro { color: orange; }
+.mensagem-validacao.erro { color: red; }
 
 /* Botões de Ação */
 .sv-actions {
