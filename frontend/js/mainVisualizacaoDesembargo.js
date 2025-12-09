@@ -203,30 +203,46 @@ document.addEventListener('DOMContentLoaded', () => {
         prepareDataForUpdate: () => {
             const data = Object.fromEntries(new FormData(ui.form).entries());
             
-            // Radios
+            // 1. Garante captura correta dos Radios
             const radioTipo = ui.form.querySelector('input[name="tipoDesembargo"]:checked');
-            if (radioTipo) data.tipoDesembargo = radioTipo.value;
+            data.tipoDesembargo = radioTipo ? radioTipo.value : null;
             
             const radioParecer = ui.form.querySelector('input[name="parecerTecnico"]:checked');
-            if (radioParecer) data.parecerTecnico = radioParecer.value;
+            data.parecerTecnico = radioParecer ? radioParecer.value : null;
             
             const radioDeliberacao = ui.form.querySelector('input[name="deliberacaoAutoridade"]:checked');
-            if (radioDeliberacao) data.deliberacaoAutoridade = radioDeliberacao.value;
+            data.deliberacaoAutoridade = radioDeliberacao ? radioDeliberacao.value : null;
 
-            // Datas
+            // 2. Tratamento de Datas
             if (ui.form.dataDesembargo?.value) {
                 const [ano, mes, dia] = ui.form.dataDesembargo.value.split('-');
                 const dt = new Date(ano, Number(mes) - 1, Number(dia));
                 data.dataDesembargo = dt.toISOString();
-            } else { data.dataDesembargo = null; }
+            } else {
+                data.dataDesembargo = null;
+            }
             
             if (ui.form.dataEmbargo?.value) {
                 const [ano, mes, dia] = ui.form.dataEmbargo.value.split('-');
                 const dt = new Date(ano, Number(mes) - 1, Number(dia));
                 data.dataEmbargo = dt.toISOString();
-            } else { data.dataEmbargo = null; }
+            } else {
+                data.dataEmbargo = null;
+            }
 
-            // Status e Responsável (para usuário comum)
+            // 3. Limpeza de strings vazias para evitar erro de tipo
+            ['area', 'areaEmbargada', 'coordenadaX', 'coordenadaY', 'numeroSEP'].forEach(k => {
+                if (data[k] === "") data[k] = null;
+            });
+
+            // 4. --- LÓGICA CRÍTICA PARA ÁREA OBRIGATÓRIA ---
+            // Se for TOTAL, garantimos que a área desembargada seja enviada igual à embargada,
+            // independentemente do estado visual do input.
+            if (data.tipoDesembargo === 'TOTAL' && data.areaEmbargada) {
+                data.area = data.areaEmbargada;
+            }
+
+            // 5. Definições de Status (apenas para usuário comum)
             if (pageState.currentUserInfo.role === 'COMUM') {
                 data.status = 'EM ANÁLISE';
                 if (!data.responsavelDesembargo) 
@@ -249,7 +265,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.UI.showToast("Preencha SEP ou E-Docs.", "error");
                 return false;
             }
-            view.displayValidationErrors({});
             return true;
         }
     };
@@ -260,10 +275,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!ui.radioDeferida || !ui.radioIndeferida) return;
             
             if (ui.radioDeferida.checked) {
-                // DEFERIDA
                 if(ui.containerSubTipo) ui.containerSubTipo.style.display = 'flex';
                 
-                // Se estava marcado como Indeferimento (híbrido) e estamos editando, limpa
+                // Se mudar de Indeferida para Deferida, limpa seleções antigas para forçar escolha
                 if (ui.radioTipoIndeferimento && ui.radioTipoIndeferimento.checked && ui.enableEdit.checked) {
                     ui.radioTipoIndeferimento.checked = false;
                     if(ui.radioTotal) ui.radioTotal.checked = false;
@@ -271,13 +285,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } 
             else if (ui.radioIndeferida.checked) {
-                // INDEFERIDA
                 if(ui.containerSubTipo) ui.containerSubTipo.style.display = 'none';
-                
-                // Marca radio oculto
                 if (ui.radioTipoIndeferimento) ui.radioTipoIndeferimento.checked = true;
                 
-                // Limpa visualmente Total/Parcial se estiver editando
                 if (ui.enableEdit.checked) {
                     if (ui.radioTotal) ui.radioTotal.checked = false;
                     if (ui.radioParcial) ui.radioParcial.checked = false;
@@ -291,30 +301,25 @@ document.addEventListener('DOMContentLoaded', () => {
         handleTipoChange: () => {
             if (!ui.containerAreaDesembargada || !ui.inputAreaDesembargada) return;
 
-            // 1. Desinterdição (Oculto)
-            if (ui.radioTipoDesinterdicao && ui.radioTipoDesinterdicao.checked) {
+            // Se for oculto (Desinterdição ou Indeferimento), esconde a área
+            if ((ui.radioTipoDesinterdicao && ui.radioTipoDesinterdicao.checked) || 
+                (ui.radioTipoIndeferimento && ui.radioTipoIndeferimento.checked)) {
                  ui.containerAreaDesembargada.style.display = 'none'; 
                  return;
             }
-            // 2. Indeferimento (Oculto)
-            if (ui.radioTipoIndeferimento && ui.radioTipoIndeferimento.checked) {
-                 ui.containerAreaDesembargada.style.display = 'none';
-                 return;
-            }
 
-            // 3. Total vs Parcial
             if (ui.radioTotal && ui.radioTotal.checked) {
-                // TOTAL
-                ui.containerAreaDesembargada.style.display = 'flex';
+                // TOTAL: Esconde o input, mas mantém no DOM para o FormData pegar (opcional, pois o businessLogic garante)
+                // A melhor UX aqui é esconder ou deixar readonly. Vamos esconder conforme seu padrão.
+                ui.containerAreaDesembargada.style.display = 'none'; // ou 'flex' com readonly se preferir ver
                 
                 if (ui.enableEdit.checked) {
                     visualLogic.copyAreaEmbargadaToDesembargada();
                     ui.inputAreaDesembargada.readOnly = true; 
-                    ui.inputAreaDesembargada.style.backgroundColor = "#f0f0f0";
                 }
             } 
             else if (ui.radioParcial && ui.radioParcial.checked) {
-                // PARCIAL
+                // PARCIAL: Mostra e libera edição
                 ui.containerAreaDesembargada.style.display = 'flex';
                 
                 if (ui.enableEdit.checked) {
@@ -322,7 +327,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     ui.inputAreaDesembargada.style.backgroundColor = "#fff";
                 }
             } else {
-                // Nenhum (Estado inicial)
                 ui.containerAreaDesembargada.style.display = 'none';
             }
         },
@@ -331,6 +335,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ui.radioTotal && ui.radioTotal.checked && ui.inputAreaEmbargada && ui.inputAreaDesembargada) {
                 if(ui.inputAreaEmbargada.value) {
                     ui.inputAreaDesembargada.value = ui.inputAreaEmbargada.value;
+                } else {
+                    ui.inputAreaDesembargada.value = '';
                 }
             }
         }
@@ -530,24 +536,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const fieldName = field.name;
             if (!fieldName) return;
 
-            // Validação contextual (Área vs Área Embargada)
+            const currentErrorEl = document.getElementById(`error-${fieldName}`);
+            if (currentErrorEl) currentErrorEl.textContent = '';
+
             let dataToValidate = { [fieldName]: field.value };
-            if (fieldName === 'area' || fieldName === 'areaEmbargada') {
+
+            // --- LÓGICA DE CONTEXTO ---
+            // Necessária para validar 'area' pois depende de 'tipoDesembargo' e 'areaEmbargada'
+            const camposCruzados = ['area', 'areaEmbargada', 'tipoDesembargo', 'deliberacaoAutoridade', 'parecerTecnico'];
+            
+            if (camposCruzados.includes(fieldName)) {
                 const formData = new FormData(ui.form);
                 dataToValidate = Object.fromEntries(formData.entries());
-                // Ajuste de tipos
+
+                // Injeta manualmente os radios para garantir que o Joi receba o valor
+                const tipoRadio = ui.form.querySelector('input[name="tipoDesembargo"]:checked');
+                if (tipoRadio) dataToValidate.tipoDesembargo = tipoRadio.value;
+
+                const delibRadio = ui.form.querySelector('input[name="deliberacaoAutoridade"]:checked');
+                if (delibRadio) dataToValidate.deliberacaoAutoridade = delibRadio.value;
+
+                // Limpa strings vazias
                 if(dataToValidate.area === '') dataToValidate.area = null;
                 if(dataToValidate.areaEmbargada === '') dataToValidate.areaEmbargada = null;
+                if(dataToValidate.numeroSEP === '') dataToValidate.numeroSEP = null;
+                if(dataToValidate.numeroEdocs === '') dataToValidate.numeroEdocs = null;
             }
 
             try {
                 const result = await api.validateForm(dataToValidate);
-                const errorEl = document.getElementById(`error-${fieldName}`);
-                if (errorEl) errorEl.textContent = result.errors?.[fieldName] ?? '';
+                if (currentErrorEl) currentErrorEl.textContent = result.errors?.[fieldName] ?? '';
                 
+                // Se mudou a área embargada, revalida visualmente a área desembargada (caso seja maior que a embargada)
                 if (fieldName === 'areaEmbargada') {
-                     const errorArea = document.getElementById(`error-area`);
-                     if(errorArea) errorArea.textContent = result.errors?.area ?? '';
+                    const errorArea = document.getElementById(`error-area`);
+                    if(errorArea) errorArea.textContent = result.errors?.area ?? '';
                 }
             } catch (e) { console.error(e); }
         },
@@ -591,14 +614,33 @@ document.addEventListener('DOMContentLoaded', () => {
              } catch(e) { window.UI.showToast('Erro busca.', 'error'); }
              finally { ui.btnBuscarSEP.disabled = false; }
         },
-        onNumeroEmbargoBlur: async (event) => { /* Valida número */
+         onNumeroEmbargoBlur: async (event) => { 
             const numero = event.target.value.trim();
-            if(!numero) { view.setEmbargoCheckMessage('', ''); return; }
+            view.setEmbargoCheckMessage('', ''); 
+            
+            if(!numero) return;
+
+            try {
+                const validationResult = await api.validateForm({ numero: numero });
+                if (validationResult.errors && validationResult.errors.numero) {
+                    view.setEmbargoCheckMessage(validationResult.errors.numero, 'error');
+                    return; 
+                }
+            } catch (e) {
+                console.error("Erro na validação local do número", e);
+                return;
+            }
+
             try {
                 const found = await api.checkEmbargoExists(numero);
-                if(found) view.setEmbargoCheckMessage('✓ Embargo encontrado', 'success');
-                else view.setEmbargoCheckMessage('Embargo não encontrado no banco.', 'error');
-            } catch(e) { view.setEmbargoCheckMessage('Erro.', 'error'); }
+                if(found) {
+                    view.setEmbargoCheckMessage('Embargo encontrado', 'success');
+                } else {
+                    view.setEmbargoCheckMessage('Embargo não encontrado.', 'error');
+                }
+            } catch(e) { 
+                view.setEmbargoCheckMessage('Erro ao consultar.', 'error'); 
+            }
         }
     };
     

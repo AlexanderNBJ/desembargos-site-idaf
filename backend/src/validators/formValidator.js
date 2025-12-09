@@ -196,7 +196,6 @@ const formSchema = Joi.object({
   area: Joi.number()
     .empty('')
     .positive()
-    .allow(null)
     .when('deliberacaoAutoridade', {
       is: 'DEFERIDA',
       then: Joi.when('tipoDesembargo', {
