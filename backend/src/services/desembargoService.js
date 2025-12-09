@@ -129,31 +129,31 @@ function _drawPdfInfoBlock(doc, y, desembargo) {
 
   // Lista completa de campos
   const infoFields = [
-    { label: "Termo de Embargo", value: `${desembargo.numero || '-'} ${desembargo.serie || '-'}` },
-    { label: "Processo Simlam",            value: desembargo.processoSimlam || '-' },
-    { label: "Processo E-Docs",            value: desembargo.numeroEdocs || '-' },
+    { label: "Termo de embargo", value: `${desembargo.numero || '-'} ${desembargo.serie || '-'}` },
+    { label: "Processo SIMLAM",            value: desembargo.processoSimlam || '-' },
+    { label: "Processo E-docs",            value: desembargo.numeroEdocs || '-' },
     { label: "Número do SEP",              value: desembargo.numeroSEP || '-' },
     { label: "Autuado",                    value: desembargo.nomeAutuado || '-' },
     
-    { label: "Data do Embargo",            value: formatDate(desembargo.dataEmbargo) },
-    { label: "Área Embargada",             value: `${desembargo.areaEmbargada || '-'} ha` },
-    { label: "Parecer Técnico",            value: (desembargo.parecerTecnico || '-').toUpperCase() },
+    { label: "Data do embargo",            value: formatDate(desembargo.dataEmbargo) },
+    { label: "Área embargada",             value: `${desembargo.areaEmbargada || '-'} ha` },
+    { label: "Parecer técnico",            value: (desembargo.parecerTecnico || '-').toUpperCase() },
     { label: "Deliberação",  value: (desembargo.deliberacaoAutoridade || '-').toUpperCase() },
     
     // Este campo será filtrado abaixo se for Indeferimento
-    { label: "Tipo de Desembargo",         value: (desembargo.tipoDesembargo || '-').toUpperCase() },
+    { label: "Tipo de desembargo",         value: (desembargo.tipoDesembargo || '-').toUpperCase() },
     
-    { label: "Área Desembargada",          value: `${desembargo.area || '-'} ha` },
-    { label: "Data do Desembargo",         value: formatDate(desembargo.dataDesembargo) },
+    { label: "Área desembargada",          value: `${desembargo.area || '-'} ha` },
+    { label: "Data do desembargo",         value: formatDate(desembargo.dataDesembargo) },
     { label: "Coordenadas UTM",            value: `X(m): ${desembargo.coordenadaX || '-'}, Y(m): ${desembargo.coordenadaY || '-'}` },
   ];
 
   // FILTRO: Remove "Tipo de Desembargo" se for INDEFERIMENTO
   const fieldsToDisplay = infoFields.filter(item => {
-    if (item.label === "Tipo de Desembargo" && desembargo.tipoDesembargo === "INDEFERIMENTO") {
+    if (item.label === "Tipo de desembargo" && desembargo.tipoDesembargo === "INDEFERIMENTO") {
         return false; // Não exibe
     }
-    if(item.label === "Área Desembargada" && desembargo.tipoDesembargo === "INDEFERIMENTO"){
+    if(item.label === "Área desembargada" && desembargo.tipoDesembargo === "INDEFERIMENTO"){
       return false;
     }
     return true; // Exibe os demais

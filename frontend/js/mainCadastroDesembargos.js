@@ -389,33 +389,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Lista completa de campos
             const infoFields = [
-                { label: "Termo de Embargo",  value: `${formData.numero || '-'} ${formData.serie?.toUpperCase() || '-'}` },
-                { label: "Processo Simlam",             value: formData.processoSimlam || '-' },
-                { label: "Processo E-Docs",             value: formData.numeroEdocs || '-' },
+                { label: "Termo de embargo",  value: `${formData.numero || '-'} ${formData.serie?.toUpperCase() || '-'}` },
+                { label: "Processo SIMLAM",             value: formData.processoSimlam || '-' },
+                { label: "Processo E-docs",             value: formData.numeroEdocs || '-' },
                 { label: "Número do SEP",               value: formData.numeroSEP || '-' },
                 { label: "Autuado",                     value: formData.nomeAutuado?.toUpperCase() || '-' },
 
-                { label: "Data do Embargo",             value: formData.dataEmbargo ? (new Date(formData.dataEmbargo)).toLocaleDateString() : '-' },
-                { label: "Área Embargada",              value: `${formData.areaEmbargada ?? '-'} ${formData.areaEmbargada ? 'ha' : ''}` },
-                { label: "Parecer Técnico",             value: (formData.parecerTecnico || '-').toUpperCase() },
+                { label: "Data do embargo",             value: formData.dataEmbargo ? (new Date(formData.dataEmbargo)).toLocaleDateString() : '-' },
+                { label: "Área embargada",              value: `${formData.areaEmbargada ?? '-'} ${formData.areaEmbargada ? 'ha' : ''}` },
+                { label: "Parecer técnico",             value: (formData.parecerTecnico || '-').toUpperCase() },
                 { label: "Deliberação",                 value: formData.deliberacaoAutoridade || '-' },
                 
                 // Este campo será filtrado se for indeferimento
-                { label: "Tipo de Desembargo",          value: (formData.tipoDesembargo || '-').toUpperCase() },
+                { label: "Tipo de desembargo",          value: (formData.tipoDesembargo || '-').toUpperCase() },
                 
-                { label: "Área Desembargada",           value: `${formData.area ?? '-'} ${formData.area && formData.area !== '-' ? 'ha' : ''}` },
-                { label: "Data do Desembargo",          value: formData.dataDesembargo ? (new Date(formData.dataDesembargo)).toLocaleDateString() : '-' },
+                { label: "Área desembargada",           value: `${formData.area ?? '-'} ${formData.area && formData.area !== '-' ? 'ha' : ''}` },
+                { label: "Data do desembargo",          value: formData.dataDesembargo ? (new Date(formData.dataDesembargo)).toLocaleDateString() : '-' },
                 { label: "Coordenadas UTM",             value: `X(m): ${formData.coordenadaX ?? '-'}, Y(m): ${formData.coordenadaY ?? '-'}` },
             ];
 
             // --- FILTRO LÓGICO ---
             const fieldsToDisplay = infoFields.filter(item => {
-                if (item.label === "Tipo de Desembargo") {
+                if (item.label === "Tipo de desembargo") {
                     if (tipoUpper === 'INDEFERIMENTO' || deliberacaoUpper === 'INDEFERIDA') {
                         return false; // Não exibe a linha
                     }
                 }
-                if(item.label === 'Área Desembargada'){
+                if(item.label === 'Área desembargada'){
                     if(tipoUpper === 'INDEFERIMENTO' || deliberacaoUpper === 'INDEFERIDA'){
                         return false;
                     }
@@ -639,7 +639,7 @@ document.addEventListener('DOMContentLoaded', () => {
         onSearchProcessoClick: async () => {
             const processo = ui.form.elements.processoSimlam.value.trim().replace(/^0+/, '');
             if (!processo) {
-                window.UI.showToast("Informe o número do processo Simlam para buscar.", "info");
+                window.UI.showToast("Informe o número do processo SIMLAM para buscar.", "info");
                 return;
             }
             view.setSearchMessage('', '');
