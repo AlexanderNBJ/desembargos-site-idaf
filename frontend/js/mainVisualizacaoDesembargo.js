@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         prepareDataForUpdate: () => {
             const data = Object.fromEntries(new FormData(ui.form).entries());
             
-            // 1. Garante captura correta dos Radios
+            // 1. Garante Radios
             const radioTipo = ui.form.querySelector('input[name="tipoDesembargo"]:checked');
             data.tipoDesembargo = radioTipo ? radioTipo.value : null;
             
@@ -213,43 +213,41 @@ document.addEventListener('DOMContentLoaded', () => {
             const radioDeliberacao = ui.form.querySelector('input[name="deliberacaoAutoridade"]:checked');
             data.deliberacaoAutoridade = radioDeliberacao ? radioDeliberacao.value : null;
 
-            // 2. Tratamento de Datas
+            // 2. Datas
             if (ui.form.dataDesembargo?.value) {
                 const [ano, mes, dia] = ui.form.dataDesembargo.value.split('-');
                 const dt = new Date(ano, Number(mes) - 1, Number(dia));
                 data.dataDesembargo = dt.toISOString();
-            } else {
-                data.dataDesembargo = null;
-            }
+            } else { data.dataDesembargo = null; }
             
             if (ui.form.dataEmbargo?.value) {
                 const [ano, mes, dia] = ui.form.dataEmbargo.value.split('-');
                 const dt = new Date(ano, Number(mes) - 1, Number(dia));
                 data.dataEmbargo = dt.toISOString();
-            } else {
-                data.dataEmbargo = null;
-            }
+            } else { data.dataEmbargo = null; }
 
-            // 3. Limpeza de strings vazias para evitar erro de tipo
-            ['area', 'areaEmbargada', 'coordenadaX', 'coordenadaY', 'numeroSEP'].forEach(k => {
+            // 3. Limpeza e CONVERSÃO DE NÚMEROS (IMPORTANTE)
+            ['area', 'areaEmbargada', 'coordenadaX', 'coordenadaY'].forEach(k => {
+                if (data[k] && typeof data[k] === 'string') {
+                    data[k] = data[k].replace(',', '.'); // Troca vírgula por ponto
+                }
                 if (data[k] === "") data[k] = null;
             });
+            if (data.numeroSEP === "") data.numeroSEP = null;
+            if (data.numeroEdocs === "") data.numeroEdocs = null;
 
-            // 4. --- LÓGICA CRÍTICA PARA ÁREA OBRIGATÓRIA ---
-            // Se for TOTAL, garantimos que a área desembargada seja enviada igual à embargada,
-            // independentemente do estado visual do input.
+            // 4. Lógica Área Total
             if (data.tipoDesembargo === 'TOTAL' && data.areaEmbargada) {
                 data.area = data.areaEmbargada;
             }
 
-            // 5. Definições de Status (apenas para usuário comum)
+            // 5. Status
             if (pageState.currentUserInfo.role === 'COMUM') {
                 data.status = 'EM ANÁLISE';
                 if (!data.responsavelDesembargo) 
                     data.responsavelDesembargo = pageState.currentUserInfo.username;
             }
             
-            Object.keys(data).forEach(k => { if (data[k] === "") data[k] = null; });
             return data;
         },
         validateFullForm: async () => {
@@ -517,12 +515,36 @@ document.addEventListener('DOMContentLoaded', () => {
     const handlers = {
         onUpdateClick: async (e) => {
             e.preventDefault();
+            
+            // 1. Verifica permissão básica
             const canEdit = businessLogic.canUserEdit(pageState.currentUserInfo, pageState.currentRecord);
             if (!canEdit) { window.UI.showToast("Sem permissão.", "error"); return; }
+
+            // 2. BLOQUEIO MANUAL DE SEGURANÇA (A validação matemática)
+            // Impede o envio se for Parcial e a Área Desembargada >= Embargada
+            if (ui.radioParcial && ui.radioParcial.checked && ui.inputAreaDesembargada && ui.inputAreaEmbargada) {
+                const valArea = parseFloat(ui.inputAreaDesembargada.value.replace(',', '.'));
+                const valEmbargada = parseFloat(ui.inputAreaEmbargada.value.replace(',', '.'));
+
+                if (!isNaN(valArea) && !isNaN(valEmbargada)) {
+                    if (valArea >= valEmbargada) {
+                        // Mostra msg no campo
+                        const errorEl = document.getElementById('error-area');
+                        if (errorEl) errorEl.textContent = 'A área desembargada deve ser menor que a área embargada.';
+                        
+                        // Mostra Toast e Aborta
+                        window.UI.showToast("Corrija os erros no formulário.", "error");
+                        ui.inputAreaDesembargada.focus();
+                        return; // <--- BLOQUEIO
+                    }
+                }
+            }
             
+            // 3. Validação completa via API (Joi)
             const isFormValid = await businessLogic.validateFullForm();
             if (!isFormValid) return;
 
+            // 4. Envio
             const data = businessLogic.prepareDataForUpdate();
             try {
                 await api.update(pageState.desembargoId, data);
@@ -536,41 +558,76 @@ document.addEventListener('DOMContentLoaded', () => {
             const fieldName = field.name;
             if (!fieldName) return;
 
+            // Limpa erro anterior
             const currentErrorEl = document.getElementById(`error-${fieldName}`);
             if (currentErrorEl) currentErrorEl.textContent = '';
 
+            // --- 1. VALIDAÇÃO MANUAL VISUAL (Feedback imediato) ---
+            if ((fieldName === 'area' || fieldName === 'areaEmbargada') && ui.radioParcial && ui.radioParcial.checked) {
+                const areaInput = document.getElementById('area');
+                const embargadaInput = document.getElementById('areaEmbargada');
+                const errorAreaEl = document.getElementById('error-area');
+
+                if (areaInput && embargadaInput && errorAreaEl) {
+                    const valArea = parseFloat(areaInput.value.replace(',', '.'));
+                    const valEmbargada = parseFloat(embargadaInput.value.replace(',', '.'));
+
+                    if (!isNaN(valArea) && !isNaN(valEmbargada)) {
+                        if (valArea >= valEmbargada) {
+                            errorAreaEl.textContent = 'A área desembargada deve ser menor que a área embargada.';
+                            // Se o campo atual é a área, paramos aqui para a API não limpar essa mensagem
+                            if (fieldName === 'area') return; 
+                        } else {
+                            errorAreaEl.textContent = '';
+                        }
+                    }
+                }
+            }
+
+            // --- 2. Validação via API (Joi) ---
             let dataToValidate = { [fieldName]: field.value };
 
-            // --- LÓGICA DE CONTEXTO ---
-            // Necessária para validar 'area' pois depende de 'tipoDesembargo' e 'areaEmbargada'
+            // Lógica de Contexto Cruzado
             const camposCruzados = ['area', 'areaEmbargada', 'tipoDesembargo', 'deliberacaoAutoridade', 'parecerTecnico'];
             
             if (camposCruzados.includes(fieldName)) {
                 const formData = new FormData(ui.form);
                 dataToValidate = Object.fromEntries(formData.entries());
 
-                // Injeta manualmente os radios para garantir que o Joi receba o valor
+                // Força envio dos Radios
                 const tipoRadio = ui.form.querySelector('input[name="tipoDesembargo"]:checked');
                 if (tipoRadio) dataToValidate.tipoDesembargo = tipoRadio.value;
 
                 const delibRadio = ui.form.querySelector('input[name="deliberacaoAutoridade"]:checked');
                 if (delibRadio) dataToValidate.deliberacaoAutoridade = delibRadio.value;
 
-                // Limpa strings vazias
-                if(dataToValidate.area === '') dataToValidate.area = null;
-                if(dataToValidate.areaEmbargada === '') dataToValidate.areaEmbargada = null;
+                // Tratamento Numérico (Vírgula -> Ponto) para a API entender
+                if (dataToValidate.area) dataToValidate.area = dataToValidate.area.replace(',', '.');
+                if (dataToValidate.areaEmbargada) dataToValidate.areaEmbargada = dataToValidate.areaEmbargada.replace(',', '.');
+
+                // Limpeza de nulos
                 if(dataToValidate.numeroSEP === '') dataToValidate.numeroSEP = null;
                 if(dataToValidate.numeroEdocs === '') dataToValidate.numeroEdocs = null;
             }
 
             try {
                 const result = await api.validateForm(dataToValidate);
-                if (currentErrorEl) currentErrorEl.textContent = result.errors?.[fieldName] ?? '';
                 
-                // Se mudou a área embargada, revalida visualmente a área desembargada (caso seja maior que a embargada)
+                // Só atualiza o erro da API na 'area' se não houver erro manual pendente ou se não for Parcial
+                if (fieldName === 'area' && ui.radioParcial && ui.radioParcial.checked) {
+                     if (result.errors?.area) {
+                        if (currentErrorEl) currentErrorEl.textContent = result.errors.area;
+                     }
+                } else {
+                     if (currentErrorEl) currentErrorEl.textContent = result.errors?.[fieldName] ?? '';
+                }
+                
+                // Validação Cruzada: Atualiza erro da área se mexer na embargada
                 if (fieldName === 'areaEmbargada') {
                     const errorArea = document.getElementById(`error-area`);
-                    if(errorArea) errorArea.textContent = result.errors?.area ?? '';
+                    if(errorArea && result.errors?.area) {
+                        errorArea.textContent = result.errors.area;
+                    }
                 }
             } catch (e) { console.error(e); }
         },

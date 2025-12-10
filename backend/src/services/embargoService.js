@@ -62,7 +62,7 @@ exports.findByProcesso = async (processo) => {
 
 exports.findBySEP = async (processo) => {
   const result = await pool.query(
-    `SELECT n_iuf_emb, serie, numero_sep, northing, easting
+    `SELECT n_iuf_emb, serie, numero_sep, northing, easting, data_embargo
       FROM ${schema}.${embargosLegacyTable} WHERE numero_sep = $1 LIMIT 1`,
     [processo]
   );

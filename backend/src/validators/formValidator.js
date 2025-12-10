@@ -199,31 +199,25 @@ const formSchema = Joi.object({
     .positive()
     .when('tipoDesembargo', {
       is: 'INDEFERIMENTO',
-      then: Joi.allow(null).optional(), // Se INDEFERIMENTO, pode ser nulo ou opcional
-      otherwise: Joi.when('deliberacaoAutoridade', { // Caso contrário (DEFERIDA, etc.)
+      then: Joi.allow(null).optional(), 
+      otherwise: Joi.when('deliberacaoAutoridade', { 
         is: 'DEFERIDA',
         then: Joi.when('tipoDesembargo', {
-          // Se for PARCIAL: Obrigatório e MENOR que a área embargada
           is: 'PARCIAL',
-          then: Joi.number().required().less(Joi.ref('areaEmbargada'))
+          // O 'adjust' converte o valor de referência para número antes de comparar
+          then: Joi.number().required().less(Joi.ref('areaEmbargada', { adjust: (val) => Number(val) }))
             .messages({
               'number.less': 'A área desembargada deve ser menor que a área embargada.',
               'any.required': 'A área desembargada é obrigatória para deferimentos parciais.',
               'number.base': commonMessages.number.base,
             }),
-          // Se for TOTAL: Obrigatório (O front deve copiar, mas validamos aqui)
-          is: 'TOTAL', // Use 'is' explicitamente para clareza, ou mantenha no otherwise do when anterior se preferir a cascata
+          is: 'TOTAL', 
           then: Joi.number().required().messages({
               'any.required': 'A área desembargada é obrigatória.'
           }),
-          // Caso sobrem outros tipos de deferimento que exijam área, o required do otherwise abaixo cobre, ou ajuste conforme necessidade.
-          otherwise: Joi.number().required().messages({ // Garante que se não for INDEFERIMENTO (e caiu no otherwise inicial), seja required
-             'any.required': 'A área desembargada é obrigatória.'
-          })
+          otherwise: Joi.number().required()
         }),
-        otherwise: Joi.allow(null) // Se deliberacaoAutoridade não for DEFERIDA (ex: INDEFERIDA), area pode ser null. 
-                                   // Nota: Se 'tipoDesembargo' for INDEFERIMENTO, já caiu no primeiro 'then'. 
-                                   // Isso cobre casos onde a lógica de negócio possa ter combinações diferentes.
+        otherwise: Joi.allow(null) 
       })
     })
     .messages({

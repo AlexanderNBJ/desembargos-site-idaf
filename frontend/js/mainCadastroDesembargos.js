@@ -1,16 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Verifica autenticação antes de iniciar
     if (!Auth.initAuth()) { 
         return;
     }
 
-    // --- MÓDULO DE ESTADO ---
     const pageState = {
         currentUserInfo: null, 
         currentPreviewUrl: null,
     };
 
-    // --- MÓDULO DE UI (Seletores e Elementos) ---
     const ui = {
         form: document.getElementById('desembargoForm'),
         
@@ -48,22 +45,24 @@ document.addEventListener('DOMContentLoaded', () => {
         containerAreaDesembargada: document.getElementById('containerAreaDesembargada'),
         inputAreaDesembargada: document.getElementById('area'),
         inputAreaEmbargada: document.getElementById('areaEmbargada'),
-        enableEdit: document.getElementById('enableEdit'), // Caso use no logic
+        enableEdit: document.getElementById('enableEdit'),
     };
   
-    // --- MÓDULO DE UTILITÁRIOS ---
     const utils = {
         getCurrentUserInfo: () => {
             const u = Auth.getSessionUser();
+            
             return {
                 username: u?.username || u?.email || u?.name || null,
                 name: u?.name || u?.username || null,
                 position: u?.position || null,
             };
         },
+
         // Transforma dados brutos do banco para o formato do formulário
         normalizeEmbargoData: (row) => {
-            if (!row) return {};
+            if (!row) 
+                return {};
             
             const pick = (o, ...keys) => {
                 for (const k of keys){ 
@@ -74,103 +73,85 @@ document.addEventListener('DOMContentLoaded', () => {
                 return undefined;
             };
 
-            const { numeroSEP, numeroEdocs } = utils.separarSepEdocs(pick(row, 'sep_edocs'));
             
             return {
                 numero:         pick(row, 'n_iuf_emb', 'numero_embargo', 'numero'),
                 serie:          pick(row, 'serie_embargo', 'serie'),
                 processoSimlam: pick(row, 'processo', 'processo_simlam'),
                 nomeAutuado:    pick(row, 'nome_autuado', 'autuado', 'nome'),
-                
-                // Mapeia área original do embargo (se vier do banco)
                 areaEmbargada:  pick(row, 'area_embargada', 'area', 'area_desembargada'), 
-                
                 coordenadaX:    pick(row, 'easting', 'easting_m', 'coordenada_x', 'coordenadaX'),
                 coordenadaY:    pick(row, 'northing', 'northing_m', 'coordenada_y', 'coordenadaY'),
-                
-                // Mapeia data original do embargo
                 dataEmbargo:    pick(row, 'data_embargo', 'data'),
-
                 descricao:      pick(row, 'descricao', 'obs'),
-                numeroSEP:      pick(row, 'numeroSEP') || numeroSEP,
-                numeroEdocs:    pick(row, 'numeroEdocs') || numeroEdocs,
+                numeroSEP:      pick(row, 'numeroSEP'),
+                numeroEdocs:    pick(row, 'numeroEdocs')
             };
-        },
-        separarSepEdocs: (valor) => {
-            if (!valor) return { numeroSEP: null, numeroEdocs: null };
-            const seped = String(valor);
-            // Verifica formato simples de E-Docs (ex: 2024-...)
-            if (/^\d{4}-/.test(seped) || seped.includes('-')) {
-                return { numeroSEP: null, numeroEdocs: seped };
-            }
-            return { numeroSEP: seped, numeroEdocs: null };
         },
     };
 
-    // --- MÓDULO DA VIEW (Manipulação do DOM) ---
     const view = {
         fillForm: (data) => {
-            if (!data || !ui.form) return;
+            if (!data || !ui.form) 
+                return;
             
-            // 1. Preenche inputs normais (Texto, Data, Select, Number)
             Object.keys(data).forEach(key => {
                 if (data[key] !== null && data[key] !== undefined) {
                     const el = ui.form.elements[key];
+
                     if (el && el.type !== 'radio') { 
-                        // Tratamento para datas
                         if (el.type === 'date' && typeof data[key] === 'string' && data[key].includes('T')) {
-                             el.value = data[key].split('T')[0];
-                        } else {
-                             el.value = data[key];
+                            el.value = data[key].split('T')[0];
+                        }
+                        else {
+                            el.value = data[key];
                         }
                     }
+
                     if (el.type === 'date' && typeof data[key] === 'string' && data[key].includes('T')) {
                         el.value = data[key].split('T')[0];
-                    } else {
-                        el.value = data[key]; // Se já vier YYYY-MM-DD do backend, cai aqui e preenche direto
+                    } 
+                    else {
+                        el.value = data[key];
                     }
                 }
             });
             
-            // 2. Marca Parecer
             if (data.parecerTecnico) {
-                 const r = ui.form.querySelector(`input[name="parecerTecnico"][value="${data.parecerTecnico}"]`);
-                 if(r) r.checked = true;
+                const r = ui.form.querySelector(`input[name="parecerTecnico"][value="${data.parecerTecnico}"]`);
+
+                if(r) 
+                    r.checked = true;
             }
 
-            // 3. Marca Deliberação
             if (data.deliberacaoAutoridade) {
-                 const r = ui.form.querySelector(`input[name="deliberacaoAutoridade"][value="${data.deliberacaoAutoridade}"]`);
-                 if(r) r.checked = true;
+                const r = ui.form.querySelector(`input[name="deliberacaoAutoridade"][value="${data.deliberacaoAutoridade}"]`);
+                
+                if(r)
+                    r.checked = true;
             }
 
-            // 4. Marca Tipo (Pode ser TOTAL, PARCIAL, INDEFERIMENTO ou DESINTERDIÇÃO)
             if (data.tipoDesembargo) {
                 const tipoValue = String(data.tipoDesembargo).toUpperCase();
-
-                // Se for Desinterdição (para visualização), precisamos mostrar o label antes de marcar
                 const labelDesinterdicao = document.getElementById('labelDesinterdicao');
+
                 if (labelDesinterdicao && (tipoValue === 'DESINTERDIÇÃO' || tipoValue === 'DESINTERDICAO')) {
                     labelDesinterdicao.style.display = 'inline-flex';
                 }
 
-                // Busca o rádio correspondente (seja nos visíveis ou nos ocultos)
                 const radio = ui.form.querySelector(`input[name="tipoDesembargo"][value="${tipoValue}"]`);
-                if (radio) radio.checked = true;
+
+                if (radio) 
+                    radio.checked = true;
             }
 
-            // 5. Executa a lógica visual para mostrar/esconder as áreas certas
-            // Isso vai esconder a área se for Indeferimento, ou mostrar se for Deferida
             logic.handleDeliberacaoChange();
             logic.handleTipoChange();
-
-            // 6. Cópia de segurança APENAS se for Total
-            // A função logic.copyAreaEmbargadaToDesembargada() JÁ DEVE ter a verificação "if (radioTotal.checked)", 
-            // mas colocar aqui também não faz mal.
             logic.copyAreaEmbargadaToDesembargada();
         },
         clearForm: (preserveField = null) => {
-            if (!ui.form) return;
+            if (!ui.form) 
+                return;
 
             const fieldsToClear = [
                 'numero', 'serie', 'nomeAutuado', 'processoSimlam',
@@ -180,6 +161,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             fieldsToClear.forEach(fieldName => {
                 const el = ui.form.elements[fieldName];
+
                 if (fieldName !== preserveField && el) { 
                     el.value = '';
                 }
@@ -198,8 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const radioIndeferida = document.getElementById('radioIndeferida');
             if (radioIndeferida) radioIndeferida.checked = false;
 
-
-
             // Limpa erros e mensagens
             document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
             if (ui.mensagemBusca) ui.mensagemBusca.textContent = '';
@@ -209,14 +189,17 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         displayValidationErrors: (errors) => {
             document.querySelectorAll('.error-msg').forEach(el => el.textContent = '');
+
             for (const field in errors) {
                 const errorEl = document.getElementById(`error-${field}`);
+
                 if (errorEl) {
                     errorEl.textContent = errors[field];
                 }
             }
         },
         setSearchMessage: (message, type) => {
+
             if(ui.mensagemBusca) {
                 ui.mensagemBusca.textContent = message;
                 ui.mensagemBusca.className = `mensagem-validacao ${type}`;
@@ -224,55 +207,82 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         setEmbargoCheckMessage: (message, type) => {
             const msgEl = document.getElementById('mensagem-numero');
-            if (!msgEl) return;
+
+            if (!msgEl) 
+                return;
+
             msgEl.textContent = '';
             msgEl.classList.remove('sucesso', 'erro');
+
             if (message) {
                 msgEl.textContent = message;
+
                 if (type === 'success' || type === 'error') {
                     msgEl.className = `mensagem-validacao ${type}`;
                 }
             }
         },
         openModal: () => {
-            if (!ui.modal) return;
+            if (!ui.modal) 
+                return;
+
             ui.modal.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
         },
         closeModal: () => {
-            if (!ui.modal) return;
+            if (!ui.modal) 
+                return;
             ui.modal.classList.add('hidden');
             document.body.style.overflow = '';
+
             if (pageState.currentPreviewUrl) {
                 URL.revokeObjectURL(pageState.currentPreviewUrl);
                 pageState.currentPreviewUrl = null;
             }
-            if (ui.iframePreview) ui.iframePreview.src = 'about:blank';
+
+            if (ui.iframePreview) 
+                ui.iframePreview.src = 'about:blank';
         },
         updateBuscaVisibility: (tipo) => {
             if (tipo === 'ate2012') {
-                if (ui.btnBuscarSEP) ui.btnBuscarSEP.style.display = 'flex';
-                if (ui.btnBuscar) ui.btnBuscar.style.display = 'none';
-            } else {
-                if (ui.btnBuscar) ui.btnBuscar.style.display = 'flex';
-                if (ui.btnBuscarSEP) ui.btnBuscarSEP.style.display = 'none';
+                if (ui.btnBuscarSEP) 
+                    ui.btnBuscarSEP.style.display = 'flex';
+
+                if (ui.btnBuscar) 
+                    ui.btnBuscar.style.display = 'none';
+            } 
+            else {
+                if (ui.btnBuscar) 
+                    ui.btnBuscar.style.display = 'flex';
+
+                if (ui.btnBuscarSEP) 
+                    ui.btnBuscarSEP.style.display = 'none';
             }
         },
     };
 
-    // --- MÓDULO DE API ---
     const api = {
         fetchEmbargoByProcesso: async (proc) => {
             const res = await Auth.fetchWithAuth(`/api/embargos/processo?valor=${encodeURIComponent(proc)}`);
-            if (res.status === 404) return null;
-            if (!res.ok) throw new Error('Falha na busca por processo');
+
+            if (res.status === 404) 
+                return null;
+            
+            if (!res.ok) 
+                throw new Error('Falha na busca por processo');
+            
             const json = await res.json();
             return json.embargo;
         },
         fetchEmbargoBySEP: async (sep) => {
             const res = await Auth.fetchWithAuth(`/api/embargos/sep?valor=${encodeURIComponent(sep)}`);
-            if (res.status === 404) return null;
-            if (!res.ok) throw new Error('Falha na busca por SEP');
+
+            if (res.status === 404) 
+                return null;
+            
+            if (!res.ok) 
+                throw new Error('Falha na busca por SEP');
+
             const json = await res.json();
             return json.embargo;
         },
@@ -291,12 +301,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
             });
             const result = await res.json();
-            if (!res.ok) throw new Error(result.message || "Erro ao inserir desembargo");
+            
+            if (!res.ok) 
+                throw new Error(result.message || "Erro ao inserir desembargo");
+
             return result;
         }
     };
 
-    // --- MÓDULO DE LÓGICA DE NEGÓCIO ---
     const logic = {
         prepareDataForSubmit: () => {
             const data = Object.fromEntries(new FormData(ui.form).entries());
@@ -318,19 +330,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 const [ano, mes, dia] = ui.form.dataDesembargo.value.split('-');
                 const dt = new Date(ano, Number(mes) - 1, Number(dia));
                 data.dataDesembargo = dt.toISOString();
-            } else {
+            } 
+            else {
                 data.dataDesembargo = null;
             }
 
-             // Trata data embargo
-             if (ui.form.dataEmbargo?.value) {
+            // Trata data embargo
+            if (ui.form.dataEmbargo?.value) {
                 const [ano, mes, dia] = ui.form.dataEmbargo.value.split('-');
                 const dt = new Date(ano, Number(mes) - 1, Number(dia));
                 data.dataEmbargo = dt.toISOString();
-            } else {
+            } 
+            else {
                 data.dataEmbargo = null;
             }
+
+            const camposNumericos = ['area', 'areaEmbargada', 'coordenadaX', 'coordenadaY'];
             
+            // Troca vírgula por ponto
+            camposNumericos.forEach(key => {
+                if (data[key] && typeof data[key] === 'string') {        
+                    data[key] = data[key].replace(',', '.');
+                }
+            });
+
             Object.keys(data).forEach(k => { if (data[k] === "") data[k] = null; });
             return data;
         },
@@ -462,35 +485,46 @@ document.addEventListener('DOMContentLoaded', () => {
             const blob = doc.output('blob');
             return URL.createObjectURL(blob);
         },
-        
-        // --- FUNÇÕES DE CONTROLE DE VISIBILIDADE (Deliberação/Área) ---
         handleDeliberacaoChange: () => {
-            if (!ui.radioDeferida || !ui.radioIndeferida) return;
+            if (!ui.radioDeferida || !ui.radioIndeferida) 
+                return;
             
             if (ui.radioDeferida.checked) {
-                if(ui.containerSubTipo) ui.containerSubTipo.style.display = 'flex';
-            } else {
-                if(ui.containerSubTipo) ui.containerSubTipo.style.display = 'none';
-                
-                // Se indeferida, reseta seleção
-                if (ui.radioTotal) ui.radioTotal.checked = false;
-                if (ui.radioParcial) ui.radioParcial.checked = false;
-                
+                if(ui.containerSubTipo)
+                    ui.containerSubTipo.style.display = 'flex';
+            } 
+            else {
+                if(ui.containerSubTipo)
+                    ui.containerSubTipo.style.display = 'none';
+
+                if (ui.radioTotal)
+                    ui.radioTotal.checked = false;
+
+                if (ui.radioParcial)
+                    ui.radioParcial.checked = false;
+
                 // Esconde area
-                if(ui.containerAreaDesembargada) ui.containerAreaDesembargada.style.display = 'none';
-                if(ui.inputAreaDesembargada) ui.inputAreaDesembargada.value = '';
+                if(ui.containerAreaDesembargada)
+                    ui.containerAreaDesembargada.style.display = 'none';
+
+                if(ui.inputAreaDesembargada)
+                    ui.inputAreaDesembargada.value = '';
             }
         },
         handleTipoChange: () => {
-            if (!ui.radioTotal || !ui.radioParcial) return;
+            if (!ui.radioTotal || !ui.radioParcial) 
+                return;
 
             if (ui.radioTotal.checked) {
-                // TOTAL: Esconde input e copia valor
-                if(ui.containerAreaDesembargada) ui.containerAreaDesembargada.style.display = 'none';
+                if(ui.containerAreaDesembargada) 
+                    ui.containerAreaDesembargada.style.display = 'none';
+
                 logic.copyAreaEmbargadaToDesembargada();
-            } else if (ui.radioParcial.checked) {
-                // PARCIAL: Mostra input vazio
-                if(ui.containerAreaDesembargada) ui.containerAreaDesembargada.style.display = 'flex';
+            } 
+            else if (ui.radioParcial.checked) {
+                if(ui.containerAreaDesembargada) 
+                    ui.containerAreaDesembargada.style.display = 'flex';
+
                 if(ui.inputAreaDesembargada) {
                     ui.inputAreaDesembargada.value = '';
                     ui.inputAreaDesembargada.focus();
@@ -503,89 +537,85 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         },
         handleDeliberacaoChange: () => {
-            if (!ui.radioDeferida || !ui.radioIndeferida) return;
+            if (!ui.radioDeferida || !ui.radioIndeferida) 
+                return;
             
             if (ui.radioDeferida.checked) {
-                // CASO 1: DEFERIDA
-                // Mostra opções de Total/Parcial
-                if(ui.containerSubTipo) ui.containerSubTipo.style.display = 'flex';
-                
-                // Se o tipo estava marcado como Indeferimento, limpa a seleção para obrigar o usuário a escolher Total ou Parcial
+                if(ui.containerSubTipo) 
+                    ui.containerSubTipo.style.display = 'flex';
+
                 if (ui.radioTipoIndeferimento.checked) {
                     ui.radioTipoIndeferimento.checked = false;
-                    // Limpa visualmente Total/Parcial para forçar escolha
                     ui.radioTotal.checked = false;
                     ui.radioParcial.checked = false;
                 }
                 
-                // Dispara lógica de area para ver se precisa mostrar/esconder baseada na seleção atual
                 logic.handleTipoChange();
 
-            } else if (ui.radioIndeferida.checked) {
-                // CASO 2: INDEFERIDA
-                // Esconde opções de Total/Parcial
-                if(ui.containerSubTipo) ui.containerSubTipo.style.display = 'none';
+            } 
+            else if (ui.radioIndeferida.checked) {
+                if(ui.containerSubTipo) 
+                    ui.containerSubTipo.style.display = 'none';
                 
-                // AUTOMATICAMENTE MARCA O TIPO COMO "INDEFERIMENTO"
                 if (ui.radioTipoIndeferimento) {
                     ui.radioTipoIndeferimento.checked = true;
                 }
                 
-                // Limpa seleções visuais de Total/Parcial
-                if (ui.radioTotal) ui.radioTotal.checked = false;
-                if (ui.radioParcial) ui.radioParcial.checked = false;
+                if (ui.radioTotal) 
+                    ui.radioTotal.checked = false;
+
+                if (ui.radioParcial) 
+                    ui.radioParcial.checked = false;
                 
-                // Esconde área desembargada (não há desembargo)
-                if(ui.containerAreaDesembargada) ui.containerAreaDesembargada.style.display = 'none';
-                if(ui.inputAreaDesembargada) ui.inputAreaDesembargada.value = '';
+                if(ui.containerAreaDesembargada)
+                    ui.containerAreaDesembargada.style.display = 'none';
+
+                if(ui.inputAreaDesembargada)
+                    ui.inputAreaDesembargada.value = '';
             }
             else{
-                if(ui.containerSubTipo) ui.containerSubTipo.style.display = 'none';
-                if (ui.radioTotal) ui.radioTotal.checked = false;
-                if (ui.radioParcial) ui.radioParcial.checked = false;
+                if(ui.containerSubTipo)
+                    ui.containerSubTipo.style.display = 'none';
+
+                if (ui.radioTotal)
+                    ui.radioTotal.checked = false;
+
+                if (ui.radioParcial)
+                    ui.radioParcial.checked = false;
             }
         },
-
         handleTipoChange: () => {
-            if (!ui.containerAreaDesembargada || !ui.inputAreaDesembargada) return;
+            if (!ui.containerAreaDesembargada || !ui.inputAreaDesembargada) 
+                return;
 
-            // Se for Desinterdição (vindo do banco ou marcado ocultamente)
             if (ui.radioTipoDesinterdicao && ui.radioTipoDesinterdicao.checked) {
-                 ui.containerAreaDesembargada.style.display = 'none';
-                 return;
+                ui.containerAreaDesembargada.style.display = 'none';
+                return;
             }
             
-            // Se for Indeferimento (marcado automaticamente)
             if (ui.radioTipoIndeferimento && ui.radioTipoIndeferimento.checked) {
-                 ui.containerAreaDesembargada.style.display = 'none';
-                 return;
+                ui.containerAreaDesembargada.style.display = 'none';
+                return;
             }
 
-            // Lógica Total vs Parcial
             if (ui.radioTotal && ui.radioTotal.checked) {
-                // TOTAL: Esconde input, copia valor
                 ui.containerAreaDesembargada.style.display = 'none';
                 logic.copyAreaEmbargadaToDesembargada();
             } 
             else if (ui.radioParcial && ui.radioParcial.checked) {
-                // PARCIAL: Mostra input
                 ui.containerAreaDesembargada.style.display = 'flex';
-                // Se estiver vazio, foca
+                
                 if(!ui.inputAreaDesembargada.value) {
                     ui.inputAreaDesembargada.focus();
                 }
             }
             else {
-                // Nenhum selecionado (estado inicial de Deferida)
                 ui.containerAreaDesembargada.style.display = 'none';
             }
         },
 
         copyAreaEmbargadaToDesembargada: () => {
-            // SÓ COPIA SE O RÁDIO "TOTAL" ESTIVER MARCADO
-            // Isso impede que sobrescreva valores parciais carregados do banco
             if (ui.radioTotal && ui.radioTotal.checked && ui.inputAreaEmbargada && ui.inputAreaDesembargada) {
-                // Copia apenas se o campo de origem tiver valor
                 if(ui.inputAreaEmbargada.value) {
                     ui.inputAreaDesembargada.value = ui.inputAreaEmbargada.value;
                 }
@@ -593,14 +623,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // --- MÓDULO DE HANDLERS ---
     const handlers = {
         onFormSubmit: async (e) => {
             e.preventDefault();
+
+            if (ui.radioParcial.checked && ui.inputAreaDesembargada && ui.inputAreaEmbargada) {
+                const valArea = parseFloat(ui.inputAreaDesembargada.value.replace(',', '.'));
+                const valEmbargada = parseFloat(ui.inputAreaEmbargada.value.replace(',', '.'));
+
+                if (!isNaN(valArea) && !isNaN(valEmbargada)) {
+                    if (valArea >= valEmbargada) {
+                        const errorEl = document.getElementById('error-area');
+                        if (errorEl) 
+                            errorEl.textContent = 'A área desembargada deve ser menor que a área embargada.';
+
+                        window.UI.showToast("Corrija os erros no formulário antes de enviar.", "error");
+                        ui.inputAreaDesembargada.focus();
+                        return;
+                    }
+                }
+            }
+
             const data = logic.prepareDataForSubmit();
             const isFormValid = await logic.validateFullForm(data);
 
-            if (!isFormValid) return;
+            if (!isFormValid) 
+                return;
 
             try {
                 if (pageState.currentPreviewUrl) 
@@ -613,7 +661,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 view.openModal();
                 window.UI.showToast('Prévia gerada. Revise e confirme o envio.', 'info');
-            } catch (error) {
+            } 
+            catch (error) {
                 console.error("Erro ao gerar prévia:", error);
                 window.UI.showToast("Erro ao gerar a prévia do documento.", "error");
             }
@@ -629,15 +678,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.UI.showToast("Desembargo inserido com sucesso!", "success");
                 view.clearForm();
                 view.closeModal();
-            } catch (error) {
+            } 
+            catch (error) {
                 window.UI.showToast(error.message, "error");
-            } finally {
+            } 
+            finally {
                 ui.confirmarBtn.disabled = false;
                 ui.confirmarBtn.innerHTML = originalHTML;
             }
         },
         onSearchProcessoClick: async () => {
             const processo = ui.form.elements.processoSimlam.value.trim().replace(/^0+/, '');
+
             if (!processo) {
                 window.UI.showToast("Informe o número do processo SIMLAM para buscar.", "info");
                 return;
@@ -648,25 +700,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 const embargoData = await api.fetchEmbargoByProcesso(processo);
+
                 if (embargoData) {
                     const dataToFill = utils.normalizeEmbargoData(embargoData);
                     view.fillForm(dataToFill);
                     window.UI.showToast('Dados do embargo preenchidos.', 'success');
-                } else {
+                } 
+                else {
                     window.UI.showToast('Nenhum embargo encontrado para este processo.', 'error');
                 }
-            } catch (error) {
+            } 
+            catch (error) {
                 window.UI.showToast('Erro ao realizar a busca.', 'error');
-            } finally {
+            } 
+            finally {
                 ui.btnBuscar.disabled = false;
             }
         },
         onSearchSEPClick: async () => {
             const sep = ui.numeroSEPInput.value.trim();
+
             if (!sep) {
                 window.UI.showToast("Informe o número do SEP para buscar.", "info");
                 return;
             }
+
             view.setSearchMessage('', '');
             view.clearForm('numeroSEP');
             ui.btnBuscarSEP.disabled = true;
@@ -677,12 +735,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     const dataToFill = utils.normalizeEmbargoData(embargoData);
                     view.fillForm(dataToFill);
                     window.UI.showToast('Dados LEGADO preenchidos via SEP.', 'success');
-                } else {
+                } 
+                else {
                     window.UI.showToast('Nenhum embargo encontrado para este SEP.', 'error');
                 }
-            } catch (error) {
+            } 
+            catch (error) {
                 window.UI.showToast('Erro ao realizar a busca.', 'error');
-            } finally {
+            }
+            finally {
                 ui.btnBuscarSEP.disabled = false;
             }
         },
@@ -695,108 +756,142 @@ document.addEventListener('DOMContentLoaded', () => {
             const fieldName = field.name;
             const fieldValue = field.value.trim();
             
-            if (!fieldName) return;
+            if (!fieldName) 
+                return;
+
+            if ((fieldName === 'area' || fieldName === 'areaEmbargada') && ui.radioParcial.checked) {
+                const areaInput = document.getElementById('area');
+                const embargadaInput = document.getElementById('areaEmbargada');
+                const errorAreaEl = document.getElementById('error-area');
+
+                if (areaInput && embargadaInput && errorAreaEl) {
+                    const valArea = parseFloat(areaInput.value.replace(',', '.'));
+                    const valEmbargada = parseFloat(embargadaInput.value.replace(',', '.'));
+
+                    if (!isNaN(valArea) && !isNaN(valEmbargada)) {
+                        if (valArea >= valEmbargada) {
+                            errorAreaEl.textContent = 'A área desembargada deve ser menor que a área embargada.';
+
+                            if (fieldName === 'area') 
+                                return; 
+                        } 
+                        else {
+                            errorAreaEl.textContent = '';
+                        }
+                    }
+                }
+            }
 
             if (fieldName === 'numero') {
                 const msgEl = document.getElementById('error-numero');
-                
-                if (msgEl) {
-                    msgEl.textContent = 'Verificando...';
+
+                if (msgEl){ 
+                    msgEl.textContent = 'Verificando...'; 
                     msgEl.className = 'mensagem-validacao error-msg';
                 }
 
                 const dataToValidate = { numero: fieldValue };
-                
                 try {
                     const result = await api.validateForm(dataToValidate);
 
                     if (result.errors && result.errors.numero) {
-                        if (msgEl) {
-                            msgEl.textContent = result.errors.numero;
-                            msgEl.classList.add('erro');
-                        }
+                        if (msgEl) { msgEl.textContent = result.errors.numero; msgEl.classList.add('erro'); }
                         return;
                     }
-                } catch (err) {
-                    console.error("Erro na validação local", err);
-                    return;
-                }
 
-                if (fieldValue) {
-                    try {
-                        // Chama a API que criamos no passo 1
-                        // Nota: api.checkEmbargoExists deve retornar true/false ou o objeto json
+                    if (fieldValue) {
                         const existe = await api.checkEmbargoExists(fieldValue); 
 
                         if (msgEl) {
-                            if (existe) {
-                                msgEl.textContent = 'Embargo encontrado.';
+                            if (existe) { 
+                                msgEl.textContent = 'Embargo encontrado.'; 
                                 msgEl.classList.add('sucesso');
-                            } else {
-                                msgEl.textContent = 'Embargo não encontrado.';
-                                msgEl.classList.add('alerta');
+                            } 
+                            else { 
+                                msgEl.textContent = 'Embargo não encontrado.'; 
+                                msgEl.classList.add('alerta'); 
                             }
                         }
-                    } catch (error) {
-                        if (msgEl) {
-                            msgEl.textContent = 'Erro ao consultar.';
-                            msgEl.classList.add('erro');
-                        }
+                    } 
+                    else { 
+                        if(msgEl) 
+                            msgEl.textContent = ''; 
                     }
-                } else {
-                    if(msgEl) msgEl.textContent = '';
+                } 
+                catch(e) { 
+                    console.error(e); 
                 }
-                return; // Fim da lógica especial do número
+                return;
             }
             
-            // Prepara dados contextuais (ex: area precisa de areaEmbargada)
-            let dataToValidate = { [fieldName]: field.value };
-            if (fieldName === 'area' || fieldName === 'areaEmbargada') {
+            let dataToValidate = {};
+
+            if (['area', 'areaEmbargada', 'deliberacaoAutoridade', 'tipoDesembargo', 'parecerTecnico'].includes(fieldName)) {
                 const formData = new FormData(ui.form);
                 dataToValidate = Object.fromEntries(formData.entries());
-                if(dataToValidate.area === '') dataToValidate.area = null;
+                
+                // Tratamento manual para garantir envio correto
+                if (dataToValidate.area) dataToValidate.area = dataToValidate.area.replace(',', '.');
+                if (dataToValidate.areaEmbargada) dataToValidate.areaEmbargada = dataToValidate.areaEmbargada.replace(',', '.');
+                
+                // Força rádios
+                const rDelib = ui.form.querySelector('input[name="deliberacaoAutoridade"]:checked');
+                dataToValidate.deliberacaoAutoridade = rDelib ? rDelib.value : null;
+                const rTipo = ui.form.querySelector('input[name="tipoDesembargo"]:checked');
+                dataToValidate.tipoDesembargo = rTipo ? rTipo.value : null;
+            } 
+            else {
+                dataToValidate = { [fieldName]: fieldValue };
             }
 
             try {
                 const result = await api.validateForm(dataToValidate);
-                
-                // Procura pelo ID padrão error-NOME
                 const errorEl = document.getElementById(`error-${fieldName}`);
-                if (errorEl) {
-                    errorEl.textContent = result.errors?.[fieldName] ?? '';
-                }
                 
-                // Atualização cruzada de area
-                if (fieldName === 'areaEmbargada') {
-                    const errorAreaEl = document.getElementById(`error-area`);
-                    if(errorAreaEl) errorAreaEl.textContent = result.errors?.area ?? '';
+                if (fieldName === 'area' && ui.radioParcial.checked) {
+                    if (result.errors?.area) 
+                        errorEl.textContent = result.errors.area;
+                } 
+                else {
+                    if (errorEl) 
+                        errorEl.textContent = result.errors?.[fieldName] ?? '';
                 }
 
-            } catch (error) {
-                console.error(`Erro validação ${fieldName}`, error);
+                // Cruzamento
+                if (fieldName === 'areaEmbargada') {
+                    const errorAreaEl = document.getElementById(`error-area`);
+
+                    if(result.errors?.area) 
+                        errorAreaEl.textContent = result.errors.area;
+                }
+
+            } 
+            catch (error) { 
+                console.error(`Erro validação ${fieldName}`, error); 
             }
         },
     };
-  
-    // --- INICIALIZAÇÃO ---
+    
     function init() {
         pageState.currentUserInfo = utils.getCurrentUserInfo();
         
-        // 1. Listeners básicos do formulário
-        if(ui.form) ui.form.addEventListener("submit", handlers.onFormSubmit);
-        if(ui.btnBuscar) ui.btnBuscar.addEventListener("click", handlers.onSearchProcessoClick);
-        if(ui.btnBuscarSEP) ui.btnBuscarSEP.addEventListener("click", handlers.onSearchSEPClick);
-        if(ui.confirmarBtn) ui.confirmarBtn.addEventListener('click', handlers.onConfirmarEnvio);
-        
-        // 2. Listeners de Modal
-        if(ui.cancelarBtn) ui.cancelarBtn.addEventListener('click', view.closeModal);
-        if(ui.fecharTopoBtn) ui.fecharTopoBtn.addEventListener('click', view.closeModal);
-        if(ui.modal) ui.modal.addEventListener('click', (e) => { if(e.target === ui.modal) view.closeModal(); });
+        if(ui.form) 
+            ui.form.addEventListener("submit", handlers.onFormSubmit);
+        if(ui.btnBuscar)    
+            ui.btnBuscar.addEventListener("click", handlers.onSearchProcessoClick);
+        if(ui.btnBuscarSEP) 
+            ui.btnBuscarSEP.addEventListener("click", handlers.onSearchSEPClick);
+        if(ui.confirmarBtn) 
+            ui.confirmarBtn.addEventListener('click', handlers.onConfirmarEnvio);
+        if(ui.cancelarBtn)      
+            ui.cancelarBtn.addEventListener('click', view.closeModal);
+        if(ui.fecharTopoBtn)    
+            ui.fecharTopoBtn.addEventListener('click', view.closeModal);
+        if(ui.modal)            
+            ui.modal.addEventListener('click', (e) => { if(e.target === ui.modal) view.closeModal(); });
 
-        // 3. Listeners de Tipos de Busca
         ui.tipoBuscaRadios.forEach(radio => radio.addEventListener('change', handlers.onTipoBuscaChange));
 
-        // 4. Validação em Blur
         const fieldsToValidate = [
             'serie', 'nomeAutuado', 'area', 'processoSimlam',
             'numeroSEP', 'numeroEdocs', 'dataDesembargo',
@@ -809,21 +904,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 2. Validação em Change para Rádios (Tipo, Parecer, Deliberação)
-        // Agrupamos os nomes dos radios para facilitar
         const radioGroups = ['tipoBusca', 'tipoDesembargo', 'parecerTecnico', 'deliberacaoAutoridade'];
 
         radioGroups.forEach(groupName => {
             const radios = document.querySelectorAll(`input[name="${groupName}"]`);
+
             radios.forEach(radio => {
-                // Adiciona listener para lógica visual (se houver)
                 if (groupName === 'tipoBusca') {
                     radio.addEventListener('change', handlers.onTipoBuscaChange);
                 } 
                 else if (groupName === 'deliberacaoAutoridade') {
                     radio.addEventListener('change', (e) => {
                         logic.handleDeliberacaoChange();
-                        // Também valida o campo ao mudar
                         handlers.onFieldBlur(e); 
                     });
                 }
@@ -833,23 +925,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         handlers.onFieldBlur(e);
                     });
                 }
-                // Para Parecer Técnico, apenas validação
                 else {
                     radio.addEventListener('change', handlers.onFieldBlur);
                 }
             });
         });
 
-        // 3. Listener especial para Área Embargada (Cópia de valor)
         if (ui.inputAreaEmbargada) {
             ui.inputAreaEmbargada.addEventListener('input', logic.copyAreaEmbargadaToDesembargada);
         }
 
-        // 4. Configurações Iniciais
         const dataEl = document.getElementById('dataDesembargo');
         if (dataEl) dataEl.value = new Date().toISOString().split('T')[0];
         
-        // Aplica estado inicial dos campos
         logic.handleDeliberacaoChange();
         view.updateBuscaVisibility('ate2012');
     }
