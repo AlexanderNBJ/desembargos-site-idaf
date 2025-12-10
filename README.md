@@ -1,4 +1,4 @@
-# Portal de Cadastro de Desembargos - IDAF
+# Portal de Cadastro de Deliberações de Desembargos - IDAF
 
 ## Requisitos
 - Node 	(versão recomendada: >= 18.x)
