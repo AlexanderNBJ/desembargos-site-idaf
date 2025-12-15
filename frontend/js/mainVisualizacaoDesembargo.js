@@ -155,8 +155,22 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         fetchEmbargoBySEP: async (sep) => {
              const res = await Auth.fetchWithAuth(`/api/embargos/sep?valor=${encodeURIComponent(sep)}`);
+             
              if (res.status === 404) return null;
-             if (!res.ok) throw new Error('Erro na busca por SEP');
+             
+             if (!res.ok) {
+                // Tenta ler a mensagem de erro específica enviada pelo backend
+                let errorMessage = 'Erro na busca por SEP';
+                try {
+                    const errorJson = await res.json();
+                    if (errorJson && errorJson.message) {
+                        errorMessage = errorJson.message;
+                    }
+                } catch (e) { /* falha ao ler json, usa msg padrao */ }
+                
+                throw new Error(errorMessage);
+             }
+             
              const json = await res.json();
              return json.embargo;
         },
@@ -659,17 +673,34 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         onSearchSEPClick: async () => {
              const sep = ui.numeroSEPInput.value.trim();
-             if (!sep) return;
+             
+             if (!sep) {
+                 window.UI.showToast("Informe o número do SEP para buscar.", "info");
+                 return;
+             }
+
+             view.setSearchMessage('', '');
+             // Opcional: Limpar campos antes de preencher, se desejar comportamento igual ao cadastro
+             // view.clearForm('numeroSEP'); 
+             
              ui.btnBuscarSEP.disabled = true;
+             
              try {
                 const embargoData = await api.fetchEmbargoBySEP(sep);
+                
                 if (embargoData) {
+                    // Normaliza usando a função do utils existente nesta página
                     const dataToFill = utils.normalizeRow(embargoData);
                     view.fillForm(dataToFill);
                     window.UI.showToast('Dados atualizados via SEP.', 'success');
-                } else { window.UI.showToast('Não encontrado.', 'error'); }
-             } catch(e) { window.UI.showToast('Erro busca.', 'error'); }
-             finally { ui.btnBuscarSEP.disabled = false; }
+                } else { 
+                    window.UI.showToast('Nenhum embargo encontrado para este SEP.', 'error'); 
+                }
+             } catch(e) { 
+                 window.UI.showToast(e.message, 'error'); 
+             } finally { 
+                 ui.btnBuscarSEP.disabled = false; 
+             }
         },
          onNumeroEmbargoBlur: async (event) => { 
             const numero = event.target.value.trim();
