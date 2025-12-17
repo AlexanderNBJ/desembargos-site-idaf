@@ -99,7 +99,7 @@
 
     <div class="title-text">
       <h1>SeloVerde ES - Área Técnica</h1>
-      <h2>Formulário de Cadastro Deliberações de Desembargos</h2>
+      <h2>Formulário de Cadastro de Deliberações de Desembargos</h2>
       <span class="restricted-badge">Área Restrita</span>
     </div>
 
@@ -201,21 +201,12 @@
         </div>
       </div>
 
-      <div class="parecer">
+      <!-- Recomendação do técnico -->
+      <div class="deliberacao">
         <label class="label-bold required-section">Recomendação do parecer técnico:</label>
         <div class="tipo-controls">
-          <label><input type="radio" name="parecerTecnico" value="DEFERIMENTO" /> <span>Deferimento</span></label>
-          <label><input type="radio" name="parecerTecnico" value="INDEFERIMENTO" /> <span>Indeferimento</span></label>
-        </div>
-        <span class="error-msg" id="error-parecerTecnico"></span>
-      </div>
-
-      <!-- Deliberação -->
-      <div class="deliberacao">
-        <label class="label-bold required-section">Deliberação da solicitação de desembargo, pela autoridade competente:</label>
-        <div class="tipo-controls">
-          <label><input type="radio" name="deliberacaoAutoridade" value="DEFERIDA" id="radioDeferida"/> <span>Deferida</span></label>
-          <label><input type="radio" name="deliberacaoAutoridade" value="INDEFERIDA" id="radioIndeferida"/> <span>Indeferida</span></label>
+          <label><input type="radio" name="deliberacaoAutoridade" value="DEFERIDA" id="radioDeferida"/> <span>Deferimento</span></label>
+          <label><input type="radio" name="deliberacaoAutoridade" value="INDEFERIDA" id="radioIndeferida"/> <span>Indeferimento</span></label>
         </div>
         <span class="error-msg" id="error-deliberacaoAutoridade"></span>
       </div>

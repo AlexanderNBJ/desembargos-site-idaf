@@ -135,21 +135,13 @@ const formSchema = Joi.object({
     }),
 
 
-  parecerTecnico: Joi.string()
-    .valid('DEFERIMENTO', 'INDEFERIMENTO')
-    .required()
-    .messages({
-      'any.only': 'A recomendação deve ser DEFERIMENTO ou INDEFERIMENTO.',
-      'any.required': 'A recomendação do parecer técnico é obrigatória.',
-    }),
-
   // 2. Deliberação da Autoridade (Obrigatório e Enum)
   deliberacaoAutoridade: Joi.string()
     .valid('DEFERIDA', 'INDEFERIDA')
     .required()
     .messages({
-      'any.only': 'A deliberação deve ser DEFERIDA ou INDEFERIDA.',
-      'any.required': 'A deliberação da autoridade é obrigatória.',
+      'any.only': 'O parecer técnico deve ser DEFERIMENTO ou INDEFERIMENTO.',
+      'any.required': 'O parecer técnico é obrigatório.',
     }),
 
   // 3. Tipo de Desembargo

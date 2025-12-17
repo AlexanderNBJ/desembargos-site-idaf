@@ -396,11 +396,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // Configura as abas com base no perfil do usuário
         const isGerente = pageState.currentUser.role === 'GERENTE';
         pageState.tabsConfig = [
-            { id: 'mine', label: 'Meus Desembargos', ownerParam: 'mine' },
-            { id: 'approved', label: 'Desembargos Aprovados', status: 'APROVADO' }
+            { id: 'mine', label: 'Minhas Deliberações', ownerParam: 'mine' },
+            { id: 'approved', label: 'Deliberações Aprovadas', status: 'APROVADO' }
         ];
         if (isGerente) {
-            pageState.tabsConfig.push({ id: 'analysis', label: 'Desembargos em Análise', status: 'EM ANÁLISE,REVISÃO PENDENTE' });
+            pageState.tabsConfig.push({ id: 'analysis', label: 'Deliberações em Análise', status: 'EM ANÁLISE,REVISÃO PENDENTE' });
         }
 
         // Anexa todos os eventos

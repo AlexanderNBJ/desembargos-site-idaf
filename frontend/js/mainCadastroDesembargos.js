@@ -117,12 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             
-            if (data.parecerTecnico) {
-                const r = ui.form.querySelector(`input[name="parecerTecnico"][value="${data.parecerTecnico}"]`);
-
-                if(r) 
-                    r.checked = true;
-            }
 
             if (data.deliberacaoAutoridade) {
                 const r = ui.form.querySelector(`input[name="deliberacaoAutoridade"][value="${data.deliberacaoAutoridade}"]`);
@@ -317,10 +311,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const radioTipo = ui.form.querySelector('input[name="tipoDesembargo"]:checked');
             if (radioTipo) data.tipoDesembargo = radioTipo.value;
 
-            // Pega rádio de Parecer
-            const radioParecer = ui.form.querySelector('input[name="parecerTecnico"]:checked');
-            if (radioParecer) data.parecerTecnico = radioParecer.value;
-
             // Pega rádio de Deliberação
             const radioDeliberacao = ui.form.querySelector('input[name="deliberacaoAutoridade"]:checked');
             if (radioDeliberacao) data.deliberacaoAutoridade = radioDeliberacao.value;
@@ -420,8 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 { label: "Data do embargo",             value: formData.dataEmbargo ? (new Date(formData.dataEmbargo)).toLocaleDateString() : '-' },
                 { label: "Área embargada",              value: `${formData.areaEmbargada ?? '-'} ${formData.areaEmbargada ? 'ha' : ''}` },
-                { label: "Parecer técnico",             value: (formData.parecerTecnico || '-').toUpperCase() },
-                { label: "Deliberação",                 value: formData.deliberacaoAutoridade || '-' },
+                { label: "Parecer técnico",                 value: formData.deliberacaoAutoridade == 'DEFERIDA' ? 'DEFERIMENTO' : 'INDEFERIMENTO' || '-' },
                 
                 // Este campo será filtrado se for indeferimento
                 { label: "Tipo de desembargo",          value: (formData.tipoDesembargo || '-').toUpperCase() },
@@ -826,7 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             let dataToValidate = {};
 
-            if (['area', 'areaEmbargada', 'deliberacaoAutoridade', 'tipoDesembargo', 'parecerTecnico'].includes(fieldName)) {
+            if (['area', 'areaEmbargada', 'deliberacaoAutoridade', 'tipoDesembargo'].includes(fieldName)) {
                 const formData = new FormData(ui.form);
                 dataToValidate = Object.fromEntries(formData.entries());
                 
@@ -904,7 +893,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        const radioGroups = ['tipoBusca', 'tipoDesembargo', 'parecerTecnico', 'deliberacaoAutoridade'];
+        const radioGroups = ['tipoBusca', 'tipoDesembargo', 'deliberacaoAutoridade'];
 
         radioGroups.forEach(groupName => {
             const radios = document.querySelectorAll(`input[name="${groupName}"]`);
