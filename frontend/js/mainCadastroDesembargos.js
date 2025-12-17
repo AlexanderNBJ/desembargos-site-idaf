@@ -274,8 +274,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (res.status === 404) 
                 return null;
             
-            if (!res.ok) 
-                throw new Error('Falha na busca por SEP');
+            if (!res.ok) {
+                // Tenta ler a mensagem de erro específica enviada pelo backend
+                let errorMessage = 'Falha na busca por SEP';
+                try {
+                    const errorJson = await res.json();
+                    if (errorJson && errorJson.message) { // Ou errorJson.error dependendo do seu middleware
+                        errorMessage = errorJson.message;
+                    }
+                } catch (e) { /* falha ao ler json de erro, usa msg padrao */ }
+                
+                throw new Error(errorMessage);
+            }
 
             const json = await res.json();
             return json.embargo;
@@ -724,13 +734,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     const dataToFill = utils.normalizeEmbargoData(embargoData);
                     view.fillForm(dataToFill);
                     window.UI.showToast('Dados LEGADO preenchidos via SEP.', 'success');
-                } 
-                else {
+                } else {
                     window.UI.showToast('Nenhum embargo encontrado para este SEP.', 'error');
                 }
             } 
             catch (error) {
-                window.UI.showToast('Erro ao realizar a busca.', 'error');
+                // Agora 'error.message' conterá "Múltiplos termos..." ou "Produto inválido..."
+                window.UI.showToast(error.message, 'error');
             }
             finally {
                 ui.btnBuscarSEP.disabled = false;

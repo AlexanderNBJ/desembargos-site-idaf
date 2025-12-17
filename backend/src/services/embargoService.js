@@ -14,6 +14,7 @@ function _formatEmbargoForFrontend(embargoDb) {
     coordenada_y: embargoDb.northing,
     processo_simlam: embargoDb.processo,
     area: embargoDb.area,
+    nome_autuado: embargoDb.nome_autuado,
     data_embargo: embargoDb.data_embargo ? new Date(embargoDb.data_embargo).toISOString().split('T')[0] : null,
     numeroSEP: embargoDb.numero_sep,
     numeroEdocs: embargoDb.numero_edocs,
@@ -62,10 +63,41 @@ exports.findByProcesso = async (processo) => {
 
 exports.findBySEP = async (processo) => {
   const result = await pool.query(
-    `SELECT n_iuf_emb, serie, numero_sep, northing, easting, data_embargo
-      FROM ${schema}.${embargosLegacyTable} WHERE numero_sep = $1 LIMIT 1`,
+    `SELECT n_iuf_emb, serie, numero_sep, northing, easting, data_embargo, produto, area, nome_autuado
+      FROM ${schema}.${embargosLegacyTable} WHERE numero_sep = $1`,
     [processo]
   );
-  
-  return _formatEmbargoForFrontend(result.rows[0]);
+  const termo = _validarTermoUnico(result.rows);
+  return _formatEmbargoForFrontend(termo);
 };
+
+function _validarTermoUnico(rows) {
+  // 1. PRIMEIRO verificamos se existem linhas. Se não, retorna null.
+  if (!rows || rows.length === 0) return null;
+
+  // 2. SEGUNDO verificamos se há conflito (mais de 1 linha)
+  if (rows.length > 1) {
+    const error = new Error('Múltiplos termos encontrados para este SEP. Favor verificar manualmente.');
+    error.statusCode = 409;
+    throw error;
+  }
+
+  // 3. SÓ AGORA é seguro pegar a linha 0.
+  const termo = rows[0]; 
+
+  // Verificação de segurança extra: se termo vier undefined por algum motivo bizarro
+  if (!termo) return null;
+
+  // 4. Validação do Produto
+  const produto = termo.produto || ''; // Garante que não quebre se vier nulo do banco
+  const produtoNormalizado = produto.trim().toUpperCase();
+  
+  // Ajuste a string abaixo conforme está salvo no seu banco (ex: 'AREA - HECTARE (HA)')
+  if (!produtoNormalizado.includes('AREA') && !produtoNormalizado.includes('HECTARE')) {
+    const error = new Error(`O termo associado não é de área (Produto: ${termo.produto}).`);
+    error.statusCode = 422;
+    throw error;
+  }
+
+  return rows[0];
+}

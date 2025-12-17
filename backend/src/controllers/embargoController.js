@@ -39,11 +39,17 @@ exports.getBySEP = asyncHandler(async (req, res, next) => {
     return next(new AppError('Parâmetro valor é obrigatório.', 400));
   }
   
-  const embargoFormatado = await embargoService.findBySEP(valor);
+  try {
+    const embargoFormatado = await embargoService.findBySEP(valor);
 
-  if (!embargoFormatado) {
-    return next(new AppError('Embargo não encontrado para este processo.', 404));
+    if (!embargoFormatado) {
+      // 404 é tratado aqui se não achar nada
+      return next(new AppError('Embargo não encontrado para este processo.', 404));
+    }
+
+    res.json({ success: true, embargo: embargoFormatado });
+
+  } catch (error) {
+    return next(new AppError(error.message, error.statusCode || 500));
   }
-
-  res.json({ success: true, embargo: embargoFormatado });
 });
