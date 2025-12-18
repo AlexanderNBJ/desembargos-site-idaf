@@ -593,7 +593,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = businessLogic.prepareDataForUpdate();
             try {
                 await api.update(pageState.desembargoId, data);
-                window.UI.showToast("Desembargo atualizado!", "success");
+                window.UI.showToast("Deliberação atualizada!", "success");
                 setTimeout(() => { window.location.href = "listaDesembargos.html"; }, 1200);
             } catch (err) { window.UI.showToast(err.message, "error"); }
         },

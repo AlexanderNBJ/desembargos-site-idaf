@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.tbody.innerHTML = '';
 
             if (!rows || rows.length === 0) {
-                ui.tbody.innerHTML = '<tr><td colspan="9">Nenhum desembargo encontrado.</td></tr>';
+                ui.tbody.innerHTML = '<tr><td colspan="9">Nenhuma deliberação encontrada.</td></tr>';
                 return;
             }
 
@@ -138,8 +138,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     pdfBtn.disabled = !isAprovado;
                     pdfBtn.title = isAprovado ? 'Gerar PDF' : 'PDF disponível apenas para status "APROVADO"';
                     
-                    if(isAprovado) 
+                    if(isAprovado){
                         pdfBtn.addEventListener('click', () => handlers.onPdfClick(d.id));
+                    } 
+                        
                 }
                 
                 ui.tbody.appendChild(clone);
@@ -296,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const res = await Auth.fetchWithAuth(`/api/desembargos/list?${params.toString()}`);
 
             if (!res.ok) 
-                throw new Error('Erro ao buscar a lista de desembargos');
+                throw new Error('Erro ao buscar a lista de deliberações');
 
             return res.json();
         },
@@ -307,12 +309,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             return res.blob();
         },
+        fetchNumeroAnoDesembargo: async (id) =>{
+            const res = await Auth.fetchWithAuth(`/api/desembargos/${id}`);
+            const jsonres = await res.json();
+
+            const dado = jsonres.numeroAno;
+            return dado;
+        }
     };
 
     // Módulo de event handlers
     const handlers = {
         fetchAndRender: async () => {
-            view.toggleLoading(true, 'Carregando desembargos...');
+            view.toggleLoading(true, 'Carregando deliberações...');
             try {
                 const payload = await api.fetchDesembargos();
                 if (!payload.success) 
@@ -324,7 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
             } 
             catch (error) {
                 console.error(error);
-                ui.tbody.innerHTML = `<tr><td colspan="9">Erro ao carregar desembargos. Tente novamente.</td></tr>`;
+                ui.tbody.innerHTML = `<tr><td colspan="9">Erro ao carregar deliberações. Tente novamente.</td></tr>`;
             } 
             finally {
                 view.toggleLoading(false);
@@ -375,8 +384,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const blob = await api.fetchPdf(id);
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
+                const ano = await api.fetchNumeroAnoDesembargo(id);
                 a.href = url;
-                a.download = `termo_desembargo_${id}.pdf`;
+                a.download = `deliberacao_${ano}.pdf`;
                 document.body.appendChild(a);
                 a.click();
                 a.remove();

@@ -389,10 +389,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.UI.showToast("Corrija os erros no formulário antes de enviar.", "error");
                 return false;
             }
-            if (!data.numeroSEP && !data.numeroEdocs) {
-                view.displayValidationErrors({ numeroSEP: 'Preencha SEP ou E-Docs', numeroEdocs: 'Preencha SEP ou E-Docs' });
-                return false;
-            }
             view.displayValidationErrors({});
             return true;
         },
@@ -699,7 +695,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 await api.createDesembargo(data);
-                window.UI.showToast("Desembargo inserido com sucesso!", "success");
+                window.UI.showToast("Deliberação inserida com sucesso!", "success");
                 view.clearForm();
                 view.closeModal();
             } 
