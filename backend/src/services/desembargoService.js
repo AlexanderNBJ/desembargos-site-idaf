@@ -43,7 +43,6 @@ function mapDesembargo(dbRow) {
     // Novos campos
     dataEmbargo: dbRow.data_embargo ? new Date(dbRow.data_embargo).toISOString().split("T")[0] : null,
     areaEmbargada: dbRow.area_embargada,
-    parecerTecnico: dbRow.recomendacao_parecer_tecnico,
     deliberacaoAutoridade: deliberacao,
     
     // Campos extras para o PDF (vindos do join)
@@ -137,7 +136,7 @@ function _drawPdfInfoBlock(doc, y, desembargo) {
     
     { label: "Data do embargo",            value: formatDate(desembargo.dataEmbargo) },
     { label: "Área embargada",             value: `${desembargo.areaEmbargada || '-'} ha` },
-    { label: "Parecer técnico",            value: (desembargo.parecerTecnico || '-').toUpperCase() },
+    //{ label: "Parecer técnico",            value: (desembargo.parecerTecnico || '-').toUpperCase() },
     { label: "Deliberação",  value: (desembargo.deliberacaoAutoridade || '-').toUpperCase() },
     
     // Este campo será filtrado abaixo se for Indeferimento
@@ -182,7 +181,7 @@ exports.inserirDesembargo = async (dados) => {
     numero, serie, nomeAutuado, area, processoSimlam,
     numeroSEP, numeroEdocs, tipoDesembargo,
     dataDesembargo, coordenadaX, coordenadaY, descricao, responsavelDesembargo,
-    dataEmbargo, areaEmbargada, parecerTecnico
+    dataEmbargo, areaEmbargada
   } = dados;
 
   const query = `
@@ -190,15 +189,15 @@ exports.inserirDesembargo = async (dados) => {
         NUMERO_EMBARGO, SERIE_EMBARGO, NOME_AUTUADO, AREA_DESEMBARGADA, PROCESSO_SIMLAM,
         NUMERO_SEP, NUMERO_EDOCS, TIPO_DESEMBARGO, DATA_DESEMBARGO, COORDENADA_X, COORDENADA_Y,
         DESCRICAO, STATUS, RESPONSAVEL_DESEMBARGO,
-        DATA_EMBARGO, AREA_EMBARGADA, RECOMENDACAO_PARECER_TECNICO
-    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, 'EM ANÁLISE', $13, $14, $15, $16)
+        DATA_EMBARGO, AREA_EMBARGADA
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12, 'EM ANÁLISE', $13, $14, $15)
     RETURNING *;
   `;
   const values = [
       numero, serie, nomeAutuado, area, processoSimlam, 
       numeroSEP, numeroEdocs, tipoDesembargo, dataDesembargo, coordenadaX, coordenadaY, 
       descricao, responsavelDesembargo,
-      dataEmbargo, areaEmbargada, parecerTecnico
+      dataEmbargo, areaEmbargada
   ];
   
   const result = await db.query(query, values);
@@ -269,7 +268,7 @@ exports.listarDesembargos = async (params = {}) => {
     SELECT ID as id, CONCAT(NUMERO_EMBARGO, ' ', SERIE_EMBARGO) AS termo, PROCESSO_SIMLAM AS processo, NUMERO_SEP AS sep,
            NUMERO_EDOCS AS edocs, NOME_AUTUADO AS autuado, TIPO_DESEMBARGO AS tipo, STATUS AS status,
            RESPONSAVEL_DESEMBARGO AS responsavel, DATA_DESEMBARGO AS data,
-           DATA_EMBARGO, AREA_EMBARGADA, RECOMENDACAO_PARECER_TECNICO, TIPO_DESEMBARGO
+           DATA_EMBARGO, AREA_EMBARGADA, TIPO_DESEMBARGO
     FROM ${schema}.${desembargoTable} ${whereClause} ${orderClause}
     LIMIT $${idx++} OFFSET $${idx++}
   `;
@@ -298,7 +297,6 @@ exports.listarDesembargos = async (params = {}) => {
       // Se quiser retornar os novos campos na listagem também:
       dataEmbargo: row.data_embargo,
       areaEmbargada: row.area_embargada,
-      parecerTecnico: row.recomendacao_parecer_tecnico
   }));
 
   return { rows: mappedRows, total };
@@ -341,7 +339,7 @@ exports.updateDesembargo = async (id, dados, user) => {
       numero, serie, processoSimlam, numeroSEP, numeroEdocs, coordenadaX, coordenadaY, 
       nomeAutuado, area, tipoDesembargo, dataDesembargo, descricao, status, 
       responsavelDesembargo, aprovado_por,
-      dataEmbargo, areaEmbargada, parecerTecnico
+      dataEmbargo, areaEmbargada
   } = dados;
   
   const query = `
@@ -350,15 +348,15 @@ exports.updateDesembargo = async (id, dados, user) => {
          numero_edocs = $5, coordenada_x = $6, coordenada_y = $7, nome_autuado = $8,
          area_desembargada = $9, tipo_desembargo = $10, data_desembargo = $11::date, descricao = $12,
          status = $13, responsavel_desembargo = $14, aprovado_por = $15,
-         DATA_EMBARGO = $16::date, AREA_EMBARGADA = $17, RECOMENDACAO_PARECER_TECNICO = $18
-     WHERE id = $19 RETURNING *
+         DATA_EMBARGO = $16::date, AREA_EMBARGADA = $17
+     WHERE id = $18 RETURNING *
   `;
 
   const values = [
       numero, serie, processoSimlam, numeroSEP, numeroEdocs, coordenadaX, coordenadaY, 
       nomeAutuado, area, tipoDesembargo, dataDesembargo, descricao, status, 
       responsavelDesembargo, aprovado_por, 
-      dataEmbargo, areaEmbargada, parecerTecnico,
+      dataEmbargo, areaEmbargada,
       id
   ];
 
