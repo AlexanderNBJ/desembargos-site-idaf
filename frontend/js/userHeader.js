@@ -12,33 +12,47 @@
 
   // busca e exibe o nome do usuário
   function renderUserName() {
+    const logoutContainer = document.querySelector('header .logout-container');
+    if (!logoutContainer) return;
 
-    // garante que o span exista
-    let span = document.getElementById('usuarioNome');
-    if (!span) {
-      const logoutContainer = document.querySelector('header .logout-container');
+    // 1. Garante que o span do NOME existe
+    let spanNome = document.getElementById('usuarioNome');
+    if (!spanNome) {
+      spanNome = document.createElement('span');
+      spanNome.id = 'usuarioNome';
+      spanNome.className = 'usuario-nome';
+      logoutContainer.insertBefore(spanNome, logoutContainer.firstChild);
+    }
 
-      if (!logoutContainer) 
-        return;
-
-      span = document.createElement('span');
-      span.id = 'usuarioNome';
-      span.className = 'usuario-nome';
-      logoutContainer.insertBefore(span, logoutContainer.firstChild);
+    // 2. Garante que o span da ROLE existe (logo após o nome)
+    let spanRole = document.getElementById('usuarioRole');
+    if (!spanRole) {
+      spanRole = document.createElement('span');
+      spanRole.id = 'usuarioRole';
+      spanNome.insertAdjacentElement('beforebegin', spanRole);
     }
     
-    // pega o usuario do auth
     const user = Auth.getSessionUser();
 
-    // se existe, coloca o nome
-    if (user && user.name) {
-      span.textContent = titleCase(user.name);
-    } 
-    else if (user && user.username) {
-      span.textContent = user.username;
+    if (user) {
+      // Define o Nome
+      spanNome.textContent = user.name ? titleCase(user.name) : (user.username || 'Usuário');
+
+      // Define a Badge de Role
+      const role = (user.role || 'COMUM').toUpperCase();
+      if (role === 'GERENTE') {
+        spanRole.textContent = 'GERENTE';
+        spanRole.className = 'role-badge badge-gerente';
+      } 
+      else {
+        spanRole.textContent = 'TÉCNICO';
+        spanRole.className = 'role-badge badge-tecnico';
+      }
     } 
     else {
-      span.textContent = 'Usuário';
+      spanNome.textContent = 'Usuário';
+      spanRole.textContent = '';
+      spanRole.className = '';
     }
   }
 

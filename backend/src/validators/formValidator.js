@@ -68,29 +68,34 @@ const formSchema = Joi.object({
       'string.pattern.base': 'O nome do autuado contém caracteres inválidos.',
     }),
 
-  processoSimlam: Joi.string()
+processoSimlam: Joi.string()
     .trim()
     .empty('')
     .pattern(validationConstants.PROCESSO_REGEX)
-    .required()
+    .when('tipoBusca', {
+      is: 'apos2012',
+      then: Joi.required(),
+      otherwise: Joi.allow(null, '')
+    })
     .messages({
-      'string.base': 'O campo processo SIMLAM é obrigatório',
-      'any.only': 'O processo SIMLAM é inválido.',
+      'string.base': 'O processo SIMLAM é obrigatório.',
       'string.empty': commonMessages.string.empty,
       'string.pattern.base': 'O processo SIMLAM deve ter o formato NÚMERO/ANO (ex: 12345/2025).',
-      'any.required': commonMessages.required.any,
+      'any.required': 'O processo SIMLAM é obrigatório para embargos a partir de 2012.',
     }),
 
   numeroSEP: Joi.number()
     .integer()
     .positive()
     .empty('')
-    .allow(null)
-    .allow(0)
+    .when('tipoBusca', {
+      is: 'ate2012',
+      then: Joi.required(),
+      otherwise: Joi.allow(null, '', 0)
+    })
     .messages({
       'number.base': 'O número SEP deve conter apenas números.',
-      'number.integer': commonMessages.number.integer,
-      'number.positive': commonMessages.number.positive,
+      'any.required': 'O número SEP é obrigatório para embargos até 2011.',
     }),
 
   numeroEdocs: Joi.string()
@@ -184,8 +189,7 @@ const formSchema = Joi.object({
       'any.required': 'A área embargada é obrigatória.',
     }),
 
-  // 7. Área Desembargada (Lógica Condicional Complexa)
-  // 7. Área Desembargada (Lógica Condicional Complexa)
+  // 7. Área Desembargada
   area: Joi.number()
     .empty('')
     .positive()
@@ -217,10 +221,5 @@ const formSchema = Joi.object({
       'number.positive': commonMessages.number.positive,
     }),
 })
-// Validação Cruzada de Documentos
-.or('numeroSEP', 'numeroEdocs')
-.messages({
-  'object.missing': 'É obrigatório preencher o número do SEP ou do E-docs.'
-});
 
 module.exports = { formSchema };

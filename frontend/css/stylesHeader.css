@@ -130,3 +130,52 @@ body {
         font-size: 14px;
     }
 }
+
+/* Ajuste no container para alinhar nome e badge */
+.logout-container {
+    position: absolute;
+    top: 50%;
+    right: 70px;
+    transform: translateY(-50%);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Reduzi um pouco o gap para a badge ficar próxima ao nome */
+}
+
+/* Estilo base da Badge de Role */
+.role-badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-family: "Hanken Grotesk", sans-serif;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* Variante para Técnico (Comum) */
+.badge-tecnico {
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Variante para Gerente */
+.badge-gerente {
+    background-color: #ffd700; /* Dourado/Amarelo */
+    color: #0b6b47; /* Texto no tom do fundo para contraste */
+    border: 1px solid #ffd700;
+}
+
+/* Ajuste responsivo para mobile */
+@media (max-width: 640px) {
+    .role-badge {
+        font-size: 10px;
+        padding: 2px 5px;
+    }
+    .logout-container {
+        gap: 8px;
+    }
+}

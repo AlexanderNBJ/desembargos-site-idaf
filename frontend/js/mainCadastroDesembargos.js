@@ -14,9 +14,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Botões de busca
         btnBuscar: document.getElementById('btnBuscarProcesso'),
         btnBuscarSEP: document.getElementById('btnBuscarSEP'),
-        
+
+
         // Inputs Específicos
         numeroSEPInput: document.getElementById('numeroSEP'),
+        labelSimlam: document.getElementById('labelSimlam'),
+        labelSEP: document.getElementById('labelSEP'),
+        inputSimlam: document.getElementById('processoSimlam'),
         
         // Mensagens
         mensagemBusca: document.getElementById('mensagem-busca'),
@@ -356,6 +360,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
             Object.keys(data).forEach(k => { if (data[k] === "") data[k] = null; });
             return data;
+        },
+        updateRequiredFields: () => {
+            const tipoBusca = ui.form.elements.tipoBusca.value;
+
+            if (tipoBusca === 'ate2012') {
+                // SEP obrigatório
+                ui.labelSEP.className = 'required';
+                ui.numeroSEPInput.required = true;
+                
+                // SIMLAM opcional
+                ui.labelSimlam.className = '';
+                ui.inputSimlam.required = false;
+            } else {
+                // SIMLAM obrigatório
+                ui.labelSimlam.className = 'required';
+                ui.inputSimlam.required = true;
+                
+                // SEP opcional
+                ui.labelSEP.className = '';
+                ui.numeroSEPInput.required = false;
+            }
         },
         async validateFullForm(data) {
             const validationResult = await api.validateForm(data);
@@ -825,7 +850,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             let dataToValidate = {};
 
-            if (['area', 'areaEmbargada', 'deliberacaoAutoridade', 'tipoDesembargo'].includes(fieldName)) {
+            if (['area', 'areaEmbargada', 'deliberacaoAutoridade', 'tipoDesembargo','processoSimlam', 'numeroSEP','tipoBusca'].includes(fieldName)) {
                 const formData = new FormData(ui.form);
                 dataToValidate = Object.fromEntries(formData.entries());
                 
@@ -889,7 +914,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(ui.modal)            
             ui.modal.addEventListener('click', (e) => { if(e.target === ui.modal) view.closeModal(); });
 
-        ui.tipoBuscaRadios.forEach(radio => radio.addEventListener('change', handlers.onTipoBuscaChange));
+        ui.tipoBuscaRadios.forEach(radio => radio.addEventListener('change', (e) => {handlers.onTipoBuscaChange,  logic.updateRequiredFields();}));
 
         const fieldsToValidate = [
             'serie', 'nomeAutuado', 'area', 'processoSimlam',
@@ -939,6 +964,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         logic.handleDeliberacaoChange();
         view.updateBuscaVisibility('ate2012');
+        logic.updateRequiredFields();
     }
 
     init();

@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Inputs Específicos
         numeroSEPInput: document.getElementById('numeroSEP'),
+        labelSimlam: document.getElementById('labelSimlam'),
+        labelSEP: document.getElementById('labelSEP'),
+        inputSimlam: document.getElementById('processoSimlam'),
         
         // Mensagens e Modais
         mensagemBusca: document.getElementById('mensagem-busca'),
@@ -83,8 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return undefined;
             };
-
-            const { numeroSEP, numeroEdocs } = utils.separarSepEdocs(pick(row, 'sep_edocs', 'numeroEdocs'));
             
             return {
                 id:                     pick(row, 'id'),
@@ -92,8 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 serie:                  pick(row, 'serie', 'serie_embargo'), 
                 processoSimlam:         pick(row, 'processoSimlam', 'processo_simlam', 'processo'),
                 
-                numeroSEP:              pick(row, 'numeroSEP', 'numero_sep') || numeroSEP,
-                numeroEdocs:            pick(row, 'numeroEdocs', 'numero_edocs') || numeroEdocs,
+                numeroSEP:              pick(row, 'numeroSEP', 'numero_sep'),
+                numeroEdocs:            pick(row, 'numeroEdocs', 'numero_edocs'),
                 
                 coordenadaX:            pick(row, 'coordenadaX', 'coordenada_x', 'easting'), 
                 coordenadaY:            pick(row, 'coordenadaY', 'coordenada_y', 'northing'),
@@ -106,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dataEmbargo:            pick(row, 'dataEmbargo', 'data_embargo'),
                 
                 tipoDesembargo:         pick(row, 'tipoDesembargo', 'tipo_desembargo'), 
-                parecerTecnico:         pick(row, 'parecerTecnico', 'recomendacao_parecer_tecnico'),
+                //parecerTecnico:         pick(row, 'parecerTecnico', 'recomendacao_parecer_tecnico'),
                 deliberacaoAutoridade:  pick(row, 'deliberacaoAutoridade', 'deliberacao_autoridade'), 
                 
                 descricao:              pick(row, 'descricao', 'obs'), 
@@ -114,14 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 responsavelDesembargo:  pick(row, 'responsavelDesembargo', 'responsavel_desembargo')
             };
         },
-        separarSepEdocs: (valor) => {
-            if (!valor) return { numeroSEP: null, numeroEdocs: null };
-            const seped = String(valor);
-            if (/^\d{4}-/.test(seped) || seped.includes('-')) {
-                return { numeroSEP: null, numeroEdocs: seped };
-            }
-            return { numeroSEP: seped, numeroEdocs: null };
-        },
+
         setSelectValue: (selectEl, value) => {
             if (!selectEl) return;
             const vStr = String(value ?? '');
@@ -214,6 +208,40 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             return false;
         },
+        updateRequiredFields: () => {
+            // 1. Pega o valor do rádio marcado de forma segura
+            const radioMarcado = ui.form.querySelector('input[name="tipoBusca"]:checked');
+            if (!radioMarcado) return;
+
+            const tipoBusca = radioMarcado.value;
+            const isEditing = ui.enableEdit ? ui.enableEdit.checked : false;
+
+            if (tipoBusca === 'ate2012') {
+                // SEP vira obrigatório
+                ui.labelSEP.classList.add('required');
+                ui.numeroSEPInput.required = true;
+                
+                // SIMLAM vira opcional
+                ui.labelSimlam.classList.remove('required');
+                ui.inputSimlam.required = false;
+
+                // Visibilidade das lupas
+                if (ui.btnBuscarSEP) ui.btnBuscarSEP.style.display = isEditing ? 'flex' : 'none';
+                if (ui.btnBuscar) ui.btnBuscar.style.display = 'none';
+            } else {
+                // SIMLAM vira obrigatório
+                ui.labelSimlam.classList.add('required');
+                ui.inputSimlam.required = true;
+                
+                // SEP vira opcional
+                ui.labelSEP.classList.remove('required');
+                ui.numeroSEPInput.required = false;
+
+                // Visibilidade das lupas
+                if (ui.btnBuscar) ui.btnBuscar.style.display = isEditing ? 'flex' : 'none';
+                if (ui.btnBuscarSEP) ui.btnBuscarSEP.style.display = 'none';
+            }
+        },
         prepareDataForUpdate: () => {
             const data = Object.fromEntries(new FormData(ui.form).entries());
             
@@ -221,8 +249,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const radioTipo = ui.form.querySelector('input[name="tipoDesembargo"]:checked');
             data.tipoDesembargo = radioTipo ? radioTipo.value : null;
             
-            const radioParecer = ui.form.querySelector('input[name="parecerTecnico"]:checked');
-            data.parecerTecnico = radioParecer ? radioParecer.value : null;
+            //const radioParecer = ui.form.querySelector('input[name="parecerTecnico"]:checked');
+            //data.parecerTecnico = radioParecer ? radioParecer.value : null;
             
             const radioDeliberacao = ui.form.querySelector('input[name="deliberacaoAutoridade"]:checked');
             data.deliberacaoAutoridade = radioDeliberacao ? radioDeliberacao.value : null;
@@ -271,10 +299,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (validationResult.errors && Object.keys(validationResult.errors).length > 0) {
                 view.displayValidationErrors(validationResult.errors);
                 window.UI.showToast("Corrija os erros no formulário.", "error");
-                return false;
-            }
-            if (!data.numeroSEP && !data.numeroEdocs) {
-                window.UI.showToast("Preencha SEP ou E-Docs.", "error");
                 return false;
             }
             return true;
@@ -377,11 +401,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            // 2. Marca Parecer
-            if (data.parecerTecnico) {
-                 const r = ui.form.querySelector(`input[name="parecerTecnico"][value="${data.parecerTecnico}"]`);
-                 if(r) r.checked = true;
-            }
+            // // 2. Marca Parecer
+            // if (data.parecerTecnico) {
+            //      const r = ui.form.querySelector(`input[name="parecerTecnico"][value="${data.parecerTecnico}"]`);
+            //      if(r) r.checked = true;
+            // }
 
             // 3. Marca Deliberação
             // Se não tiver dado salvo (legado), tenta inferir pelo tipo
@@ -407,6 +431,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Marca o radio (seja Total, Parcial, Indeferimento ou Desinterdição)
                 const radio = ui.form.querySelector(`input[name="tipoDesembargo"][value="${tipoValue}"]`);
                 if (radio) radio.checked = true;
+            }
+            if (data.numeroSEP && !data.processoSimlam) {
+                const r = ui.form.querySelector('input[name="tipoBusca"][value="ate2012"]');
+                if (r) r.checked = true;
+            } else if (data.processoSimlam) {
+                const r = ui.form.querySelector('input[name="tipoBusca"][value="apos2012"]');
+                if (r) r.checked = true;
             }
 
             // 5. Atualiza o estado visual
@@ -602,7 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let dataToValidate = { [fieldName]: field.value };
 
             // Lógica de Contexto Cruzado
-            const camposCruzados = ['area', 'areaEmbargada', 'tipoDesembargo', 'deliberacaoAutoridade', 'parecerTecnico'];
+            const camposCruzados = ['area', 'areaEmbargada', 'tipoDesembargo', 'deliberacaoAutoridade','processoSimlam', 'numeroSEP','tipoBusca'];
             
             if (camposCruzados.includes(fieldName)) {
                 const formData = new FormData(ui.form);
@@ -665,6 +696,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const embargoData = await api.fetchEmbargoByProcesso(processo);
                 if (embargoData) {
                     const dataToFill = utils.normalizeRow(embargoData); 
+                    view.clearForm();
                     view.fillForm(dataToFill);
                     window.UI.showToast('Dados atualizados via busca.', 'success');
                 } else { window.UI.showToast('Não encontrado.', 'error'); }
@@ -691,6 +723,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (embargoData) {
                     // Normaliza usando a função do utils existente nesta página
                     const dataToFill = utils.normalizeRow(embargoData);
+                    view.clearForm();
                     view.fillForm(dataToFill);
                     window.UI.showToast('Dados atualizados via SEP.', 'success');
                 } else { 
@@ -743,7 +776,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (ui.enableEdit) ui.enableEdit.addEventListener("change", handlers.onEditToggle);
         if (ui.btnBuscar) ui.btnBuscar.addEventListener("click", handlers.onSearchProcessoClick);
         if (ui.btnBuscarSEP) ui.btnBuscarSEP.addEventListener("click", handlers.onSearchSEPClick);
-        if (ui.tipoBuscaRadios) ui.tipoBuscaRadios.forEach(r => r.addEventListener('change', handlers.onTipoBuscaChange));
+        if (ui.tipoBuscaRadios) ui.tipoBuscaRadios.forEach(r =>r.addEventListener('change', (e) => {
+            handlers.onTipoBuscaChange(e);        // Chama a função de visibilidade
+            businessLogic.updateRequiredFields(); // Chama a função do asterisco
+        }));
 
         // Listeners Lógica de Negócio
         if (ui.radioDeferida && ui.radioIndeferida) {
@@ -754,8 +790,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ui.radioTotal.addEventListener('change', (e) => { visualLogic.handleTipoChange(); handlers.onFieldBlur(e); });
             ui.radioParcial.addEventListener('change', (e) => { visualLogic.handleTipoChange(); handlers.onFieldBlur(e); });
         }
-        const radiosParecer = document.querySelectorAll('input[name="parecerTecnico"]');
-        radiosParecer.forEach(r => r.addEventListener('change', handlers.onFieldBlur));
+        // const radiosParecer = document.querySelectorAll('input[name="parecerTecnico"]');
+        // radiosParecer.forEach(r => r.addEventListener('change', handlers.onFieldBlur));
 
         if (ui.inputAreaEmbargada) {
             ui.inputAreaEmbargada.addEventListener('input', visualLogic.copyAreaEmbargadaToDesembargada);
@@ -792,6 +828,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error(err);
             window.UI.showToast("Erro ao carregar dados.", "error");
         }
+        businessLogic.updateRequiredFields();
     }
     
     init();

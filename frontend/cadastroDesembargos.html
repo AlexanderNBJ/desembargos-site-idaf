@@ -128,12 +128,12 @@
         <label class="section-title">Número do(s) Processo(s):</label>
         <div class="processos-row">
             <div class="processo-item">
-                <label for="numeroEdocs" class="semirequired">E-Docs:</label>
+                <label for="numeroEdocs">E-Docs:</label>
                 <input id="numeroEdocs" name="numeroEdocs" class="input" type="text" placeholder="Ex: 2025-A12345" />
                 <span class="error-msg" id="error-numeroEdocs"></span>
             </div>
             <div class="processo-item">
-                <label for="processoSimlam" class="required">SIMLAM:</label>
+                <label for="processoSimlam" id= "labelSimlam" class="required">SIMLAM:</label>
                 <div class="input-with-icon">
                     <input id="processoSimlam" name="processoSimlam" class="input" type="text" placeholder="Ex: 12345/2025" required/>
                     <button type="button" id="btnBuscarProcesso" class="icon-btn" aria-label="Buscar processo"><i class="fa-solid fa-search"></i></button>
@@ -142,7 +142,7 @@
                 <span id="mensagem-busca" class="mensagem-validacao"></span>
             </div>
             <div class="processo-item">
-                <label for="numeroSEP" class="semirequired">SEP:</label>
+                <label for="numeroSEP" id = "labelSEP" class="semirequired">SEP:</label>
                 <div class="input-with-icon">
                     <input id="numeroSEP" name="numeroSEP" class="input" type="text" placeholder="Ex: 123456789" />
                     <button type="button" id="btnBuscarSEP" class="icon-btn" aria-label="Buscar SEP"><i class="fa-solid fa-search"></i></button>

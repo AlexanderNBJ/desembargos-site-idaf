@@ -63,12 +63,12 @@
         <label class="section-title">Número do(s) Processo(s):</label>
         <div class="processos-row">
             <div class="processo-item">
-                <label for="numeroEdocs" class="semirequired">E-Docs:</label>
+                <label for="numeroEdocs" class="">E-Docs:</label>
                 <input id="numeroEdocs" name="numeroEdocs" class="input" type="text" placeholder="Ex: 2025-A12345" disabled/>
                 <span class="error-msg" id="error-numeroEdocs"></span>
             </div>
             <div class="processo-item">
-                <label for="processoSimlam" class="required">SIMLAM:</label>
+                <label for="processoSimlam" id = "labelSimlam" class="">SIMLAM:</label>
                 <div class="input-with-icon">
                     <input id="processoSimlam" name="processoSimlam" class="input" type="text" placeholder="Ex: 12345/2025" disabled/>
                     <!-- Botões de busca removidos ou ocultos na visualização inicial, aparecem se editar -->
@@ -77,7 +77,7 @@
                 <span class="error-msg" id="error-processoSimlam"></span>
             </div>
             <div class="processo-item">
-                <label for="numeroSEP" class="semirequired">SEP:</label>
+                <label for="numeroSEP" id = "labelSEP" class="">SEP:</label>
                 <div class="input-with-icon">
                     <input id="numeroSEP" name="numeroSEP" class="input" type="text" placeholder="Ex: 123456789" disabled/>
                     <button type="button" id="btnBuscarSEP" class="icon-btn" style="display:none;" disabled><i class="fa-solid fa-search"></i></button>
@@ -136,22 +136,12 @@
       </div>
     </div>
 
-    <!-- Parecer Técnico -->
-    <div class="parecer">
-        <label class="label-bold required-section">Recomendação do parecer técnico:</label>
-        <div class="tipo-controls">
-          <label><input type="radio" name="parecerTecnico" value="DEFERIMENTO" disabled /> <span>Deferimento</span></label>
-          <label><input type="radio" name="parecerTecnico" value="INDEFERIMENTO" disabled /> <span>Indeferimento</span></label>
-        </div>
-        <span class="error-msg" id="error-parecerTecnico"></span>
-    </div>
-
     <!-- Deliberação -->
     <div class="deliberacao">
-        <label class="label-bold required-section">Deliberação da solicitação de desembargo, pela autoridade competente:</label>
+        <label class="label-bold required-section">Recomendação do parecer técnico:</label>
         <div class="tipo-controls">
-          <label><input type="radio" name="deliberacaoAutoridade" value="DEFERIDA" id="radioDeferida" disabled/> <span>Deferida</span></label>
-          <label><input type="radio" name="deliberacaoAutoridade" value="INDEFERIDA" id="radioIndeferida" disabled/> <span>Indeferida</span></label>
+          <label><input type="radio" name="deliberacaoAutoridade" value="DEFERIDA" id="radioDeferida" disabled/> <span>Deferimento</span></label>
+          <label><input type="radio" name="deliberacaoAutoridade" value="INDEFERIDA" id="radioIndeferida" disabled/> <span>Indeferimento</span></label>
         </div>
         <span class="error-msg" id="error-deliberacaoAutoridade"></span>
     </div>
