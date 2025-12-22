@@ -99,10 +99,12 @@ function _drawPdfTitle(doc, y, desembargo) {
   }
 
   // Se não tiver ano separado, usa o ano da data de desembargo ou atual
-  const ano = desembargo.dataDesembargo ? desembargo.dataDesembargo.split('-')[0] : new Date().getFullYear();
+  //const ano = desembargo.dataDesembargo ? desembargo.dataDesembargo.split('-')[0] : new Date().getFullYear();
   const numeroCompleto = desembargo.numeroAno || '-'; 
+  const ano = numeroCompleto.split('-')[0];
+  const numero = numeroCompleto.split('-')[1];
 
-  doc.text(`${texto_header_aux} Nº ${numeroCompleto}/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center');
+  doc.text(`${texto_header_aux} Nº ${numero}/${ano}/IDAF/GELCOF`, doc.internal.pageSize.getWidth() / 2, y, 'center');
   
   y += 10;
   doc.setTextColor(secondaryColor);
@@ -129,15 +131,15 @@ function _drawPdfInfoBlock(doc, y, desembargo) {
   // Lista completa de campos
   const infoFields = [
     { label: "Termo de embargo", value: `${desembargo.numero || '-'} ${desembargo.serie || '-'}` },
-    { label: "Processo SIMLAM",            value: desembargo.processoSimlam || '-' },
     { label: "Processo E-docs",            value: desembargo.numeroEdocs || '-' },
-    { label: "Número do SEP",              value: desembargo.numeroSEP || '-' },
+    { label: "Processo SIMLAM",            value: desembargo.processoSimlam || '-' },
+    { label: "Processo SEP",              value: desembargo.numeroSEP || '-' },
     { label: "Autuado",                    value: desembargo.nomeAutuado || '-' },
     
     { label: "Data do embargo",            value: formatDate(desembargo.dataEmbargo) },
     { label: "Área embargada",             value: `${desembargo.areaEmbargada || '-'} ha` },
     //{ label: "Parecer técnico",            value: (desembargo.parecerTecnico || '-').toUpperCase() },
-    { label: "Deliberação",  value: (desembargo.deliberacaoAutoridade || '-').toUpperCase() },
+    { label: "Deliberação",                 value: (desembargo.deliberacaoAutoridade || '-').toUpperCase() },
     
     // Este campo será filtrado abaixo se for Indeferimento
     { label: "Tipo de desembargo",         value: (desembargo.tipoDesembargo || '-').toUpperCase() },
@@ -390,7 +392,7 @@ exports.gerarPdfDesembargo = async (desembargo) => {
   doc.text(descricaoSplit, 40, y, { maxWidth: 500, align: 'justify' });
   y += descricaoSplit.length * lineHeight + 20;
 
-  const aprovadorName = desembargo.aprovadorName || desembargo.aprovado_por || desembargo.responsavelDesembargo || '-';
+  const aprovadorName = desembargo.aprovadorName || '-';
   const aprovadorPosition = desembargo.aprovadorPosition || '-';
   
   doc.setTextColor(secondaryColor);

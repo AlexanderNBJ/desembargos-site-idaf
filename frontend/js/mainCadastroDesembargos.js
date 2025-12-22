@@ -424,8 +424,9 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (tipoUpper === 'DESINTERDIÇÃO'){ 
                 texto_aux_header = 'TERMO DE DESINTERDIÇÃO';
             }
+            const data = new Date();
 
-            doc.text(`${texto_aux_header} Nº X/IDAF`, doc.internal.pageSize.getWidth() / 2, y, 'center'); 
+            doc.text(`${texto_aux_header} Nº X/${data.getUTCFullYear()}/IDAF/GELCOF`, doc.internal.pageSize.getWidth() / 2, y, 'center'); 
             y += 10;
 
             doc.setTextColor(secondaryColor); doc.setDrawColor(200); doc.setLineWidth(0.8); doc.line(40, y, 555, y);
@@ -434,9 +435,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Lista completa de campos
             const infoFields = [
                 { label: "Termo de embargo",  value: `${formData.numero || '-'} ${formData.serie?.toUpperCase() || '-'}` },
-                { label: "Processo SIMLAM",             value: formData.processoSimlam || '-' },
                 { label: "Processo E-docs",             value: formData.numeroEdocs || '-' },
-                { label: "Número do SEP",               value: formData.numeroSEP || '-' },
+                { label: "Processo SIMLAM",             value: formData.processoSimlam || '-' },
+                { label: "Processo SEP",               value: formData.numeroSEP || '-' },
                 { label: "Autuado",                     value: formData.nomeAutuado?.toUpperCase() || '-' },
 
                 { label: "Data do embargo",             value: formData.dataEmbargo ? (new Date(formData.dataEmbargo)).toLocaleDateString() : '-' },
@@ -489,13 +490,13 @@ document.addEventListener('DOMContentLoaded', () => {
             doc.text(descricaoSplit, 40, y); 
             y += descricaoSplit.length * lineHeight + 10;
 
-            doc.setFont("helvetica", "bold"); doc.setTextColor(secondaryColor);
-            doc.text(String(pageState.currentUserInfo.name || "-"), doc.internal.pageSize.getWidth() / 2, y, 'center'); 
-            y += lineHeight;
+            // doc.setFont("helvetica", "bold"); doc.setTextColor(secondaryColor);
+            // doc.text(String(pageState.currentUserInfo.name || "-"), doc.internal.pageSize.getWidth() / 2, y, 'center'); 
+            // y += lineHeight;
 
-            doc.setFont("helvetica", "normal"); doc.setTextColor(primaryColor);
-            doc.text(String(pageState.currentUserInfo.position || "-"), doc.internal.pageSize.getWidth() / 2, y, 'center'); 
-            y += 2*lineHeight;
+            // doc.setFont("helvetica", "normal"); doc.setTextColor(primaryColor);
+            // doc.text(String(pageState.currentUserInfo.position || "-"), doc.internal.pageSize.getWidth() / 2, y, 'center'); 
+            // y += 2*lineHeight;
 
             doc.setFontSize(10); doc.setTextColor("#666");
             const disclaimer = "AVISO: ESTE DOCUMENTO É APENAS UMA PRÉVIA. Uma vez aprovado, o termo somente terá validade após sua inclusão e assinatura no sistema EDOC-s.";
