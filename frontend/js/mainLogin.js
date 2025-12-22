@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
       Auth.setSession(loginData.token, loginData.user);
 
       try {
-        const pRes = await Auth.fetchWithAuth('/api/auth/permissions');
+        const pRes = await ApiService.auth.login(username, password)
 
         if (pRes.ok) {
           const perm = await pRes.json();
@@ -79,11 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setSubmittingState(true);
 
       try {
-        const response = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
-        });
+        const response = await ApiService.auth.login(username, password);
         
         const data = await response.json();
 

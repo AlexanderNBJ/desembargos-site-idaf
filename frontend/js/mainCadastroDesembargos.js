@@ -259,64 +259,72 @@ document.addEventListener('DOMContentLoaded', () => {
         },
     };
 
-    const api = {
-        fetchEmbargoByProcesso: async (proc) => {
-            const res = await Auth.fetchWithAuth(`/api/embargos/processo?valor=${encodeURIComponent(proc)}`);
+    // const api = {
+    //     fetchEmbargoByProcesso: async (proc) => {
+    //         const res = await Auth.fetchWithAuth(`/api/embargos/processo?valor=${encodeURIComponent(proc)}`);
 
-            if (res.status === 404) 
-                return null;
+    //         if (res.status === 404) 
+    //             return null;
             
-            if (!res.ok) 
-                throw new Error('Falha na busca por processo');
+    //         if (!res.ok) 
+    //             throw new Error('Falha na busca por processo');
             
-            const json = await res.json();
-            return json.embargo;
-        },
-        fetchEmbargoBySEP: async (sep) => {
-            const res = await Auth.fetchWithAuth(`/api/embargos/sep?valor=${encodeURIComponent(sep)}`);
+    //         const json = await res.json();
+    //         return json.embargo;
+    //     },
+    //     fetchEmbargoBySEP: async (sep) => {
+    //         const res = await Auth.fetchWithAuth(`/api/embargos/sep?valor=${encodeURIComponent(sep)}`);
 
-            if (res.status === 404) 
-                return null;
+    //         if (res.status === 404) 
+    //             return null;
             
-            if (!res.ok) {
-                // Tenta ler a mensagem de erro específica enviada pelo backend
-                let errorMessage = 'Falha na busca por SEP';
-                try {
-                    const errorJson = await res.json();
-                    if (errorJson && errorJson.message) { // Ou errorJson.error dependendo do seu middleware
-                        errorMessage = errorJson.message;
-                    }
-                } catch (e) { /* falha ao ler json de erro, usa msg padrao */ }
+    //         if (!res.ok) {
+    //             // Tenta ler a mensagem de erro específica enviada pelo backend
+    //             let errorMessage = 'Falha na busca por SEP';
+    //             try {
+    //                 const errorJson = await res.json();
+    //                 if (errorJson && errorJson.message) { // Ou errorJson.error dependendo do seu middleware
+    //                     errorMessage = errorJson.message;
+    //                 }
+    //             } catch (e) { /* falha ao ler json de erro, usa msg padrao */ }
                 
-                throw new Error(errorMessage);
-            }
+    //             throw new Error(errorMessage);
+    //         }
 
-            const json = await res.json();
-            return json.embargo;
-        },
-        validateForm: async (formData) => {
-            const res = await fetch('/api/desembargos/validate', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData),
-            });
-            return res.json();
-        },
-        checkEmbargoExists: async (numero) => {
-            const res = await Auth.fetchWithAuth(`/api/embargos/check/${encodeURIComponent(numero)}`);
-            return res.ok;
-        },
-        createDesembargo: async (data) => {
-            const res = await Auth.fetchWithAuth('/api/desembargos/create', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
-            });
-            const result = await res.json();
+    //         const json = await res.json();
+    //         return json.embargo;
+    //     },
+    //     validateForm: async (formData) => {
+    //         const res = await fetch('/api/desembargos/validate', {
+    //             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData),
+    //         });
+    //         return res.json();
+    //     },
+    //     checkEmbargoExists: async (numero) => {
+    //         const res = await Auth.fetchWithAuth(`/api/embargos/check/${encodeURIComponent(numero)}`);
+    //         return res.ok;
+    //     },
+    //     createDesembargo: async (data) => {
+    //         const res = await Auth.fetchWithAuth('/api/desembargos/create', {
+    //             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
+    //         });
+    //         const result = await res.json();
             
-            if (!res.ok) 
-                throw new Error(result.message || "Erro ao inserir desembargo");
+    //         if (!res.ok) 
+    //             throw new Error(result.message || "Erro ao inserir desembargo");
 
-            return result;
-        }
+    //         return result;
+    //     }
+    // };
+
+    const api = {
+        fetchEmbargoByProcesso: ApiService.embargos.fetchByProcesso,
+        fetchEmbargoBySEP: ApiService.embargos.fetchBySEP,
+        validateForm: ApiService.desembargos.validateForm,
+        checkEmbargoExists: ApiService.embargos.checkExists,
+        createDesembargo: ApiService.desembargos.create
     };
-
+    
     const logic = {
         prepareDataForSubmit: () => {
             const data = Object.fromEntries(new FormData(ui.form).entries());

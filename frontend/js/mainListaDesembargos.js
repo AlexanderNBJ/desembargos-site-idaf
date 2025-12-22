@@ -271,51 +271,56 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Módulo de API
+    // const api = {
+    //     fetchDesembargos: async () => {
+    //         const active = pageState.tabsConfig.find(t => t.id === pageState.activeTab);
+    //         const params = new URLSearchParams({
+    //             page: pageState.page,
+    //             pageSize: pageState.pageSize,
+    //         });
+
+    //         if (pageState.searchTerm) 
+    //             params.set('search', pageState.searchTerm);
+
+    //         if (active?.status) 
+    //             params.set('status', active.status);
+
+    //         if (active?.ownerParam) 
+    //             params.set('owner', active.ownerParam);
+
+    //         if (pageState.sortKey) 
+    //             params.set('sortKey', pageState.sortKey);
+
+    //         if (pageState.sortDir) 
+    //             params.set('sortDir', pageState.sortDir);
+
+
+    //         const res = await Auth.fetchWithAuth(`/api/desembargos/list?${params.toString()}`);
+
+    //         if (!res.ok) 
+    //             throw new Error('Erro ao buscar a lista de deliberações');
+
+    //         return res.json();
+    //     },
+    //     fetchPdf: async (id) => {
+    //         const res = await Auth.fetchWithAuth(`/api/desembargos/${id}/pdf`);
+    //         if (!res.ok) 
+    //             throw new Error('Erro ao gerar o PDF');
+
+    //         return res.blob();
+    //     },
+    //     fetchNumeroAnoDesembargo: async (id) =>{
+    //         const res = await Auth.fetchWithAuth(`/api/desembargos/${id}`);
+    //         const jsonres = await res.json();
+
+    //         const dado = jsonres.numerono;
+    //         return dado;
+    //     }
+    // };
     const api = {
-        fetchDesembargos: async () => {
-            const active = pageState.tabsConfig.find(t => t.id === pageState.activeTab);
-            const params = new URLSearchParams({
-                page: pageState.page,
-                pageSize: pageState.pageSize,
-            });
-
-            if (pageState.searchTerm) 
-                params.set('search', pageState.searchTerm);
-
-            if (active?.status) 
-                params.set('status', active.status);
-
-            if (active?.ownerParam) 
-                params.set('owner', active.ownerParam);
-
-            if (pageState.sortKey) 
-                params.set('sortKey', pageState.sortKey);
-
-            if (pageState.sortDir) 
-                params.set('sortDir', pageState.sortDir);
-
-
-            const res = await Auth.fetchWithAuth(`/api/desembargos/list?${params.toString()}`);
-
-            if (!res.ok) 
-                throw new Error('Erro ao buscar a lista de deliberações');
-
-            return res.json();
-        },
-        fetchPdf: async (id) => {
-            const res = await Auth.fetchWithAuth(`/api/desembargos/${id}/pdf`);
-            if (!res.ok) 
-                throw new Error('Erro ao gerar o PDF');
-
-            return res.blob();
-        },
-        fetchNumeroAnoDesembargo: async (id) =>{
-            const res = await Auth.fetchWithAuth(`/api/desembargos/${id}`);
-            const jsonres = await res.json();
-
-            const dado = jsonres.numeroAno;
-            return dado;
-        }
+        fetchDesembargos: () => ApiService.desembargos.fetchList(pageState),
+        fetchPdf: ApiService.desembargos.fetchPdf,
+        fetchNumeroAnoDesembargo: ApiService.desembargos.fetchNumeroAno
     };
 
     // Módulo de event handlers

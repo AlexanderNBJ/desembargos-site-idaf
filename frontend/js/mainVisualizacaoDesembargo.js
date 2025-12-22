@@ -130,66 +130,75 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- MÓDULO DE API ---
-    const api = {
-        fetchDesembargoById: async (id) => {
-            const res = await Auth.fetchWithAuth(`/api/desembargos/${id}`);
-            if (!res.ok) { 
-                const txt = await res.text();
-                throw new Error(`HTTP ${res.status} - ${txt}`);
-            }
-            const json = await res.json();
-            return utils.normalizeRow(json.data || json.desembargo || json);
-        },
-        fetchEmbargoByProcesso: async (proc) => {
-             const res = await Auth.fetchWithAuth(`/api/embargos/processo?valor=${encodeURIComponent(proc)}`);
-             if (res.status === 404) return null;
-             if (!res.ok) throw new Error('Erro na busca por processo');
-             const json = await res.json();
-             return json.embargo;
-        },
-        fetchEmbargoBySEP: async (sep) => {
-             const res = await Auth.fetchWithAuth(`/api/embargos/sep?valor=${encodeURIComponent(sep)}`);
+    // const api = {
+    //     fetchDesembargoById: async (id) => {
+    //         const res = await Auth.fetchWithAuth(`/api/desembargos/${id}`);
+    //         if (!res.ok) { 
+    //             const txt = await res.text();
+    //             throw new Error(`HTTP ${res.status} - ${txt}`);
+    //         }
+    //         const json = await res.json();
+    //         return utils.normalizeRow(json.data || json.desembargo || json);
+    //     },
+    //     fetchEmbargoByProcesso: async (proc) => {
+    //          const res = await Auth.fetchWithAuth(`/api/embargos/processo?valor=${encodeURIComponent(proc)}`);
+    //          if (res.status === 404) return null;
+    //          if (!res.ok) throw new Error('Erro na busca por processo');
+    //          const json = await res.json();
+    //          return json.embargo;
+    //     },
+    //     fetchEmbargoBySEP: async (sep) => {
+    //          const res = await Auth.fetchWithAuth(`/api/embargos/sep?valor=${encodeURIComponent(sep)}`);
              
-             if (res.status === 404) return null;
+    //          if (res.status === 404) return null;
              
-             if (!res.ok) {
-                // Tenta ler a mensagem de erro específica enviada pelo backend
-                let errorMessage = 'Erro na busca por SEP';
-                try {
-                    const errorJson = await res.json();
-                    if (errorJson && errorJson.message) {
-                        errorMessage = errorJson.message;
-                    }
-                } catch (e) { /* falha ao ler json, usa msg padrao */ }
+    //          if (!res.ok) {
+    //             // Tenta ler a mensagem de erro específica enviada pelo backend
+    //             let errorMessage = 'Erro na busca por SEP';
+    //             try {
+    //                 const errorJson = await res.json();
+    //                 if (errorJson && errorJson.message) {
+    //                     errorMessage = errorJson.message;
+    //                 }
+    //             } catch (e) { /* falha ao ler json, usa msg padrao */ }
                 
-                throw new Error(errorMessage);
-             }
+    //             throw new Error(errorMessage);
+    //          }
              
-             const json = await res.json();
-             return json.embargo;
-        },
-        getUsers: async () => {
-            const res = await Auth.fetchWithAuth('/api/usuarios');
-            return res.ok ? res.json().then(j => j.data || j) : null;
-        },
-        update: async (id, data) => {
-            const res = await Auth.fetchWithAuth(`/api/desembargos/${id}`, {
-                method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data)
-            });
-            const result = await res.json();
-            if (!res.ok) throw new Error(result.message || "Erro ao atualizar");
-            return result;
-        },
-        validateForm: async (formData) => {
-            const res = await fetch('/api/desembargos/validate', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData),
-            });
-            return res.json();
-        },
-        checkEmbargoExists: async (numero) => {
-            const res = await Auth.fetchWithAuth(`/api/embargos/check/${encodeURIComponent(numero)}`);
-            return res.ok;
-        },
+    //          const json = await res.json();
+    //          return json.embargo;
+    //     },
+    //     getUsers: async () => {
+    //         const res = await Auth.fetchWithAuth('/api/usuarios');
+    //         return res.ok ? res.json().then(j => j.data || j) : null;
+    //     },
+    //     update: async (id, data) => {
+    //         const res = await Auth.fetchWithAuth(`/api/desembargos/${id}`, {
+    //             method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data)
+    //         });
+    //         const result = await res.json();
+    //         if (!res.ok) throw new Error(result.message || "Erro ao atualizar");
+    //         return result;
+    //     },
+    //     validateForm: async (formData) => {
+    //         const res = await fetch('/api/desembargos/validate', {
+    //             method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData),
+    //         });
+    //         return res.json();
+    //     },
+    //     checkEmbargoExists: async (numero) => {
+    //         const res = await Auth.fetchWithAuth(`/api/embargos/check/${encodeURIComponent(numero)}`);
+    //         return res.ok;
+    //     },
+    // };
+    const api = {
+        fetchDesembargoById: ApiService.desembargos.fetchById,
+        fetchEmbargoByProcesso: ApiService.embargos.fetchByProcesso,
+        fetchEmbargoBySEP: ApiService.embargos.fetchBySEP,
+        getUsers: ApiService.auth.getUsers,
+        update: ApiService.desembargos.update,
+        validateForm: ApiService.desembargos.validateForm,
+        checkEmbargoExists: ApiService.embargos.checkExists
     };
 
     // --- MÓDULO DE LÓGICA DE NEGÓCIO (Regras, Permissões e Dados) ---
